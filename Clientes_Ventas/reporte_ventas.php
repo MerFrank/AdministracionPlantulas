@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reporte de Ventas</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/css/style.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -12,12 +12,23 @@
     <header>
       <div class="encabezado">
         <a class="navbar-brand" href="#">
-          <img src="logoplantulas.png" alt="Logo" width="130" height="124" class="d-inline-block align-text-center" />
+          <img src="/css/logoplantulas.png" alt="Logo" width="130" height="124" class="d-inline-block align-text-center" />
         </a>
         <div>
           <h2>Reporte de Ventas</h2>
           <p>Consulta el estado de las ventas </p>
         </div>
+      </div>
+      <div class="barra-navegacion">
+        <nav class="navbar bg-body-tertiary">
+          <div class="container-fluid">
+            <div class="Opciones-barra">
+              <button onclick="window.location.href='dashboard_clientesVentas.php'">
+                Regresar inicio
+              </button>
+            </div>
+          </div>
+        </nav>
       </div>
 
     <form id="filtroVentas" class="row g-3">

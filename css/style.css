@@ -47,7 +47,24 @@
     padding: 20px;
     overflow: visible; /* evita scroll interno */
   }
+
+  .radio-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+  }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
   
+  .form-facturar {
+   display: none; /* Oculto por defecto */
+   border: 1px solid #ccc;
+   padding: 10px; 
+  }
   /* =========================
      ENCABEZADO
      ========================= */
