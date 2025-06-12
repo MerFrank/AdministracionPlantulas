@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Notas de Remisión - Plantas In Vitro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --color-primario: #2c3e50;
+      --color-secundario: #28a745;
+      --color-fondo: #f8f9fa;
+      --color-texto: #333;
+    }
+    body {
+      background-color: var(--color-fondo);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .contenedor-pagina {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .encabezado {
+      display: flex;
+      align-items: center;
+      padding: 15px 20px;
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .encabezado img {
+      margin-right: 20px;
+      height: 70px;
+    }
+    .encabezado h2 {
+      color: var(--color-primario);
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .encabezado p {
+      color: #6c757d;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    .barra-navegacion {
+      background-color: var(--color-primario);
+      padding: 10px 0;
+    }
+    .barra-navegacion button {
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+    .barra-navegacion button:hover {
+      background-color: white;
+      color: var(--color-primario);
+    }
+    main {
+      flex: 1;
+      padding: 25px;
+    }
+    .card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      border: none;
+    }
+    .card-header {
+      background-color: var(--color-secundario);
+      color: white;
+      border-radius: 10px 10px 0 0 !important;
+      padding: 12px 20px;
+      font-weight: 500;
+    }
+    .form-label {
+      font-weight: 500;
+      color: var(--color-primario);
+      margin-bottom: 5px;
+    }
+    .btn-primary {
+      background-color: var(--color-secundario);
+      border-color: var(--color-secundario);
+    }
+    .btn-primary:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    .btn-outline-secondary {
+      color: var(--color-primario);
+      border-color: var(--color-primario);
+    }
+    .btn-outline-secondary:hover {
+      background-color: var(--color-primario);
+      color: white;
+    }
+    .table th {
+      background-color: var(--color-secundario);
+      color: white;
+    }
+    .total-display {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--color-secundario);
+    }
+    footer {
+      background-color: var(--color-primario);
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      margin-top: auto;
+      font-size: 0.9rem;
+    }
+    .search-container {
+      position: relative;
+    }
+    .search-results {
+      position: absolute;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 0 0 5px 5px;
+      z-index: 1000;
+      display: none;
+    }
+    .search-result-item {
+      padding: 8px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .search-result-item:hover {
+      background-color: #f8f9fa;
+    }
+    .autocomplete-input {
+      position: relative;
+    }
+    .autocomplete-list {
+      position: absolute;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 0 0 5px 5px;
+      z-index: 1000;
+      display: none;
+    }
+    .autocomplete-item {
+      padding: 8px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .autocomplete-item:hover {
+      background-color: #f8f9fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor-pagina">
+    <header>
+      <div class="encabezado">
+        <a class="navbar-brand" href="#">
+          <img src="logoplantulas.png" alt="Logo" class="d-inline-block align-text-center" />
+        </a>
+        <div>
+          <h2>Nota de Remisión</h2>
+          <p>Sistema de ventas para plantas in vitro</p>
+        </div>
+      </div>
+
+      <div class="barra-navegacion">
+        <nav class="navbar">
+          <div class="container-fluid">
+            <div class="Opciones-barra">
+              <button onclick="window.location.href='index.html'">
+                <i class="bi bi-arrow-left"></i> Regresar al inicio
+              </button>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="card">
+              <div class="card-header">
+                <i class="bi bi-file-earmark-text"></i> Información General
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label for="numeroRemision" class="form-label">Número de Remisión</label>
+                    <input type="text" class="form-control" id="numeroRemision" value="3320" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="fecha" class="form-label">Fecha</label>
+                    <input type="date" class="form-control" id="fecha" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="cotizacion" class="form-label">Cotización Relacionada</label>
+                    <select class="form-select" id="cotizacion">
+                      <option value="">-- Seleccione una cotización --</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <i class="bi bi-person"></i> Datos del Cliente
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="buscarCliente" class="form-label">Buscar Cliente</label>
+                    <div class="autocomplete-input">
+                      <input type="text" class="form-control" id="buscarCliente" placeholder="Nombre, teléfono o RFC">
+                      <div class="autocomplete-list" id="resultadosClientes"></div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="rfcCliente" class="form-label">RFC</label>
+                    <input type="text" class="form-control" id="rfcCliente" readonly>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="nombreCliente" class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-control" id="nombreCliente" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="telefono" class="form-label">Teléfono</label>
+                    <input type="tel" class="form-control" id="telefono">
+                  </div>
+                  <div class="col-md-12">
+                    <label for="direccion" class="form-label">Dirección</label>
+                    <textarea class="form-control" id="direccion" rows="2"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <i class="bi bi-basket"></i> Detalle de Plantas
+              </div>
+              <div class="card-body">
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label for="especie" class="form-label">Especie</label>
+                    <select class="form-select" id="especie" required>
+                      <option value="">-- Seleccione una especie --</option>
+                      <option value="Tomate">Tomate</option>
+                      <option value="Chile">Chile</option>
+                      <option value="Lechuga">Lechuga</option>
+                      <option value="Fresa">Fresa</option>
+                      <option value="Orquídea">Orquídea</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="variedad" class="form-label">Variedad</label>
+                    <select class="form-select" id="variedad" required>
+                      <option value="">-- Seleccione primero una especie --</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="cantidad" class="form-label">Cantidad</label>
+                    <input type="number" class="form-control" id="cantidad" min="1" value="1" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="costo" class="form-label">Precio Unitario</label>
+                    <input type="number" class="form-control" id="costo" min="0" step="0.01" required>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-primary" id="agregarProducto">
+                  <i class="bi bi-plus-circle"></i> Agregar Planta
+                </button>
+
+                <div class="table-responsive mt-3">
+                  <table class="table table-bordered table-hover" id="tablaProductos" style="display:none;">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Variedad/Especie</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                        <td class="total-display" id="totalGeneral">$0.00</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <i class="bi bi-cash-coin"></i> Información de Pago
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="tipoPago" class="form-label">Tipo de Pago</label>
+                    <select class="form-select" id="tipoPago">
+                      <option value="contado">Contado</option>
+                      <option value="credito">Crédito</option>
+                      <option value="anticipo">Anticipo</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="metodoPago" class="form-label">Método de Pago</label>
+                    <select class="form-select" id="metodoPago">
+                      <option value="efectivo">Efectivo</option>
+                      <option value="transferencia">Transferencia</option>
+                      <option value="cheque">Cheque</option>
+                      <option value="tarjeta">Tarjeta</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="anticipo" class="form-label">Anticipo (MXN)</label>
+                    <input type="number" class="form-control" id="anticipo" min="0" step="0.01" value="0">
+                  </div>
+                  <div class="col-md-12">
+                    <label for="importeLetra" class="form-label">Importe con Letra</label>
+                    <input type="text" class="form-control" id="importeLetra" readonly>
+                  </div>
+                  <div class="col-md-12">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea class="form-control" id="observaciones" rows="2"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <i class="bi bi-file-earmark-text"></i> Pagaré
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="numeroPagare" class="form-label">Número de Pagaré</label>
+                    <input type="text" class="form-control" id="numeroPagare">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
+                    <input type="date" class="form-control" id="fechaVencimiento">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="lugarPago" class="form-label">Lugar de Pago</label>
+                    <input type="text" class="form-control" id="lugarPago" value="Tenancingo, México">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+              <button type="button" class="btn btn-outline-secondary me-md-2" id="limpiarForm">
+                <i class="bi bi-x-circle"></i> Limpiar
+              </button>
+              <button type="button" class="btn btn-primary me-md-2" id="guardarRemision">
+                <i class="bi bi-save"></i> Guardar
+              </button>
+              <button type="button" class="btn btn-success" id="generarPDF">
+                <i class="bi bi-file-earmark-pdf"></i> Generar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 PLANTAS IN VITRO. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    // Base de datos simulada de clientes
+    const clientesDB = [
+      { id: 1, nombre: "Vivero El Jardín", rfc: "VEJ850101ABC", telefono: "7221234567", direccion: "Av. Juárez 123, Tenancingo, México" },
+      { id: 2, nombre: "Florería Natural", rfc: "FNA900202DEF", telefono: "7227654321", direccion: "Calle Morelos 45, Tenancingo, México" },
+      { id: 3, nombre: "Invernaderos del Valle", rfc: "INV800303GHI", telefono: "7225551212", direccion: "Carretera Tenancingo-Villa Guerrero Km 5.5" },
+      { id: 4, nombre: "Agricultores Unidos", rfc: "AUN700404JKL", telefono: "7229876543", direccion: "Ejido San Francisco, Tenancingo, México" }
+    ];
+
+    // Base de datos simulada de cotizaciones
+    const cotizacionesDB = [
+      { 
+        id: 1, 
+        clienteId: 1, 
+        fecha: "2025-05-15", 
+        numero: "COT-2025-001",
+        productos: [
+          { especie: "Tomate", variedad: "Roma", cantidad: 100, precio: 2.5 },
+          { especie: "Chile", variedad: "Jalapeño", cantidad: 50, precio: 3.0 }
+        ],
+        total: 400.00
+      },
+      { 
+        id: 2, 
+        clienteId: 2, 
+        fecha: "2025-05-18", 
+        numero: "COT-2025-002",
+        productos: [
+          { especie: "Orquídea", variedad: "Phalaenopsis", cantidad: 30, precio: 15.0 },
+          { especie: "Fresa", variedad: "Festival", cantidad: 80, precio: 4.5 }
+        ],
+        total: 810.00
+      }
+    ];
+
+    // Variedades por especie
+    const variedadesPorEspecie = {
+      "Tomate": ["Roma", "Cherry", "Saladette", "Beefsteak", "Heirloom"],
+      "Chile": ["Jalapeño", "Serrano", "Habanero", "Poblano", "Bell"],
+      "Lechuga": ["Romana", "Iceberg", "Butterhead", "Oak Leaf", "Lollo Rosso"],
+      "Fresa": ["Festival", "Albion", "San Andreas", "Camarosa", "Monterey"],
+      "Orquídea": ["Phalaenopsis", "Cattleya", "Dendrobium", "Vanda", "Oncidium"]
+    };
+
+    // Array para almacenar productos
+    let productos = [];
+    
+    // Configuración inicial al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('fecha').value = today;
+      
+      // Cargar cotizaciones en el select
+      const selectCotizaciones = document.getElementById('cotizacion');
+      cotizacionesDB.forEach(cotizacion => {
+        const cliente = clientesDB.find(c => c.id === cotizacion.clienteId);
+        const option = document.createElement('option');
+        option.value = cotizacion.id;
+        option.textContent = `${cotizacion.numero} - ${cliente.nombre} (${new Date(cotizacion.fecha).toLocaleDateString()})`;
+        selectCotizaciones.appendChild(option);
+      });
+
+      // Evento para cargar datos de cotización seleccionada
+      selectCotizaciones.addEventListener('change', function() {
+        const cotizacionId = parseInt(this.value);
+        if (cotizacionId) {
+          const cotizacion = cotizacionesDB.find(c => c.id === cotizacionId);
+          const cliente = clientesDB.find(c => c.id === cotizacion.clienteId);
+          
+          // Cargar datos del cliente
+          document.getElementById('nombreCliente').value = cliente.nombre;
+          document.getElementById('telefono').value = cliente.telefono;
+          document.getElementById('direccion').value = cliente.direccion;
+          document.getElementById('rfcCliente').value = cliente.rfc;
+          document.getElementById('buscarCliente').value = cliente.nombre;
+          
+          // Limpiar productos existentes
+          productos = [];
+          
+          // Agregar productos de la cotización
+          cotizacion.productos.forEach(prod => {
+            productos.push({
+              descripcion: `${prod.variedad} (${prod.especie})`,
+              cantidad: prod.cantidad,
+              costo: prod.precio,
+              subtotal: prod.cantidad * prod.precio
+            });
+          });
+          
+          actualizarTablaProductos();
+        }
+      });
+
+      // Actualizar variedades cuando cambia la especie
+      document.getElementById('especie').addEventListener('change', function() {
+        const especie = this.value;
+        const selectVariedad = document.getElementById('variedad');
+        selectVariedad.innerHTML = '<option value="">-- Seleccione una variedad --</option>';
+        
+        if (especie && variedadesPorEspecie[especie]) {
+          variedadesPorEspecie[especie].forEach(variedad => {
+            const option = document.createElement('option');
+            option.value = variedad;
+            option.textContent = variedad;
+            selectVariedad.appendChild(option);
+          });
+        }
+      });
+
+      // Autocompletado de clientes
+      const buscarClienteInput = document.getElementById('buscarCliente');
+      const resultadosClientes = document.getElementById('resultadosClientes');
+      
+      buscarClienteInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        resultadosClientes.innerHTML = '';
+        
+        if (searchTerm.length > 2) {
+          const resultados = clientesDB.filter(cliente => 
+            cliente.nombre.toLowerCase().includes(searchTerm) || 
+            cliente.telefono.includes(searchTerm) ||
+            cliente.rfc.toLowerCase().includes(searchTerm)
+          );
+          
+          if (resultados.length > 0) {
+            resultados.forEach(cliente => {
+              const item = document.createElement('div');
+              item.className = 'autocomplete-item';
+              item.textContent = `${cliente.nombre} (${cliente.telefono})`;
+              item.addEventListener('click', function() {
+                buscarClienteInput.value = cliente.nombre;
+                document.getElementById('nombreCliente').value = cliente.nombre;
+                document.getElementById('telefono').value = cliente.telefono;
+                document.getElementById('direccion').value = cliente.direccion;
+                document.getElementById('rfcCliente').value = cliente.rfc;
+                resultadosClientes.style.display = 'none';
+              });
+              resultadosClientes.appendChild(item);
+            });
+            resultadosClientes.style.display = 'block';
+          } else {
+            resultadosClientes.style.display = 'none';
+          }
+        } else {
+          resultadosClientes.style.display = 'none';
+        }
+      });
+      
+      // Cerrar autocompletado al hacer clic fuera
+      document.addEventListener('click', function(e) {
+        if (e.target !== buscarClienteInput) {
+          resultadosClientes.style.display = 'none';
+        }
+      });
+      
+      // Agregar producto
+      document.getElementById('agregarProducto').addEventListener('click', function() {
+        const especie = document.getElementById('especie').value;
+        const variedad = document.getElementById('variedad').value;
+        const cantidad = parseInt(document.getElementById('cantidad').value);
+        const costo = parseFloat(document.getElementById('costo').value);
+        
+        if (!especie || !variedad) {
+          alert('Por favor, complete la especie y variedad de la planta.');
+          return;
+        }
+        if (isNaN(cantidad) || cantidad <= 0) {
+          alert('Por favor, ingrese una cantidad válida.');
+          return;
+        }
+        if (isNaN(costo) || costo < 0) {
+          alert('Por favor, ingrese un costo válido.');
+          return;
+        }
+        
+        const producto = {
+          descripcion: `${variedad} (${especie})`,
+          cantidad: cantidad,
+          costo: costo,
+          subtotal: cantidad * costo
+        };
+        
+        productos.push(producto);
+        actualizarTablaProductos();
+        
+        // Limpiar campos de producto
+        document.getElementById('variedad').value = '';
+        document.getElementById('cantidad').value = '1';
+        document.getElementById('costo').value = '';
+        document.getElementById('especie').focus();
+      });
+      
+      // Actualizar anticipo cuando cambia el tipo de pago
+      document.getElementById('tipoPago').addEventListener('change', function() {
+        if (this.value === 'contado') {
+          const total = parseFloat(document.getElementById('totalGeneral').textContent.substring(1)) || 0;
+          document.getElementById('anticipo').value = total.toFixed(2);
+        } else {
+          document.getElementById('anticipo').value = '0';
+        }
+      });
+      
+      // Limpiar formulario
+      document.getElementById('limpiarForm').addEventListener('click', function() {
+        if (confirm('¿Está seguro de que desea limpiar todo el formulario?')) {
+          document.getElementById('numeroRemision').value = '3320';
+          document.getElementById('fecha').value = today;
+          document.getElementById('cotizacion').value = '';
+          document.getElementById('buscarCliente').value = '';
+          document.getElementById('nombreCliente').value = '';
+          document.getElementById('telefono').value = '';
+          document.getElementById('direccion').value = '';
+          document.getElementById('rfcCliente').value = '';
+          document.getElementById('especie').value = '';
+          document.getElementById('variedad').innerHTML = '<option value="">-- Seleccione primero una especie --</option>';
+          document.getElementById('cantidad').value = '1';
+          document.getElementById('costo').value = '';
+          document.getElementById('tipoPago').value = 'contado';
+          document.getElementById('metodoPago').value = 'efectivo';
+          document.getElementById('anticipo').value = '0';
+          document.getElementById('importeLetra').value = '';
+          document.getElementById('observaciones').value = '';
+          document.getElementById('numeroPagare').value = '';
+          document.getElementById('fechaVencimiento').value = '';
+          productos = [];
+          actualizarTablaProductos();
+        }
+      });
+      
+      // Guardar remisión
+      document.getElementById('guardarRemision').addEventListener('click', function() {
+        if (validarFormulario()) {
+          const remision = {
+            numero: document.getElementById('numeroRemision').value,
+            fecha: document.getElementById('fecha').value,
+            cliente: {
+              nombre: document.getElementById('nombreCliente').value,
+              rfc: document.getElementById('rfcCliente').value,
+              telefono: document.getElementById('telefono').value,
+              direccion: document.getElementById('direccion').value
+            },
+            productos: productos,
+            pago: {
+              tipo: document.getElementById('tipoPago').value,
+              metodo: document.getElementById('metodoPago').value,
+              anticipo: parseFloat(document.getElementById('anticipo').value),
+              total: parseFloat(document.getElementById('totalGeneral').textContent.substring(1))
+            },
+            pagare: {
+              numero: document.getElementById('numeroPagare').value,
+              fechaVencimiento: document.getElementById('fechaVencimiento').value,
+              lugarPago: document.getElementById('lugarPago').value
+            },
+            observaciones: document.getElementById('observaciones').value
+          };
+          
+          console.log('Remisión a guardar:', remision);
+          alert('Remisión guardada correctamente (simulación)');
+        }
+      });
+      
+      // Generar PDF
+      document.getElementById('generarPDF').addEventListener('click', generarPDF);
+    });
+    
+    // Actualizar tabla de productos
+    function actualizarTablaProductos() {
+      const tbody = document.querySelector('#tablaProductos tbody');
+      tbody.innerHTML = '';
+      
+      let total = 0;
+      
+      productos.forEach((producto, index) => {
+        total += producto.subtotal;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${producto.descripcion}</td>
+          <td>${producto.cantidad}</td>
+          <td>$${producto.costo.toFixed(2)}</td>
+          <td>$${producto.subtotal.toFixed(2)}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="eliminarProducto(${index})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      document.getElementById('totalGeneral').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('tablaProductos').style.display = productos.length > 0 ? 'table' : 'none';
+      
+      // Actualizar importe con letra
+      if (total > 0) {
+        document.getElementById('importeLetra').value = numeroALetras(total) + ' PESOS MEXICANOS';
+      } else {
+        document.getElementById('importeLetra').value = '';
+      }
+      
+      // Calcular anticipo si es pago de contado
+      if (document.getElementById('tipoPago').value === 'contado') {
+        document.getElementById('anticipo').value = total.toFixed(2);
+      }
+    }
+    
+    // Eliminar producto
+    window.eliminarProducto = function(index) {
+      productos.splice(index, 1);
+      actualizarTablaProductos();
+    };
+    
+    // Validar formulario
+    function validarFormulario() {
+      if (!document.getElementById('numeroRemision').value) {
+        alert('Por favor, ingrese el número de remisión.');
+        return false;
+      }
+      if (!document.getElementById('nombreCliente').value) {
+        alert('Por favor, ingrese el nombre del cliente.');
+        return false;
+      }
+      if (productos.length === 0) {
+        alert('Por favor, agregue al menos un producto.');
+        return false;
+      }
+      if (document.getElementById('tipoPago').value === 'credito') {
+        if (!document.getElementById('fechaVencimiento').value) {
+          alert('Para pagos a crédito, debe especificar la fecha de vencimiento.');
+          return false;
+        }
+        if (!document.getElementById('numeroPagare').value) {
+          alert('Para pagos a crédito, debe especificar el número de pagaré.');
+          return false;
+        }
+      }
+      return true;
+    }
+    
+    // Función para generar el PDF
+    function generarPDF() {
+      if (!validarFormulario()) return;
+      
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Encabezado
+      doc.setFontSize(16);
+      doc.setTextColor(40, 167, 69);
+      doc.text("Venta de Plantas In vitro", 105, 15, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text("ING. SILVESTRE PEREZ PEREZ", 105, 22, { align: 'center' });
+      doc.text("CALLE 16 DE SEPTIEMBRE S/N. COL. EMILIANO ZAPATA", 105, 27, { align: 'center' });
+      doc.text("TENANCINGO, EDO. DE MEXICA 52433", 105, 32, { align: 'center' });
+      doc.text("CELS.: 7222041444  E-mail: plantasdoc@hotmail.com", 105, 37, { align: 'center' });
+      
+      // Nota de Remisión
+      doc.setFontSize(12);
+      doc.text("NOTA DE REMISIÓN", 105, 45, { align: 'center' });
+      doc.text(`No. ${document.getElementById('numeroRemision').value}`, 105, 50, { align: 'center' });
+      
+      // Línea divisoria
+      doc.line(10, 55, 200, 55);
+      
+      // Datos del cliente
+      doc.setFontSize(10);
+      const fecha = new Date(document.getElementById('fecha').value).toLocaleDateString('es-MX');
+      doc.text(`TENANCINGO, MEX. A ${fecha}`, 20, 65);
+      doc.text(`Nombre: ${document.getElementById('nombreCliente').value}`, 20, 75);
+      doc.text(`Dirección: ${document.getElementById('direccion').value}`, 20, 80);
+      doc.text(`Tel: ${document.getElementById('telefono').value}`, 20, 85);
+      doc.text(`RFC: ${document.getElementById('rfcCliente').value}`, 20, 90);
+      
+      // Tabla de plantas
+      const plantasData = [];
+      productos.forEach(prod => {
+        plantasData.push([
+          prod.descripcion,
+          prod.cantidad,
+          `$${prod.costo.toFixed(2)}`,
+          `$${prod.subtotal.toFixed(2)}`
+        ]);
+      });
+      
+      doc.autoTable({
+        startY: 95,
+        head: [['VARIEDAD Y/O ESPECIE', 'CANTIDAD', 'COSTO POR PLANTA', 'SUBTOTAL']],
+        body: plantasData,
+        margin: { left: 10 },
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [40, 167, 69] }
+      });
+      
+      // Total
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.text(`IMPORTE CON LETRA: ${document.getElementById('importeLetra').value}`, 20, finalY);
+      doc.text(`TOTAL $${document.getElementById('totalGeneral').textContent.substring(1)}`, 20, finalY + 5);
+      
+      // Información de pago
+      doc.text(`Tipo de pago: ${document.getElementById('tipoPago').value.toUpperCase()}`, 20, finalY + 15);
+      doc.text(`Método de pago: ${document.getElementById('metodoPago').value.toUpperCase()}`, 20, finalY + 20);
+      if (document.getElementById('anticipo').value > 0) {
+        doc.text(`Anticipo: $${parseFloat(document.getElementById('anticipo').value).toFixed(2)}`, 20, finalY + 25);
+      }
+      
+      // Observaciones
+      if (document.getElementById('observaciones').value) {
+        doc.text(`Observaciones: ${document.getElementById('observaciones').value}`, 20, finalY + 35, { maxWidth: 170 });
+      }
+      
+      // Pagaré (segunda página)
+      if (document.getElementById('tipoPago').value === 'credito') {
+        doc.addPage();
+        doc.setFontSize(12);
+        doc.text("PAGARÉ", 105, 20, { align: 'center' });
+        doc.text(`No. ${document.getElementById('numeroPagare').value}`, 105, 25, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.text(`Bueno por: $${document.getElementById('totalGeneral').textContent.substring(1)}`, 20, 35);
+        
+        const fechaVencimiento = new Date(document.getElementById('fechaVencimiento').value).toLocaleDateString('es-MX');
+        const lugarPago = document.getElementById('lugarPago').value;
+        const importeLetra = document.getElementById('importeLetra').value;
+        
+        const pagareText1 = `Por este PAGARÉ me obligo incondicionalmente a pagar a la orden de ING. SILVESTRE PEREZ PEREZ en ${lugarPago} el día ${fechaVencimiento}, la cantidad de ${importeLetra}.`;
+        const pagareText2 = `El pago deberá efectuarse en el domicilio del beneficiario ubicado en CALLE 16 DE SEPTIEMBRE S/N. COL. EMILIANO ZAPATA, TENANCINGO, EDO. DE MEXICA.`;
+        const pagareText3 = `Este documento ampara la venta de plantas in vitro que he recibido a mi entera satisfacción. En caso de mora, me obligo a pagar intereses moratorios del 15% anual.`;
+        
+        doc.text(pagareText1, 20, 45, { maxWidth: 170 });
+        doc.text(pagareText2, 20, 60, { maxWidth: 170 });
+        doc.text(pagareText3, 20, 75, { maxWidth: 170 });
+        
+        // Firma
+        doc.text(`Nombre: ${document.getElementById('nombreCliente').value}`, 20, 100);
+        doc.text(`Dirección: ${document.getElementById('direccion').value}`, 20, 105);
+        doc.text(`RFC: ${document.getElementById('rfcCliente').value}`, 20, 110);
+        doc.text("Acepto de Conformidad: _________________________", 20, 120);
+      }
+      
+      // Guardar PDF
+      doc.save(`Nota_Remision_${document.getElementById('numeroRemision').value}.pdf`);
+    }
+    
+    // Función para convertir números a letras (versión mejorada)
+    function numeroALetras(numero) {
+      const unidades = ['', 'UN', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+      const decenas = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+      const especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+      const centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+      
+      let entero = Math.floor(numero);
+      let decimal = Math.round((numero - entero) * 100);
+      let letras = '';
+      
+      if (entero === 0) return 'CERO';
+      if (entero >= 1000000) {
+        const millones = Math.floor(entero / 1000000);
+        entero = entero % 1000000;
+        letras += numeroALetras(millones) + ' MILLON' + (millones > 1 ? 'ES ' : ' ');
+      }
+      
+      if (entero >= 1000) {
+        const miles = Math.floor(entero / 1000);
+        entero = entero % 1000;
+        letras += (miles === 1 ? 'MIL ' : numeroALetras(miles) + ' MIL ');
+      }
+      
+      if (entero >= 100) {
+        const centena = Math.floor(entero / 100);
+        entero = entero % 100;
+        letras += centenas[centena] + ' ';
+      }
+      
+      if (entero >= 10 && entero <= 19) {
+        letras += especiales[entero - 10] + ' ';
+        entero = 0;
+      } else if (entero >= 20) {
+        const decena = Math.floor(entero / 10);
+        entero = entero % 10;
+        letras += decenas[decena] + (entero > 0 ? ' Y ' : ' ');
+      }
+      
+      if (entero > 0) {
+        letras += unidades[entero] + ' ';
+      }
+      
+      return letras.trim();
+    }
+  </script>
+</body>
+</html>
