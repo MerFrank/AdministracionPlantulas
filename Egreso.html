@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de Egresos - Plantulas Agrodex</title>
+ <link rel="stylesheet" href="style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    
+    .contenedor-pagina {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    header {
+      background-color: #f8f9fa;
+      padding: 1rem 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .encabezado {
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+    }
+    
+    .encabezado div {
+      margin-left: 1rem;
+    }
+    
+    .barra-navegacion {
+      background-color: #e9ecef;
+      padding: 0.5rem 0;
+    }
+    
+    .Opciones-barra button {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    
+    main {
+      flex: 1;
+      padding: 2rem;
+    }
+    
+    footer {
+      background-color: #f8f9fa;
+      text-align: center;
+      padding: 1rem 0;
+      margin-top: 2rem;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-container {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .sub-form {
+      background-color: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+      border: 1px solid #dee2e6;
+    }
+    
+    .required-field::after {
+      content: " *";
+      color: red;
+    }
+    
+    /* Estilos para el formulario en tabla */
+    .form-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 15px;
+    }
+    
+    .form-table td {
+      padding: 0 10px;
+      vertical-align: top;
+    }
+    
+    .form-table .form-label {
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+    }
+    
+    .form-table .form-control, 
+    .form-table .form-select {
+      width: 100%;
+    }
+    
+    /* Estilos para el vale */
+    #valePreview {
+      display: none;
+      margin-top: 2rem;
+      page-break-after: always;
+    }
+    
+    .vale-container {
+      width: 80mm;
+      height: auto;
+      border: 1px solid #000;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      margin: 0 auto;
+      background: white;
+    }
+    
+    .company-name {
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    
+    .vale-subtitle {
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    
+    .vale-title {
+      font-size: 14px;
+      font-weight: bold;
+      text-decoration: underline;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    
+    .folio-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .vale-field {
+      border-bottom: 1px solid #000;
+      min-height: 20px;
+      margin-bottom: 10px;
+      padding: 2px 0;
+    }
+    
+    .amount-in-words {
+      font-style: italic;
+    }
+    
+    .signature-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    
+    .signature {
+      width: 45%;
+      text-align: center;
+    }
+    
+    .signature-line {
+      border-top: 1px solid #000;
+      width: 100%;
+      margin-bottom: 5px;
+    }
+    
+    .control {
+      text-align: center;
+      font-size: 10px;
+      margin-top: 5px;
+    }
+    
+    .date {
+      text-align: right;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #valePreview, #valePreview * {
+        visibility: visible;
+      }
+      #valePreview {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .form-table {
+        display: block;
+      }
+      
+      .form-table tr {
+        display: block;
+        margin-bottom: 15px;
+      }
+      
+      .form-table td {
+        display: block;
+        padding: 5px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor-pagina">
+    <header>
+      <div class="encabezado">
+        <a class="navbar-brand" href="#">
+          <img src="logoplantulas.png" alt="Logo" width="130" height="124" class="d-inline-block align-text-center" />
+        </a>
+        <div>
+          <h2>Registro de Egresos</h2>
+          <p>Registra los gastos y transferencias de la empresa</p>
+        </div>
+      </div>
+
+      <div class="barra-navegacion">
+        <nav class="navbar bg-body-tertiary">
+          <div class="container-fluid">
+            <div class="Opciones-barra">
+              <button onclick="window.location.href='indexPlantilla.html'">
+                Regresar inicio
+              </button>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="container mt-5">
+        <div class="form-container">
+          <form id="egresoForm">
+            <h5 class="mb-4">Datos Generales</h5>
+            
+            <table class="form-table">
+              <tr>
+                <td style="width: 30%;">
+                  <label for="fecha" class="form-label required-field">Fecha</label>
+                  <input type="date" class="form-control" id="fecha" required>
+                </td>
+                <td style="width: 30%;">
+                  <label for="monto" class="form-label required-field">Monto ($)</label>
+                  <input type="number" class="form-control" id="monto" min="0" step="0.01" required>
+                </td>
+                <td style="width: 40%;">
+                  <label for="tipo" class="form-label required-field">Tipo de Egreso</label>
+                  <select class="form-select" id="tipo" required>
+                    <option value="">Seleccione...</option>
+                    <option value="servicio">Pago de Servicios</option>
+                    <option value="compra">Compra a Proveedor</option>
+                    <option value="nomina">Pago de Nómina</option>
+                    <option value="transferencia_interna">Transferencia Interna</option>
+                  </select>
+                </td>
+              </tr>
+              
+              <!-- Fila para Proveedor/Beneficiario/Destino -->
+              <tr>
+                <td id="proveedorGroup" style="display: none;">
+                  <label for="proveedor" class="form-label required-field">Proveedor</label>
+                  <select class="form-select" id="proveedor" onchange="toggleNuevoProveedor()">
+                    <option value="">Seleccione...</option>
+                    <option value="1">Proveedor A</option>
+                    <option value="2">Proveedor B</option>
+                    <option value="nuevo">+ Registrar Nuevo Proveedor</option>
+                  </select>
+                </td>
+                
+                <td id="beneficiarioGroup">
+                  <label for="beneficiario" class="form-label required-field">Beneficiario</label>
+                  <input type="text" class="form-control" id="beneficiario">
+                </td>
+                
+                <td id="destinoGroup" style="display: none;">
+                  <label for="destino" class="form-label required-field">Destino</label>
+                  <select class="form-select" id="destino">
+                    <option value="">Seleccione...</option>
+                    <option value="laboratorio">Laboratorio "Lagunilla"</option>
+                    <option value="invernadero">Invernadero "Los Pilares"</option>
+                  </select>
+                </td>
+              </tr>
+              
+              <!-- Fila para Fuente de fondos y Método de pago -->
+              <tr>
+                <td>
+                  <label for="fuenteFondos" class="form-label required-field">Fuente de fondos</label>
+                  <select class="form-select" id="fuenteFondos" required>
+                    <option value="">Seleccione...</option>
+                    <option value="cuenta_bancaria">Cuenta Bancaria</option>
+                    <option value="caja_chica">Caja Chica</option>
+                  </select>
+                </td>
+                <td id="valeGroup" style="display: none;">
+                  <label for="conceptoVale" class="form-label required-field">Concepto para vale</label>
+                  <input type="text" class="form-control" id="conceptoVale" placeholder="Detalle breve del gasto">
+                </td>
+                <td>
+                  <label for="metodo" class="form-label required-field">Método de Pago</label>
+                  <select class="form-select" id="metodo" required>
+                    <option value="">Seleccione...</option>
+                    <option value="transferencia">Transferencia Bancaria</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="efectivo">Efectivo</option>
+                  </select>
+                </td>
+              </tr>
+              
+              <!-- Fila para Referencia y Descripción -->
+              <tr>
+                <td>
+                  <label for="referencia" class="form-label">N° Referencia/Comprobante</label>
+                  <input type="text" class="form-control" id="referencia">
+                </td>
+                <td colspan="2">
+                  <label for="descripcion" class="form-label">Descripción</label>
+                  <textarea class="form-control" id="descripcion" rows="2"></textarea>
+                </td>
+              </tr>
+            </table>
+            
+            <!-- Formulario para nuevo proveedor (oculto por defecto) -->
+            <div class="sub-form" id="nuevoProveedorGroup" style="display: none;">
+              <h5>Datos del Nuevo Proveedor</h5>
+              <div class="row">
+                <div class="col-md-4">
+                  <label for="nombreProveedor" class="form-label required-field">Nombre</label>
+                  <input type="text" class="form-control" id="nombreProveedor">
+                </div>
+                <div class="col-md-4">
+                  <label for="rutProveedor" class="form-label">RUT/NIT</label>
+                  <input type="text" class="form-control" id="rutProveedor">
+                </div>
+                <div class="col-md-4">
+                  <label for="contactoProveedor" class="form-label">Contacto</label>
+                  <input type="text" class="form-control" id="contactoProveedor">
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+              <button type="submit" class="btn btn-success">Guardar Egreso</button>
+              <button type="button" id="printValeBtn" class="btn btn-primary" style="display: none;" onclick="window.print()">Imprimir Vale</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Vista previa del vale -->
+        <div id="valePreview">
+          <div class="vale-container">
+            <div class="company-name">Plantulas Agrodex S.C. de P de R.L. de C.V.</div>
+            <div class="vale-subtitle">FOLIO</div>
+            <div class="vale-title">VALE PROVISIONAL DE CAJA</div>
+            <div class="vale-subtitle">INVERNADERO</div>
+            
+            <div class="folio-section">
+              <div>No. <strong id="numeroVale">903</strong></div>
+            </div>
+            
+            <div class="vale-subtitle">IMPORTE (EN LETRA)</div>
+            <div class="vale-field amount-in-words" id="importeLetraVale">Cincuenta y cuatro pesos 00/100 M.N.</div>
+            
+            <div class="vale-subtitle">CONCEPTO</div>
+            <div class="vale-field" id="conceptoValeTemplate">Pago pasajes</div>
+            
+            <div class="signature-section">
+              <div class="signature">
+                <div class="signature-line"></div>
+                <div>AUTORIZADO POR:</div>
+              </div>
+              <div class="signature">
+                <div class="signature-line"></div>
+                <div>RECIBIDO POR:</div>
+              </div>
+            </div>
+            
+            <div class="control">CONTROL</div>
+            <div class="date" id="fechaVale">07/06/15</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 PLANTAS AGRODEX. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Función para obtener la fecha actual en formato YYYY-MM-DD
+    function obtenerFechaActual() {
+      const hoy = new Date();
+      const año = hoy.getFullYear();
+      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoy.getDate()).padStart(2, '0');
+      return `${año}-${mes}-${dia}`;
+    }
+
+    // Función para formatear fecha como "07/06/15"
+    function formatearFechaCorta(fecha) {
+      if (!fecha) return '';
+      const fechaObj = new Date(fecha);
+      if (isNaN(fechaObj.getTime())) return '';
+      
+      const dia = String(fechaObj.getDate()).padStart(2, '0');
+      const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+      const año = String(fechaObj.getFullYear()).slice(-2);
+      return `${dia}/${mes}/${año}`;
+    }
+
+    // Establecer fecha actual al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      // Configurar fecha automática
+      const fechaInput = document.getElementById('fecha');
+      fechaInput.value = obtenerFechaActual();
+      
+      // Configurar método de pago según fuente de fondos
+      document.getElementById('fuenteFondos').addEventListener('change', function() {
+        const metodoPagoSelect = document.getElementById('metodo');
+        
+        if (this.value === 'caja_chica') {
+          // Mostrar solo efectivo para caja chica
+          metodoPagoSelect.innerHTML = `
+            <option value="efectivo" selected>Efectivo</option>
+          `;
+          document.getElementById('valeGroup').style.display = 'table-cell';
+        } else {
+          // Mostrar todas las opciones para otras fuentes
+          metodoPagoSelect.innerHTML = `
+            <option value="">Seleccione...</option>
+            <option value="transferencia">Transferencia Bancaria</option>
+            <option value="cheque">Cheque</option>
+            <option value="efectivo">Efectivo</option>
+          `;
+          document.getElementById('valeGroup').style.display = 'none';
+        }
+      });
+
+      // Mostrar campos según el tipo de egreso
+      document.getElementById('tipo').addEventListener('change', function() {
+        const tipo = this.value;
+        const proveedorGroup = document.getElementById('proveedorGroup');
+        const beneficiarioGroup = document.getElementById('beneficiarioGroup');
+        const destinoGroup = document.getElementById('destinoGroup');
+
+        document.getElementById('nuevoProveedorGroup').style.display = 'none';
+
+        if (tipo === 'compra') {
+          proveedorGroup.style.display = 'table-cell';
+          beneficiarioGroup.style.display = 'none';
+          destinoGroup.style.display = 'none';
+        } else if (tipo === 'transferencia_interna') {
+          proveedorGroup.style.display = 'none';
+          beneficiarioGroup.style.display = 'none';
+          destinoGroup.style.display = 'table-cell';
+        } else {
+          proveedorGroup.style.display = 'none';
+          beneficiarioGroup.style.display = 'table-cell';
+          destinoGroup.style.display = 'none';
+        }
+      });
+
+      function toggleNuevoProveedor() {
+        const proveedor = document.getElementById('proveedor').value;
+        const nuevoProveedorGroup = document.getElementById('nuevoProveedorGroup');
+
+        if (proveedor === 'nuevo') {
+          nuevoProveedorGroup.style.display = 'block';
+        } else {
+          nuevoProveedorGroup.style.display = 'none';
+        }
+      }
+
+      // Generar vale al enviar el formulario
+      document.getElementById('egresoForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validaciones básicas
+        if (!document.getElementById('fecha').value) {
+          alert('Por favor ingrese la fecha');
+          return;
+        }
+        
+        if (!document.getElementById('monto').value || parseFloat(document.getElementById('monto').value) <= 0) {
+          alert('Por favor ingrese un monto válido');
+          return;
+        }
+        
+        if (document.getElementById('fuenteFondos').value === 'caja_chica') {
+          generarValeCajaChica();
+          document.getElementById('printValeBtn').style.display = 'block';
+        } else {
+          document.getElementById('valePreview').style.display = 'none';
+          document.getElementById('printValeBtn').style.display = 'none';
+        }
+        
+        alert('Egreso registrado correctamente.' + 
+          (document.getElementById('fuenteFondos').value === 'caja_chica' ? '\n\nEl vale de caja chica está listo para imprimir.' : ''));
+        
+        if (document.getElementById('fuenteFondos').value !== 'caja_chica') {
+          this.reset();
+          // Restablecer la fecha automáticamente al valor actual
+          document.getElementById('fecha').value = obtenerFechaActual();
+        }
+      });
+    });
+
+    // Función para convertir números a letras
+    function numeroALetras(numero) {
+      // Validar que sea un número válido
+      if (isNaN(numero)) return "Cantidad no válida";
+      
+      // Convertir a número por si viene como string
+      numero = parseFloat(numero);
+      
+      // Si es cero, retornar directamente
+      if (numero === 0) return "Cero pesos 00/100 M.N.";
+      
+      // Definir unidades, decenas y centenas
+      const unidades = ['', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+      const decenas = ['diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 
+                      'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'treinta', 'cuarenta', 
+                      'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+      const centenas = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 
+                       'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+      
+      // Separar parte entera y decimal
+      const entero = Math.floor(numero);
+      const decimal = Math.round((numero - entero) * 100);
+      
+      let letras = '';
+      
+      // Convertir parte entera
+      if (entero > 0) {
+          // Millones
+          if (entero >= 1000000) {
+              const millones = Math.floor(entero / 1000000);
+              letras += convertirGrupo(millones, unidades, decenas, centenas) + ' millón' + (millones > 1 ? 'es' : '') + ' ';
+              numero = entero % 1000000;
+          }
+          
+          // Miles
+          if (entero >= 1000) {
+              const miles = Math.floor(entero / 1000);
+              letras += convertirGrupo(miles, unidades, decenas, centenas) + ' mil ';
+              numero = entero % 1000;
+          }
+          
+          // Centenas, decenas y unidades
+          letras += convertirGrupo(entero % 1000, unidades, decenas, centenas);
+          
+          // Plural
+          letras += ' peso' + (entero !== 1 ? 's' : '');
+      }
+      
+      // Agregar parte decimal
+      letras += ' ' + (decimal < 10 ? '0' + decimal : decimal) + '/100 M.N.';
+      
+      return letras.charAt(0).toUpperCase() + letras.slice(1);
+      
+      // Función auxiliar para convertir grupos de 3 dígitos
+      function convertirGrupo(num, unidades, decenas, centenas) {
+          let grupo = '';
+          const centena = Math.floor(num / 100);
+          const decenaUnidad = num % 100;
+          
+          if (centena > 0) {
+              grupo += centenas[centena] + ' ';
+          }
+          
+          if (decenaUnidad > 0) {
+              if (decenaUnidad < 10) {
+                  grupo += unidades[decenaUnidad];
+              } else if (decenaUnidad < 20) {
+                  grupo += decenas[decenaUnidad - 10];
+              } else {
+                  const decena = Math.floor(decenaUnidad / 10);
+                  const unidad = decenaUnidad % 10;
+                  
+                  grupo += decenas[decena + 8]; // +8 porque decenas empieza en 'veinte'
+                  if (unidad > 0) {
+                      grupo += ' y ' + unidades[unidad];
+                  }
+              }
+          }
+          
+          return grupo.trim();
+      }
+    }
+
+    function generarValeCajaChica() {
+      const monto = document.getElementById('monto').value;
+      const concepto = document.getElementById('conceptoVale').value;
+      const fecha = document.getElementById('fecha').value;
+      
+      // Generar número de vale (puedes implementar tu propia lógica)
+      const numeroVale = Math.floor(Math.random() * 900) + 100;
+      
+      // Llenar plantilla del vale
+      document.getElementById('numeroVale').textContent = numeroVale;
+      document.getElementById('importeLetraVale').textContent = numeroALetras(monto);
+      document.getElementById('conceptoValeTemplate').textContent = concepto;
+      document.getElementById('fechaVale').textContent = formatearFechaCorta(fecha);
+      
+      document.getElementById('valePreview').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
