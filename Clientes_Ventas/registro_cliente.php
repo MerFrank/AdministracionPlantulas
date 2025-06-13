@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '/db/config.php';
+include __DIR__ . '/../db/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar y limpiar los datos de entrada
@@ -23,41 +23,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Error: Email no válido");
     }
 
-    if ($requiere_factura && strlen($rfc) < 12) {
-        die("Error: RFC no válido.");
+    if ($requiere_factura && (empty($rfc) || strlen($rfc) < 12)) {
+        die("Error: RFC no válido o faltante.");
     }
 
-    $conexion = conn();
+    // Crear instancia de Database y obtener conexión PDO
+    $db = new Database();
+    $conexion = $db->conectar();
 
-    // Usar consultas preparadas
-    $sql = "INSERT INTO Clientes (alias, nombre_Cliente, nombre_Empresa, nombre_contato, telefono, email, rfc, domicilio_fiscal)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-    $stmt = $conexion->prepare($sql);
-    if ($stmt === false) {
-        die("Error en la preparación: " . $conexion->error);
+    try {
+        // Consulta SQL corregida (nombre_contacto en lugar de nombre_contato)
+        $sql = "INSERT INTO Clientes (alias, nombre_Cliente, nombre_Empresa, nombre_contacto, telefono, email, rfc, domicilio_fiscal)
+                VALUES (:alias, :nombre_Cliente, :nombre_Empresa, :nombre_contacto, :telefono, :email, :rfc, :domicilio_fiscal)";
+        
+        $stmt = $conexion->prepare($sql);
+        
+        // Bind de parámetros con PDO especificando el tipo para NULL
+        $stmt->bindParam(':alias', $alias);
+        $stmt->bindParam(':nombre_Cliente', $nombre_Cliente);
+        $stmt->bindParam(':nombre_Empresa', $nombre_Empresa);
+        $stmt->bindParam(':nombre_contacto', $nombre_contacto);
+        $stmt->bindParam(':telefono', $telefono);
+        $stmt->bindParam(':email', $email);
+        
+        // Manejo especial para campos que pueden ser NULL
+        $stmt->bindParam(':rfc', $rfc, $rfc === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $stmt->bindParam(':domicilio_fiscal', $domicilio_fiscal, $domicilio_fiscal === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Datos ingresados correctamente'); window.location.href='registro_cliente.php';</script>";
+        } else {
+            $errorInfo = $stmt->errorInfo();
+            echo "<script>alert('Error al ingresar los datos: " . addslashes($errorInfo[2]) . "'); window.location.href='registro_cliente.php';</script>";
+        }
+    } catch(PDOException $e) {
+        echo "<script>alert('Error: " . addslashes($e->getMessage()) . "'); window.location.href='registro_cliente.php';</script>";
     }
-
-    $stmt->bind_param("ssssssss", 
-        $alias, 
-        $nombre_Cliente, 
-        $nombre_Empresa, 
-        $nombre_contacto, 
-        $telefono, 
-        $email, 
-        $rfc, 
-        $domicilio_fiscal
-    );
-
-    if ($stmt->execute()) {
-      echo "<script>alert('Datos ingresados correctamente'); window.location.href='registro_cliente.php';</script>";
-    } else {
-      echo "<script>alert('Error al ingresar los datos'); window.location.href='registro_cliente.php';</script>";
-    }
-
-
-    $stmt->close();
-    $conexion->close();
 }
 ?>
 
