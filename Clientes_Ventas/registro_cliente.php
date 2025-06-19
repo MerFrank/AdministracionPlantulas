@@ -67,27 +67,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Registro de Clientes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Registro de clientes</title>
     <link rel="stylesheet" href="/css/style.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
   </head>
   <body>
     <div class="contenedor-pagina">
       <header>
         <div class="encabezado">
           <a class="navbar-brand" href="#">
-            <img src="/css/logoplantulas.png" alt="Logo" width="130" height="124" />
+            <img
+              src="/css/logoplantulas.png"
+              alt="Logo"
+              width="130"
+              height="124"
+              class="d-inline-block align-text-center"
+            />
           </a>
           <div>
-            <h2>Registro de clientes</h2>
+            <h2>Registra un nuevo Cliente</h2>
             <p>Ingresa un nuevo cliente en el sistema</p>
           </div>
         </div>
-        <nav class="navbar bg-body-tertiary">
-          <div class="container-fluid">
-            <button onclick="window.location.href='dashboard_clientesVentas.php'">Regresar inicio</button>
-          </div>
-        </nav>
+
+        <div class="barra-navegacion">
+          <nav class="navbar bg-body-tertiary">
+            <div class="container-fluid">
+              <div class="Opciones-barra">
+                <button
+                  onclick="window.location.href='dashboard_clientesVentas.php'"
+                >
+                  Regresar inicio
+                </button>
+              </div>
+            </div>
+          </nav>
+        </div>
       </header>
 
       <main>
@@ -100,26 +123,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <input type="text" class="form-control" id="alias" name="alias" />
             </div>
             <div class="mb-3">
-              <label for="nombre_Cliente" class="form-label">Nombre o Razón Social <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="nombre" name="nombre_Cliente" required />
+              <label for="nombre_Cliente" class="form-label"
+                >Nombre o Razón Social <span class="text-danger">*</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="nombre"
+                name="nombre_Cliente"
+                required
+              />
             </div>
             <div class="mb-3">
               <label for="nombre_Empresa" class="form-label">Empresa</label>
-              <input type="text" class="form-control" id="tipo" name="nombre_Empresa" />
+              <input
+                type="text"
+                class="form-control"
+                id="tipo"
+                name="nombre_Empresa"
+              />
             </div>
 
             <h5>Datos de Contacto</h5>
             <div class="mb-3">
-              <label for="nombre_contacto" class="form-label">Nombre del contacto</label>
-              <input type="text" class="form-control" id="nombreContacto" name="nombre_contacto" />
+              <label for="nombre_contacto" class="form-label"
+                >Nombre del contacto</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="nombreContacto"
+                name="nombre_contacto"
+              />
             </div>
             <div class="mb-3">
-              <label for="telefonoContacto" class="form-label">Teléfono del contacto</label>
-              <input type="tel" class="form-control" id="telefonoContacto" name="telefono" required />
+              <label for="telefonoContacto" class="form-label"
+                >Teléfono del contacto</label
+              >
+              <input
+                type="tel"
+                class="form-control"
+                id="telefonoContacto"
+                name="telefono"
+                required
+              />
             </div>
             <div class="mb-3">
-              <label for="correoContacto" class="form-label">Correo del contacto</label>
-              <input type="email" class="form-control" id="correoContacto" name="email" required />
+              <label for="correoContacto" class="form-label"
+                >Correo del contacto</label
+              >
+              <input
+                type="email"
+                class="form-control"
+                id="correoContacto"
+                name="email"
+                required
+              />
             </div>
 
             <hr />
@@ -128,27 +187,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <label for="opcion-si">Sí</label>
               <input type="radio" id="opcion-si" name="opcion" value="si" />
               <label for="opcion-no">No</label>
-              <input type="radio" id="opcion-no" name="opcion" value="no" checked />
+              <input
+                type="radio"
+                id="opcion-no"
+                name="opcion"
+                value="no"
+                checked
+              />
             </div>
 
             <div class="form-facturar" style="display: none">
               <h5>Datos Fiscales</h5>
               <div class="mb-3">
                 <label for="rfc" class="form-label">RFC</label>
-                <input type="text" class="form-control" id="rfc" maxlength="13" name="rfc" />
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rfc"
+                  maxlength="13"
+                  name="rfc"
+                />
               </div>
               <div class="mb-3">
-                <label for="domicilioFiscal" class="form-label">Domicilio Fiscal</label>
-                <textarea class="form-control" id="domicilioFiscal" name="domicilio_fiscal" rows="2"></textarea>
+                <label for="domicilioFiscal" class="form-label"
+                  >Domicilio Fiscal</label
+                >
+                <textarea
+                  class="form-control"
+                  id="domicilioFiscal"
+                  name="domicilio_fiscal"
+                  rows="2"
+                ></textarea>
               </div>
             </div>
 
-            <button type="submit" class="btn btn-success">Guardar Cliente</button>
+            <button type="submit" class="btn btn-success">
+              Guardar Cliente
+            </button>
           </form>
         </div>
       </main>
 
-      <footer class="text-center mt-5">
+      <footer>
         <p>&copy; 2025 PLANTAS AGRODEX. Todos los derechos reservados.</p>
       </footer>
     </div>
@@ -179,7 +259,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         toggleFacturaFields(); // Al cargar
       });
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
