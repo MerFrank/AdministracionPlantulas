@@ -1,3 +1,53 @@
+<?php
+include __DIR__ . '/../db/config.php';
+
+$db = new Database();
+$con = $db->conectar();
+
+// Consulta seguimientos ventas y sus detalles
+$sql = $con->prepare("
+  SELECT
+    sv.id_notaPedido,
+    sv.fecha,
+    c.nombre_Cliente AS nombre_cliente,
+    sv.estado_pedido,
+    v.nombre_variedad AS nombre_variedad,
+    dsv.estado_pago
+  FROM
+    SeguimientoVentas sv
+  LEFT JOIN Clientes c ON
+    sv.id_cliente = c.id_cliente
+  LEFT JOIN DetallesSeguimientoVentas dsv ON
+    sv.id_notaPedido = dsv.id_detalleSeguimiento
+  LEFT JOIN Variedades v ON
+    dsv.id_variedad = v.id_variedad
+  ORDER BY
+    sv.fecha DESC
+");
+$sql->execute();
+$resultados = $sql->fetchAll(PDO::FETCH_ASSOC);
+
+// Agrupar por pedidos
+$ventasAgrupadas = [];
+foreach ($resultados as $venta) {
+    $idPedido = $venta['id_notaPedido'];
+    if (!isset($ventasAgrupadas[$idPedido])) {
+        $ventasAgrupadas[$idPedido] = [
+            'fecha' => $venta['fecha'],
+            'cliente' => $venta['nombre_cliente'],
+            'estado_pedido' => $venta['estado_pedido'],
+            'productos' => [],  
+            'estados_pago' => []
+        ];
+    }
+    if (!empty($venta['nombre_variedad'])) {
+        $ventasAgrupadas[$idPedido]['productos'][] = $venta['nombre_variedad'];
+        $ventasAgrupadas[$idPedido]['estados_pago'][] = $venta['estado_pago'];
+    }
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -67,87 +117,70 @@
       <table class="table table-bordered mt-3" id="tablaVentas">
         <thead class="table-light">
           <tr>
+            <th>ID Pedido</th>
             <th>Fecha</th>
             <th>Cliente</th>
-            <th>Estado</th>
-            <th>Productos</th>
+            <th>Estado Pedido</th>
+            <th>Productos</th> 
             <th>Estado de Pago</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <?php foreach ($ventasAgrupadas as $idPedido => $venta): ?>
+            <tr>
+              <td><?php echo htmlspecialchars($idPedido); ?></td>
+              <td><?php echo date('d/m/Y', strtotime($venta['fecha'])); ?></td>
+              <td><?php echo htmlspecialchars($venta['cliente'] ?? 'N/A'); ?></td>
+              <td>
+                <span class="badge 
+                  <?php 
+                    switch(strtolower($venta['estado_pedido'])) {
+                      case 'pendiente': echo 'bg-warning'; break;
+                      case 'en preparacion': echo 'bg-info'; break;
+                      case 'entregado': echo 'bg-success'; break;
+                      default: echo 'bg-secondary';
+                    }
+                  ?>">
+                  <?php echo htmlspecialchars($venta['estado_pedido']); ?>
+                </span>
+              </td>
+              <td>
+                <?php if (!empty($venta['productos'])): ?>
+                  <ul class="mb-0">
+                    <?php foreach (array_unique($venta['productos']) as $variedad): ?>
+                      <li><?php echo htmlspecialchars($variedad); ?></li>
+                    <?php endforeach; ?>
+                  </ul>
+                <?php else: ?>
+                  Sin variedades registradas
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if (!empty($venta['estados_pago'])): ?>
+                  <?php foreach (array_unique($venta['estados_pago']) as $estadoPago): ?>
+                    <span class="badge 
+                      <?php 
+                        switch(strtolower($estadoPago)) {
+                          case 'pagado': echo 'bg-success'; break;
+                          case 'pendiente': echo 'bg-warning'; break;
+                          case 'cancelado': echo 'bg-danger'; break;
+                          default: echo 'bg-secondary';
+                        }
+                      ?>">
+                      <?php echo htmlspecialchars($estadoPago); ?>
+                    </span><br>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  Sin información
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
       </table>
     </div>
   </main>
 
-  <script>
-    const ventas = [
-      { fecha: "2025-06-06", cliente: "Juan Pérez", estado: "pendiente", productos: ["Fertilizante", "Maceta"], total: 500, pagado: 300 },
-      { fecha: "2025-06-07", cliente: "Lucía Torres", estado: "entregado", productos: ["Sustrato", "Semillas"], total: 200, pagado: 200 },
-      { fecha: "2025-06-07", cliente: "Mario Gómez", estado: "en preparacion", productos: ["Maceta 3L", "Etiqueta"], total: 100, pagado: 50 },
-      { fecha: "2025-06-05", cliente: "Ana López", estado: "pendiente", productos: ["Maceta pequeña"], total: 150, pagado: 0 }
-    ];
-
-    const filtros = {
-      fechaInicio: document.getElementById("fechaInicio"),
-      fechaFin: document.getElementById("fechaFin"),
-      cliente: document.getElementById("cliente"),
-      estado: document.getElementById("estado")
-    };
-
-    Object.values(filtros).forEach(input => {
-      input.addEventListener("input", filtrarVentas);
-      input.addEventListener("change", filtrarVentas);
-    });
-
-    function filtrarVentas() {
-      const tbody = document.querySelector("#tablaVentas tbody");
-      tbody.innerHTML = "";
-
-      const fechaInicio = filtros.fechaInicio.value;
-      const fechaFin = filtros.fechaFin.value;
-      const cliente = filtros.cliente.value.toLowerCase();
-      const estado = filtros.estado.value.toLowerCase();
-
-      const resultados = ventas.filter(v => {
-        const fecha = new Date(v.fecha);
-        const inicio = fechaInicio ? new Date(fechaInicio) : null;
-        const fin = fechaFin ? new Date(fechaFin) : null;
-
-        const coincideFecha = (!inicio || fecha >= inicio) && (!fin || fecha <= fin);
-        const coincideCliente = !cliente || v.cliente.toLowerCase().includes(cliente);
-        const coincideEstado = !estado || v.estado.toLowerCase() === estado;
-        const incluir = !["en preparacion", "entregado", "sin trabajar"].includes(v.estado.toLowerCase());
-
-        return coincideFecha && coincideCliente && coincideEstado && incluir;
-      });
-
-      if (resultados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center">No se encontraron resultados</td></tr>`;
-      } else {
-        resultados.forEach(v => {
-          let estadoPago = "<span class='text-danger fw-bold'>Sin abono</span>";
-          if (v.pagado === v.total) estadoPago = "<span class='text-success fw-bold'>Liquidado</span>";
-          else if (v.pagado > 0 && v.pagado < v.total) estadoPago = "<span class='text-warning fw-bold'>Con saldo</span>";
-
-          tbody.innerHTML += `
-            <tr>
-              <td>${v.fecha}</td>
-              <td>${v.cliente}</td>
-              <td>${v.estado}</td>
-              <td>${v.productos.join(", ")}</td>
-              <td>${estadoPago}</td>
-            </tr>`;
-        });
-      }
-    }
-
-    function exportarExcel() {
-      const tabla = document.getElementById("tablaVentas");
-      const wb = XLSX.utils.table_to_book(tabla, { sheet: "Reporte" });
-      XLSX.writeFile(wb, "reporte_ventas.xlsx");
-    }
-
-    filtrarVentas();
-  </script>
+  <script></script>
 </body>
 </html>
