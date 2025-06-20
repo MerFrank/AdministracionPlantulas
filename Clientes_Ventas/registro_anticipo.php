@@ -13,48 +13,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
     />
-    <style>
-      .payment-method {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: 500;
-      }
-      .payment-cash {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      .payment-transfer {
-        background-color: #cce5ff;
-        color: #004085;
-      }
-      .status-badge {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: 500;
-      }
-      .status-pending {
-        background-color: #fff3cd;
-        color: #856404;
-      }
-      .status-completed {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      .table-responsive {
-        max-height: 500px;
-        overflow-y: auto;
-      }
-      .search-container {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-      }
-    </style>
+    <style></style>
   </head>
   <body>
     <div class="contenedor-pagina">
@@ -81,7 +40,6 @@
               <div class="Opciones-barra">
                 <button
                   onclick="window.location.href='dashboard_clientesVentas.php'"
-                  class="btn btn-secondary"
                 >
                   Regresar inicio
                 </button>
@@ -541,40 +499,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-      // Ejemplo de funcionalidad JavaScript
-      document.addEventListener("DOMContentLoaded", function () {
-        // Configurar fecha actual en el formulario de pago
-        const today = new Date().toISOString().split("T")[0];
-        document.getElementById("paymentDate").value = today;
-
-        // Ejemplo de guardar pago
-        document
-          .getElementById("savePayment")
-          .addEventListener("click", function () {
-            const form = document.getElementById("paymentForm");
-            if (form.checkValidity()) {
-              alert("Pago registrado correctamente");
-              // Aquí iría el código para enviar los datos al servidor
-              // ...
-              // Cerrar el modal después de guardar
-              const modal = bootstrap.Modal.getInstance(
-                document.getElementById("newPaymentModal")
-              );
-              modal.hide();
-            } else {
-              form.reportValidity();
-            }
-          });
-
-        // Ejemplo de búsqueda
-        document
-          .getElementById("searchButton")
-          .addEventListener("click", function () {
-            alert("Búsqueda realizada (simulación)");
-            // Aquí iría el código para filtrar la tabla según los criterios de búsqueda
-          });
-      });
-    </script>
+    <script></script>
   </body>
 </html>
