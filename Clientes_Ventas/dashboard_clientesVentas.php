@@ -45,7 +45,7 @@
       <main>
         <section class="dashboard-grid">
           <div class="card">
-            <h2>📝 Registrar Clientes</h2>
+            <h2>👤📝 Registrar Clientes</h2>
             <p>Revisa a los nuevo clientes para la empresa.</p>
             <a href="registro_cliente.php">Ver detalles</a>
           </div>
@@ -55,7 +55,7 @@
             <a href="reporte_ventas.php">Trabajo en Disección</a>
           </div>
           <div class="card">
-            <h2>📝 Cotización</h2>
+            <h2>💰 Cotización</h2>
             <p>Muestra diferentes precio u opciones a los clientes.</p>
             <a href="cotizacion.php">Ver detalles</a>
           </div>
@@ -65,7 +65,7 @@
             <a href="notas_pedido.php">Ver detalles</a>
           </div>
           <div class="card">
-            <h2>📊 Registro de anticipos</h2>
+            <h2>💳  Registro de anticipos</h2>
             <p>Manten un seguimiento de los pagos hechos.</p>
             <a href="registro_anticipo.php">Ver detalles</a>
           </div>
