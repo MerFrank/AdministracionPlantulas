@@ -49,13 +49,13 @@
             <p>
               Administra los colores disponibles para cada especie o variedad.
             </p>
-            <a href="Registro_colores.html">Ver detalles</a>
+            <a href="Registro_colores.php">Ver detalles</a>
           </div>
 
           <div class="card">
             <h2>🌿 Registro Especie</h2>
             <p>Agrega o edita especies de plantas disponibles en el sistema.</p>
-            <a href="Registro_especie.html">Ver detalles</a>
+            <a href="Registro_especie.php">Ver detalles</a>
           </div>
 
           <div class="card">
@@ -63,7 +63,7 @@
             <p>
               Gestiona las diferentes variedades para cada especie registrada.
             </p>
-            <a href="Registro_variedades.html">Ver detalles</a>
+            <a href="Registro_variedades.php">Ver detalles</a>
           </div>
         </section>
       </main>

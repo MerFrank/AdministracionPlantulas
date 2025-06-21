@@ -34,7 +34,7 @@
             <div class="container-fluid">
               <div class="Opciones-barra">
                 <button
-                  onclick="window.location.href='dashboard_registroProducto.html'"
+                  onclick="window.location.href='dashboard_registroProducto.php'"
                 >
                   Regresar inicio
                 </button>
