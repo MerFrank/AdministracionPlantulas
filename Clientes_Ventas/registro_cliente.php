@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conexion = $db->conectar();
 
     try {
-        // Consulta SQL corregida (nombre_contacto en lugar de nombre_contato)
+        // Consulta SQL 
         $sql = "INSERT INTO Clientes (alias, nombre_Cliente, nombre_Empresa, nombre_contacto, telefono, email, rfc, domicilio_fiscal)
                 VALUES (:alias, :nombre_Cliente, :nombre_Empresa, :nombre_contacto, :telefono, :email, :rfc, :domicilio_fiscal)";
         
