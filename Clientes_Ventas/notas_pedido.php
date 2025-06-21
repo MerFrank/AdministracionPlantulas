@@ -186,12 +186,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
                     />
                   </div>
                   <div class="col-md-3">
-                    <label for="fecha" class="form-label">Fecha</label>
+                    <label for="fecha" class="form-label">Fecha nota</label>
                     <input
                       type="date"
                       class="form-control"
                       id="fecha"
                       name="fecha"
+                      required
+                    />
+                  </div>
+                  div class="col-md-3">
+                    <label for="fecha" class="form-label">Fecha entrega</label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="fecha"
+                      name="fecha_entrega"
                       required
                     />
                   </div>
@@ -381,7 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
                     <label for="tipoPago" class="form-label"
                       >Tipo de Pago</label
                     >
-                    <select class="form-select" id="tipoPago">
+                    <select class="form-select" id="tipoPago" name="tipo_pago">
                       <option value="contado">Contado</option>
                       <option value="credito">Crédito</option>
                       <option value="anticipo">Anticipo</option>
@@ -391,7 +401,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
                     <label for="metodoPago" class="form-label"
                       >Método de Pago</label
                     >
-                    <select class="form-select" id="metodoPago">
+                    <select class="form-select" id="metodoPago" name="metodo_Pago">
                       <option value="efectivo">Efectivo</option>
                       <option value="transferencia">Transferencia</option>
                       <option value="cheque">Cheque</option>
@@ -419,6 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
                       type="text"
                       class="form-control"
                       id="importeLetra"
+                      name="importe_letra"
                       readonly
                     />
                   </div>
@@ -446,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
                     <label for="numeroPagare" class="form-label"
                       >Número de Pagaré</label
                     >
-                    <input type="text" class="form-control" id="numeroPagare" />
+                    <input type="text" class="form-control" id="numeroPagare" name="num_pagare" />
                   </div>
                   <div class="col-md-4">
                     <label for="fechaVencimiento" class="form-label"
@@ -456,6 +467,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
                       type="date"
                       class="form-control"
                       id="fechaVencimiento"
+                      name="fecha_validez"
                     />
                   </div>
                   <div class="col-md-4">
@@ -466,6 +478,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
                       type="text"
                       class="form-control"
                       id="lugarPago"
+                      name="lugar_pago"
                       value=""
                       placeholder="Tenancingo, México"
                     />
