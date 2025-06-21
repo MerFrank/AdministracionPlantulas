@@ -1,3 +1,34 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nombre = htmlspecialchars(trim($_POST['nombreEspecie']));
+    $descripcion = htmlspecialchars(trim($_POST['descripcionEspecie']));
+    
+    if (empty($nombre)) {
+        echo "<script>alert('Por favor ingrese el nombre de la especie');</script>";
+        exit;
+    }
+    
+    try {
+        $sql = "INSERT INTO Especies (nombre, descripcion, fecha_registro) VALUES (:nombre, :descripcion, CURDATE())";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':nombre', $nombre);
+        $stmt->bindParam(':descripcion', $descripcion, $descripcion ? PDO::PARAM_STR : PDO::PARAM_NULL);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Especie registrada exitosamente'); window.location.href='Registro_especie.php';</script>";
+        } else {
+            echo "<script>alert('Error al registrar la especie');</script>";
+        }
+    } catch(PDOException $e) {
+        if ($e->getCode() == 23000) {
+            echo "<script>alert('Esta especie ya está registrada');</script>";
+        } else {
+            echo "<script>alert('Error: ".addslashes($e->getMessage())."');</script>";
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -45,143 +76,66 @@
       </header>
 
       <main>
-        <h2>Registrar Nueva Especie</h2>
-        <div class="container mt-5">
-          <form id="especieForm">
-            <h5>Datos de la Especie</h5>
-            <div class="mb-3">
-              <label for="nombreEspecie" class="form-label"
-                >Nombre de la especie <span class="text-danger">*</span></label
-              >
-              <input
-                type="text"
-                class="form-control"
-                id="nombreEspecie"
-                required
-                placeholder="Ej. Rosa, Tulipán, Orquídea"
-              />
-            </div>
-            <div class="mb-3">
-              <label for="descripcionEspecie" class="form-label"
-                >Descripción</label
-              >
-              <textarea
-                class="form-control"
-                id="descripcionEspecie"
-                rows="3"
-                placeholder="Características principales de la especie"
-              ></textarea>
+            <h2>Registrar Nueva Especie</h2>
+            <div class="container mt-5">
+                <form id="especieForm" method="POST" action="">
+                    <h5>Datos de la Especie</h5>
+                    <div class="mb-3">
+                        <label for="nombreEspecie" class="form-label">Nombre de la especie <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nombreEspecie" name="nombreEspecie" required placeholder="Ej. Rosa, Tulipán, Orquídea">
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcionEspecie" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcionEspecie" name="descripcionEspecie" rows="3" placeholder="Características principales de la especie"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Guardar Especie</button>
+                </form>
             </div>
 
-            <button type="submit" class="btn btn-success">
-              Guardar Especie
-            </button>
-          </form>
-        </div>
-
-        <div class="container mt-5">
-          <h5>Especies Registradas</h5>
-          <div class="table-responsive">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Fecha Registro</th>
-                </tr>
-              </thead>
-              <tbody id="listaEspecies">
-                <!-- Las especies se cargarán aquí dinámicamente -->
-                <tr>
-                  <td colspan="4" class="text-center">
-                    No hay especies registradas
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <script>
-          // Base de datos temporal
-          let especies = [];
-
-          document
-            .getElementById("especieForm")
-            .addEventListener("submit", function (event) {
-              event.preventDefault();
-
-              const nombre = document
-                .getElementById("nombreEspecie")
-                .value.trim();
-              const descripcion = document
-                .getElementById("descripcionEspecie")
-                .value.trim();
-
-              // Validar que el nombre no esté vacío
-              if (!nombre) {
-                alert("Por favor ingrese el nombre de la especie");
-                return;
-              }
-
-              // Verificar si la especie ya existe
-              const existe = especies.some(
-                (esp) => esp.nombre.toLowerCase() === nombre.toLowerCase()
-              );
-              if (existe) {
-                alert("Esta especie ya está registrada");
-                return;
-              }
-
-              // Crear nuevo registro
-              const nuevaEspecie = {
-                id: Date.now(),
-                nombre,
-                descripcion,
-                fecha: new Date().toLocaleDateString(),
-              };
-
-              // Agregar a la lista
-              especies.push(nuevaEspecie);
-
-              // Actualizar la tabla
-              actualizarListaEspecies();
-
-              // Limpiar formulario
-              this.reset();
-
-              // Mostrar mensaje de éxito
-              alert("Especie registrada exitosamente");
-            });
-
-          function actualizarListaEspecies() {
-            const tbody = document.getElementById("listaEspecies");
-
-            if (especies.length === 0) {
-              tbody.innerHTML = `
-              <tr>
-                <td colspan="4" class="text-center">No hay especies registradas</td>
-              </tr>
-            `;
-              return;
-            }
-
-            tbody.innerHTML = especies
-              .map(
-                (especie) => `
-            <tr>
-              <td>${especie.id}</td>
-              <td>${especie.nombre}</td>
-              <td>${especie.descripcion || "-"}</td>
-              <td>${especie.fecha}</td>
-            </tr>
-          `
-              )
-              .join("");
-          }
-        </script>
-      </main>
+            <div class="container mt-5">
+                <h5>Especies Registradas</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Fecha Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaEspecies">
+                            <?php
+                            include __DIR__ . '/../db/config.php';
+                            $db = new Database();
+                            $conexion = $db->conectar();
+                            
+                            try {
+                                $sql = "SELECT * FROM Especies ORDER BY fecha_registro DESC";
+                                $stmt = $conexion->query($sql);
+                                
+                                if ($stmt->rowCount() > 0) {
+                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        echo "<tr>
+                                                <td>{$row['id_especie']}</td>
+                                                <td>{$row['nombre']}</td>
+                                                <td>".($row['descripcion'] ?: '-')."</td>
+                                                <td>{$row['fecha_registro']}</td>
+                                              </tr>";
+                                    }
+                                } else {
+                                    echo '<tr><td colspan="4" class="text-center">No hay especies registradas</td></tr>';
+                                }
+                            } catch(PDOException $e) {
+                                echo '<tr><td colspan="4" class="text-center">Error al cargar especies: '.$e->getMessage().'</td></tr>';
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
 
       <footer>
         <p>&copy; 2025 PLANTAS AGRODEX. Todos los derechos reservados.</p>
