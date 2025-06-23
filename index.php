@@ -1,34 +1,21 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Registrar Cliente - Plantulas</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
-    />
-    <link href="/Plantulas/assets/css/style.css" rel="stylesheet" />
-    <style></style>
-  </head>
-  <body>
-    <?php include_once __DIR__ . '/../../includes/header.php'; ?>
+<?php
+require('./includes/config.php');
+?>
 
-    <div class="loading-overlay" id="loadingOverlay">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Cargando...</span>
-      </div>
-    </div>
 
-    <main class="container mt-4"></main>
+<?php
+// Variables para el encabezado
+$titulo = "Página principal";
+$encabezado = "Este es el index";
+$subtitulo = "En esta página puedes ver el contenido del index";
 
-    <?php include_once __DIR__ . '/../../includes/footer.php'; ?>
+// Incluir la cabecera
+require('./includes/header.php');
+?>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script></script>
-  </body>
-</html>
+
+<main class="container mt-4">
+  <p>Contenido principal del index aquí.</p>
+</main>
+
+<?php require('./includes/footer.php'); ?>
