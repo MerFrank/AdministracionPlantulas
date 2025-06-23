@@ -1,14 +1,14 @@
 <?php
-include __DIR__ . '/../db/config.php';
+require_once __DIR__ . '/../../includes/config.php';
+header('Content-Type: application/json');
+
 $db = new Database();
 $conexion = $db->conectar();
-
-header('Content-Type: application/json');
 
 $especieId = $_GET['especie'] ?? null;
 
 if (!$especieId) {
-    echo json_encode(['error' => 'ID de especie no proporcionado']);
+    echo json_encode([]);
     exit;
 }
 
@@ -17,10 +17,10 @@ try {
     $stmt = $conexion->prepare($sql);
     $stmt->bindParam(':id_especie', $especieId, PDO::PARAM_INT);
     $stmt->execute();
-    
     $colores = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
     echo json_encode($colores);
 } catch(PDOException $e) {
-    echo json_encode(['error' => 'Error al cargar colores: ' . $e->getMessage()]);
+    error_log('Error al obtener colores: ' . $e->getMessage());
+    echo json_encode([]);
 }
-?>

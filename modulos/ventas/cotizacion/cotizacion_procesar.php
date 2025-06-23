@@ -16,6 +16,7 @@ try {
     $id_cliente = isset($_POST['id_clientes']) ? intval($_POST['id_clientes']) : null;
     $fecha_validez = isset($_POST['fechaValidez']) ? $_POST['fechaValidez'] : null;
     $productosJSON = isset($_POST['productosJSON']) ? $_POST['productosJSON'] : '[]';
+    $nota = isset($_POST['nota']) ? $_POST['nota'] : '';
 
     if (!$id_cliente) throw new Exception("Cliente no seleccionado");
     if (empty($fecha_validez)) throw new Exception("Fecha de validez requerida");
@@ -30,18 +31,21 @@ try {
     $conexion = $db->conectar();
     $conexion->beginTransaction();
 
-    // 1. Insertar la cabecera de la cotización (sin notas)
+    // 1. Insertar la cabecera de la cotización (con campo notas)
     $sqlCotizacion = "INSERT INTO Cotizaciones (
                         id_cliente,
-                        fecha_validez
+                        fecha_validez,
+                        notas
                       ) VALUES (
                         :id_cliente,
-                        :fecha_validez
+                        :fecha_validez,
+                        :notas
                       )";
 
     $stmtCotizacion = $conexion->prepare($sqlCotizacion);
     $stmtCotizacion->bindValue(':id_cliente', $id_cliente, PDO::PARAM_INT);
     $stmtCotizacion->bindValue(':fecha_validez', $fecha_validez, PDO::PARAM_STR);
+    $stmtCotizacion->bindValue(':notas', $nota, PDO::PARAM_STR);
 
     if (!$stmtCotizacion->execute()) {
         throw new Exception("Error al guardar la cotización");
