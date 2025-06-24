@@ -12,10 +12,11 @@
 │   ├── footer.php
 ├── modulos/
 │   ├── clientes/
+│   │   └── dashboard_clientes.php
 │   │   └── editar_cliente.php
 │   │   └── registro_cliente.php
-│   │ ├── lista_clientes.php
-│   │ ├── tabla_clientes.php
+│   │   └──lista_clientes.php
+│   │   └──tabla_clientes.php
 │   ├── ventas/
 │   │   ├── cotizacion/
 │   │   │   ├── index.php
@@ -30,4 +31,6 @@
 │   │   ├── registro_producto.php
 │   │   ├── obtener_colores.php
 │   │   └── get_colores.php
+│   ├── proveedores/
+│   │   └── dashboard_proveedores.php
 └── index.php

@@ -1,4 +1,5 @@
 <?php
+define('BASE_URL', '/Administrativa');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -8,14 +9,14 @@
   <title><?php echo $titulo ?? 'Panel Plantas Agrodex'; ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="/Administracion/assets/css/style.css">
 </head>
 <body>
   <div class="contenedor-pagina">
     <header>
       <div class="encabezado d-flex align-items-center">
         <a class="navbar-brand" href="/">
-          <img src="./assets/img/logoplantulas.png" alt="Logo" width="130" height="124">
+          <img src="/Administracion/assets/img/logoplantulas.png" alt="Logo" width="130" height="124">
         </a>
         <div>
           <h2><?php echo $encabezado ?? 'Panel de Control'; ?></h2>

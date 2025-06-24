@@ -1,49 +1,17 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Panel Operaciones Financiazas</title>
-    <link rel="stylesheet" href="/css/style.css" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div class="contenedor-pagina">
-      <header>
-        <div class="encabezado">
-          <a class="navbar-brand" href="#">
-            <img
-              src="/css/logoplantulas.png"
-              alt="Logo"
-              width="130"
-              height="124"
-              class="d-inline-block align-text-center"
-            />
-          </a>
-          <div>
-            <h2>Clientes y Ventas</h2>
-            <p></p>
-          </div>
-        </div>
+<?php
 
-        <div class="barra-navegacion">
-          <nav class="navbar bg-body-tertiary">
-            <div class="container-fluid">
-              <div class="Opciones-barra">
-                <button onclick="window.location.href=''">
-                  Cerrar Sesión (aún no funciona)
-                </button>
-              </div>
-            </div>
-          </nav>
-        </div>
-      </header>
+// Configuración de encabezado
+$titulo = "Gestión de Ventas";
+$encabezado = "Panel de Ventas y Seguimiento de Pagos";
+$subtitulo = "Administra cotizaciones, ventas, seguimiento de pagos";
 
-      <main>
-        <section class="dashboard-grid">
+// Incluir la cabecera (ruta relativa al archivo actual)
+require('../../includes/header.php');
+?>
+
+
+<main class="container mt-4">
+  <section class="dashboard-grid">
           <div class="card">
             <h2>👤📝 Registrar Clientes</h2>
             <p>Revisa a los nuevo clientes para la empresa.</p>
@@ -70,13 +38,6 @@
             <a href="registro_anticipo.php">Ver detalles</a>
           </div>
         </section>
-      </main>
+</main>
 
-      <footer>
-        <p>&copy; 2025 PLANTAS AGRODEX. Todos los derechos reservados.</p>
-      </footer>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
-</html>
+<?php require('../../includes/footer.php'); ?>
