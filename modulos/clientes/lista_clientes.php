@@ -27,7 +27,7 @@ $busqueda = $_GET['busqueda'] ?? '';
 
 if (!empty($busqueda)) {
     $busquedaLike = "%$busqueda%";
-    $sql = "SELECT * FROM Clientes WHERE activo = 1 
+    $sql = "SELECT * FROM clientes WHERE activo = 1 
             AND (nombre_Cliente LIKE ? OR alias LIKE ? OR nombre_Empresa LIKE ? OR nombre_contacto LIKE ?)
             ORDER BY nombre_Cliente ASC";
     
@@ -36,16 +36,11 @@ if (!empty($busqueda)) {
         $stmt->execute(array_fill(0, 4, $busquedaLike));
         $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Para peticiones AJAX, devolver solo la tabla
-        if (isset($_GET['ajax'])) {
-            include __DIR__ . '/tabla_clientes.php';
-            exit;
-        }
     } catch (PDOException $e) {
         die("Error al obtener clientes: " . $e->getMessage());
     }
 } else {
-    $sql = "SELECT * FROM Clientes WHERE activo = 1 ORDER BY nombre_Cliente ASC";
+    $sql = "SELECT * FROM clientes WHERE activo = 1 ORDER BY nombre_Cliente ASC";
     try {
         $stmt = $con->prepare($sql);
         $stmt->execute();
@@ -54,10 +49,24 @@ if (!empty($busqueda)) {
         die("Error al obtener clientes: " . $e->getMessage());
     }
 }
+// Para peticiones AJAX, devolver solo la tabla
+if (isset($_GET['ajax'])) {
+    include __DIR__ . '/tabla_clientes.php';
+    exit;
+}
 
-// Incluir el header principal (solo una vez)
-require_once __DIR__ . '/../../includes/header.php';
 ?>
+
+
+<?php
+// Configuración de encabezado
+$encabezado = "Lista los Clientes";
+$subtitulo = "Muestra lso cliente registrados en el  sistema";
+
+// Incluir la cabecera (ruta relativa al archivo actual)
+require('../../includes/header.php');
+?>
+
 
 <main class="container mt-4 mb-5">
     <div class="card card-lista">
@@ -109,8 +118,7 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </main>
 
-<?php include_once __DIR__ . '/../../includes/footer.php'; ?>
-
+<?php require('../../includes/footer.php'); ?>
 <!-- jQuery para AJAX -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>

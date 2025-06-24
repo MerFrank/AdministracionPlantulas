@@ -30,7 +30,7 @@ try {
 
 // Realizar el borrado lógico (marcar como inactivo)
 try {
-    $sql = "UPDATE Clientes SET activo = 0 WHERE id_cliente = ?";
+    $sql = "UPDATE clientes SET activo = 0 WHERE id_cliente = ?";
     $stmt = $con->prepare($sql);
     $stmt->execute([$id_cliente]);
     

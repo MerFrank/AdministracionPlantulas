@@ -35,7 +35,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Obtener datos actuales del cliente
 try {
-    $sql = "SELECT * FROM Clientes WHERE id_cliente = ?";
+    $sql = "SELECT * FROM clientes WHERE id_cliente = ?";
     $stmt = $con->prepare($sql);
     $stmt->execute([$id_cliente]);
     $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
         }
 
         // Actualizar en BD
-        $sql = "UPDATE Clientes SET
+        $sql = "UPDATE clientes SET
                   alias = :alias,
                   nombre_Cliente = :nombre_Cliente,
                   nombre_Empresa = :nombre_Empresa,
