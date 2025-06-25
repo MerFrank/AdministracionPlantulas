@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conexion->beginTransaction();
 
             // Verificar que la variedad existe y está activa
-            $sqlCheck = "SELECT id_variedad FROM Variedades WHERE id_variedad = :id AND activo = 1";
+            $sqlCheck = "SELECT id_variedad FROM variedades WHERE id_variedad = :id AND activo = 1";
             $stmtCheck = $conexion->prepare($sqlCheck);
             $stmtCheck->bindParam(':id', $idVariedad, PDO::PARAM_INT);
             $stmtCheck->execute();
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Borrado lógico (marcar como inactivo)
-            $sql = "UPDATE Variedades SET activo = 0 WHERE id_variedad = :id";
+            $sql = "UPDATE variedades SET activo = 0 WHERE id_variedad = :id";
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':id', $idVariedad, PDO::PARAM_INT);
             
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Verificar duplicados de código
-            $sqlCheck = "SELECT id_variedad FROM Variedades WHERE codigo = :codigo AND activo = 1";
+            $sqlCheck = "SELECT id_variedad FROM variedades WHERE codigo = :codigo AND activo = 1";
             if ($accion === 'editar') {
                 $sqlCheck .= " AND id_variedad != :id_variedad";
             }
@@ -99,10 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Insertar o actualizar
             if ($accion === 'crear') {
-                $sql = "INSERT INTO Variedades (id_especie, id_color, nombre_variedad, codigo, activo) 
+                $sql = "INSERT INTO variedades (id_especie, id_color, nombre_variedad, codigo, activo) 
                         VALUES (:id_especie, :id_color, :nombre, :codigo, 1)";
             } else {
-                $sql = "UPDATE Variedades SET 
+                $sql = "UPDATE variedades SET 
                         id_especie = :id_especie, 
                         id_color = :id_color, 
                         nombre_variedad = :nombre, 
@@ -126,8 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Obtener datos para respuesta
             $lastId = $accion === 'crear' ? $conexion->lastInsertId() : $idVariedad;
-            $nombreEspecie = $conexion->query("SELECT nombre FROM Especies WHERE id_especie = $idEspecie")->fetchColumn();
-            $nombreColor = $conexion->query("SELECT nombre_color FROM Colores WHERE id_color = $idColor")->fetchColumn();
+            $nombreEspecie = $conexion->query("SELECT nombre FROM especies WHERE id_especie = $idEspecie")->fetchColumn();
+            $nombreColor = $conexion->query("SELECT nombre_color FROM colores WHERE id_color = $idColor")->fetchColumn();
             
             sendJsonResponse(true, 
                 $accion === 'crear' ? 'Variedad registrada con éxito' : 'Variedad actualizada con éxito',
@@ -164,9 +164,9 @@ if (isset($_GET['editar'])) {
         }
 
         $sql = "SELECT v.*, e.nombre as nombre_especie, c.nombre_color 
-                FROM Variedades v
-                JOIN Especies e ON v.id_especie = e.id_especie
-                JOIN Colores c ON v.id_color = c.id_color
+                FROM variedades v
+                JOIN especies e ON v.id_especie = e.id_especie
+                JOIN colores c ON v.id_color = c.id_color
                 WHERE v.id_variedad = :id AND v.activo = 1";
         $stmt = $conexion->prepare($sql);
         $stmt->bindParam(':id', $idEditar, PDO::PARAM_INT);
@@ -184,7 +184,7 @@ if (isset($_GET['editar'])) {
 // Obtener listado de especies
 $especies = [];
 try {
-    $sql = "SELECT id_especie, nombre FROM Especies ORDER BY nombre";
+    $sql = "SELECT id_especie, nombre FROM especies ORDER BY nombre";
     $stmt = $conexion->query($sql);
     $especies = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch(PDOException $e) {
@@ -196,7 +196,7 @@ $colores = [];
 if (isset($variedadEditar) || $especieSeleccionada) {
     $idEspecie = $variedadEditar['id_especie'] ?? $especieSeleccionada;
     try {
-        $sql = "SELECT id_color, nombre_color FROM Colores WHERE id_especie = :id_especie ORDER BY nombre_color";
+        $sql = "SELECT id_color, nombre_color FROM colores WHERE id_especie = :id_especie ORDER BY nombre_color";
         $stmt = $conexion->prepare($sql);
         $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
         $stmt->execute();
@@ -211,9 +211,9 @@ $variedades = [];
 try {
     $sql = "SELECT v.id_variedad, e.nombre AS especie, c.nombre_color AS color, 
                    v.nombre_variedad, v.codigo, v.id_especie
-            FROM Variedades v
-            JOIN Especies e ON v.id_especie = e.id_especie
-            JOIN Colores c ON v.id_color = c.id_color
+            FROM variedades v
+            JOIN especies e ON v.id_especie = e.id_especie
+            JOIN colores c ON v.id_color = c.id_color
             WHERE v.activo = 1";
     
     if ($especieSeleccionada) {
