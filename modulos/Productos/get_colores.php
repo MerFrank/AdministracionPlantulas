@@ -13,7 +13,7 @@ if (!$especieId) {
 }
 
 try {
-    $sql = "SELECT id_color, nombre_color FROM Colores WHERE id_especie = :id_especie ORDER BY nombre_color";
+    $sql = "SELECT id_color, nombre_color FROM colores WHERE id_especie = :id_especie ORDER BY nombre_color";
     $stmt = $conexion->prepare($sql);
     $stmt->bindParam(':id_especie', $especieId, PDO::PARAM_INT);
     $stmt->execute();

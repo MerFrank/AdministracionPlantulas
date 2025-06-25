@@ -1,10 +1,4 @@
 <?php
-require_once 'C:/xampp/htdocs/Plantulas/includes/config.php';
-$db = new Database();
-$conexion = $db->conectar();
-
-$colorEditar = null;
-$especieSeleccionada = $_GET['especie'] ?? null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idEspecie = $_POST['especie'];
@@ -20,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     try {
         if ($accion === 'eliminar' && $idColor) {
-            $sql = "DELETE FROM Colores WHERE id_color = :id_color";
+            $sql = "DELETE FROM colores WHERE id_color = :id_color";
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
             
@@ -34,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             // Verificar si el color ya existe
-            $sqlCheck = "SELECT id_color FROM Colores WHERE id_especie = :id_especie AND nombre_color = :color";
+            $sqlCheck = "SELECT id_color FROM colores WHERE id_especie = :id_especie AND nombre_color = :color";
             if ($accion === 'editar' && $idColor) {
                 $sqlCheck .= " AND id_color != :id_color_excluir";
             }
@@ -53,12 +47,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($accion === 'crear') {
-                $sql = "INSERT INTO Colores (id_especie, nombre_color) VALUES (:id_especie, :color)";
+                $sql = "INSERT INTO colores (id_especie, nombre_color) VALUES (:id_especie, :color)";
                 $stmt = $conexion->prepare($sql);
                 $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
                 $stmt->bindParam(':color', $color);
             } elseif ($accion === 'editar') {
-                $sql = "UPDATE Colores SET nombre_color = :color WHERE id_color = :id_color";
+                $sql = "UPDATE colores SET nombre_color = :color WHERE id_color = :id_color";
                 $stmt = $conexion->prepare($sql);
                 $stmt->bindParam(':color', $color);
                 $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
@@ -81,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if (isset($_GET['editar'])) {
     try {
-        $sql = "SELECT * FROM Colores WHERE id_color = :id_color";
+        $sql = "SELECT * FROM colores WHERE id_color = :id_color";
         $stmt = $conexion->prepare($sql);
         $stmt->bindParam(':id_color', $_GET['editar'], PDO::PARAM_INT);
         $stmt->execute();
@@ -91,33 +85,18 @@ if (isset($_GET['editar'])) {
         echo "<script>alert('Error al cargar color: ".addslashes($e->getMessage())."');</script>";
     }
 }
+
+// Configuración de encabezado
+$titulo = "Gestión de Colores";
+$encabezado = "Gestión de Colores";
+$subtitulo = "Administra inventario de colores.";
+
+// Incluir la cabecera (ruta relativa al archivo actual)
+require('../../includes/header.php');
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Colores</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .form-container {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .table-responsive {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-    </style>
-</head>
-<body>
-    <?php include 'C:/xampp/htdocs/Plantulas/includes/header.php'; ?>
 
-    <main class="container py-4">
+<main class="container py-4">
         <div class="form-container">
             <h4><?= isset($colorEditar) ? 'Editar Color' : 'Agregar Nuevo Color' ?></h4>
             <form id="colorForm" method="POST">
@@ -130,7 +109,7 @@ if (isset($_GET['editar'])) {
                         <select class="form-select" name="especie" id="selectEspecie" required>
                             <option value="">-- Seleccione --</option>
                             <?php
-                            $sql = "SELECT id_especie, nombre FROM Especies ORDER BY nombre";
+                            $sql = "SELECT id_especie, nombre FROM especies ORDER BY nombre";
                             $stmt = $conexion->query($sql);
                             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                                 $selected = ($especieSeleccionada == $row['id_especie']) ? 'selected' : '';
@@ -170,7 +149,7 @@ if (isset($_GET['editar'])) {
                     <?php
                     if ($especieSeleccionada) {
                         try {
-                            $sql = "SELECT id_color, nombre_color FROM Colores 
+                            $sql = "SELECT id_color, nombre_color FROM colores 
                                     WHERE id_especie = :id_especie 
                                     ORDER BY nombre_color";
                             $stmt = $conexion->prepare($sql);
@@ -204,9 +183,9 @@ if (isset($_GET['editar'])) {
         </div>
     </main>
 
-    <?php include 'C:/xampp/htdocs/Plantulas/includes/footer.php'; ?>
+<?php require('../../includes/footer.php'); ?>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Función para eliminar color
         function eliminarColor(idColor) {
@@ -272,5 +251,3 @@ if (isset($_GET['editar'])) {
             }
         });
     </script>
-</body>
-</html>

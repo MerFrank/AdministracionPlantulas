@@ -14,7 +14,7 @@ if (!$especieId) {
 
 try {
     $sql = "SELECT c.id_color, c.nombre_color 
-            FROM Colores c 
+            FROM colores c 
             WHERE c.id_especie = :id_especie 
             ORDER BY c.nombre_color";
     $stmt = $conexion->prepare($sql);

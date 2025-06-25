@@ -1,5 +1,5 @@
 <?php
-require_once 'C:/xampp/htdocs/Plantulas/includes/config.php';
+require_once __DIR__ . '/../../includes/config.php';
 $db = new Database();
 $conexion = $db->conectar();
 
@@ -18,9 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             if ($_POST['accion'] === 'crear') {
-                $sql = "INSERT INTO Especies (nombre, descripcion, fecha_registro) VALUES (:nombre, :descripcion, CURDATE())";
+                $sql = "INSERT INTO especies (nombre, descripcion, fecha_registro) VALUES (:nombre, :descripcion, CURDATE())";
             } elseif ($_POST['accion'] === 'editar' && $id) {
-                $sql = "UPDATE Especies SET nombre = :nombre, descripcion = :descripcion WHERE id_especie = :id";
+                $sql = "UPDATE especies SET nombre = :nombre, descripcion = :descripcion WHERE id_especie = :id";
             }
             
             $stmt = $conexion->prepare($sql);
@@ -47,7 +47,7 @@ if (isset($_GET['eliminar'])) {
     $id = $_GET['eliminar'];
     
     try {
-        $sql = "DELETE FROM Especies WHERE id_especie = :id";
+        $sql = "DELETE FROM especies WHERE id_especie = :id";
         $stmt = $conexion->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         
@@ -63,7 +63,7 @@ if (isset($_GET['eliminar'])) {
 $especieEditar = null;
 if (isset($_GET['editar'])) {
     try {
-        $sql = "SELECT * FROM Especies WHERE id_especie = :id";
+        $sql = "SELECT * FROM especies WHERE id_especie = :id";
         $stmt = $conexion->prepare($sql);
         $stmt->bindParam(':id', $_GET['editar'], PDO::PARAM_INT);
         $stmt->execute();
@@ -72,26 +72,18 @@ if (isset($_GET['editar'])) {
         echo "<script>alert('Error al cargar datos: ".addslashes($e->getMessage())."');</script>";
     }
 }
+
+// Configuración de encabezado
+$titulo = "Registro de Especies";
+$encabezado = "Registro de Especies";
+$subtitulo = "Registra nuevas Especies en el sistema";
+
+// Incluir la cabecera (ruta relativa al archivo actual)
+require('../../includes/header.php');
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Registro de Especies</title>
-    <link rel="stylesheet" href="/Plantulas/assets/css/style.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-        .acciones-btn {
-            white-space: nowrap;
-        }
-    </style>
-</head>
-<body>
-    <?php include 'C:/xampp/htdocs/Plantulas/includes/header.php'; ?>
 
-    <main>
+<main>
         <div class="container mt-5">
             <h2>Registro de Especies</h2>
             <form method="POST" action="">
@@ -132,7 +124,7 @@ if (isset($_GET['editar'])) {
                         <tbody>
                             <?php
                             try {
-                                $sql = "SELECT * FROM Especies ORDER BY nombre";
+                                $sql = "SELECT * FROM especies ORDER BY nombre";
                                 $stmt = $conexion->query($sql);
                                 
                                 if ($stmt->rowCount() > 0) {
@@ -164,8 +156,7 @@ if (isset($_GET['editar'])) {
         </div>
     </main>
 
-    <?php include 'C:/xampp/htdocs/Plantulas/includes/footer.php'; ?>
-    
+<?php require('../../includes/footer.php'); ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Función para confirmar eliminación
@@ -175,5 +166,3 @@ if (isset($_GET['editar'])) {
             }
         }
     </script>
-</body>
-</html>

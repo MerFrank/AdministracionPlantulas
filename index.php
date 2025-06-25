@@ -34,6 +34,12 @@ require('./includes/header.php');
           <p>Ten un segimiento de los proveedores disponibles en el sistema.</p>
           <a href="./modulos/proveedores/dashboard_proveedores.php">Ver detalles</a>
         </div>
+
+        <div class="card">
+          <h2>📦 Base de datos 📦 </h2>
+          <p>Provar la concexión a la base de datos.</p>
+          <a href="./includes/config.php">Ver detalles</a>
+        </div>
   </section>
 </main>
 
