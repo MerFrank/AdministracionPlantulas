@@ -27,7 +27,7 @@ $busqueda = $_GET['busqueda'] ?? '';
 
 if (!empty($busqueda)) {
     $busquedaLike = "%$busqueda%";
-    $sql = "SELECT * FROM Proveedores WHERE activo = 1 
+    $sql = "SELECT * FROM proveedores WHERE activo = 1 
             AND (nombre_proveedor LIKE ? OR alias LIKE ? OR nombre_empresa LIKE ? OR nombre_contacto LIKE ?)
             ORDER BY nombre_proveedor ASC";
     
@@ -45,7 +45,7 @@ if (!empty($busqueda)) {
         die("Error al obtener proveedores: " . $e->getMessage());
     }
 } else {
-    $sql = "SELECT * FROM Proveedores WHERE activo = 1 ORDER BY nombre_proveedor ASC";
+    $sql = "SELECT * FROM proveedores WHERE activo = 1 ORDER BY nombre_proveedor ASC";
     try {
         $stmt = $con->prepare($sql);
         $stmt->execute();

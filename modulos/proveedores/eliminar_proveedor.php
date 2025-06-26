@@ -30,7 +30,7 @@ try {
 
 // Realizar el borrado lógico (marcar como inactivo)
 try {
-    $sql = "UPDATE Proveedores SET activo = 0 WHERE id_proveedor = ?";
+    $sql = "UPDATE proveedores SET activo = 0 WHERE id_proveedor = ?";
     $stmt = $con->prepare($sql);
     $stmt->execute([$id_proveedor]);
     

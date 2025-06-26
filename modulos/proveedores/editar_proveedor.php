@@ -35,7 +35,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Obtener datos actuales del proveedor
 try {
-    $sql = "SELECT * FROM Proveedores WHERE id_proveedor = ?";
+    $sql = "SELECT * FROM proveedores WHERE id_proveedor = ?";
     $stmt = $con->prepare($sql);
     $stmt->execute([$id_proveedor]);
     $proveedor = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
         }
 
         // Actualizar en BD
-        $sql = "UPDATE Proveedores SET
+        $sql = "UPDATE proveedores SET
                   alias = :alias,
                   nombre_proveedor = :nombre_proveedor,
                   nombre_empresa = :nombre_empresa,
@@ -125,203 +125,177 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 }
 
 // Incluir header
-require_once __DIR__ . '/../../includes/header.php';
-?>
+require_once __DIR__ . '/../../includes/header.php';?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Proveedor - Plantulas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="/Plantulas/assets/css/style.css" rel="stylesheet">
-    <style>
-        .invalid-feedback { display: none; color: #dc3545; }
-        .was-validated .form-control:invalid ~ .invalid-feedback { display: block; }
-        #datos-fiscales { transition: all 0.3s ease; max-height: 0; overflow: hidden; }
-        #datos-fiscales.show { max-height: 500px; }
-        .form-section { margin-bottom: 1.5rem; }
-        .form-section h5 { margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #45814d; color: #45814d; }
-        .required-field::after { content: " *"; color: #dc3545; }
-        .rfc-example { font-size: 0.85rem; color: #6c757d; font-style: italic; }
-    </style>
-</head>
-<body>
-    <?php include_once __DIR__ . '/../../includes/header.php'; ?>
-    
-    <main class="container mt-4">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h2 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Proveedor</h2>
-                    <a href="lista_proveedores.php" class="btn btn-light">
-                        <i class="bi bi-arrow-left"></i> Volver a la lista
-                    </a>
-                </div>
-            </div>
-            
-            <div class="card-body">
-                <?php if (isset($_SESSION['error_message'])): ?>
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        <?= htmlspecialchars($_SESSION['error_message']) ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    <?php unset($_SESSION['error_message']); ?>
-                <?php endif; ?>
-                
-                <?php if (!empty($error)): ?>
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        <i class="bi bi-exclamation-triangle-fill"></i> <?= htmlspecialchars($error) ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <?php endif; ?>
-
-                <form method="post" class="needs-validation" novalidate>
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                    
-                    <div class="row g-3">
-                        <!-- Sección Información Básica -->
-                        <div class="col-md-6 form-section">
-                            <h5><i class="bi bi-info-circle"></i> Información Básica</h5>
-                            
-                            <div class="mb-3">
-                                <label for="alias" class="form-label">Alias (Opcional)</label>
-                                <input type="text" class="form-control" id="alias" name="alias" 
-                                       value="<?= htmlspecialchars($proveedor['alias']) ?>">
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="nombre_proveedor" class="form-label required-field">Nombre/Razón Social</label>
-                                <input type="text" class="form-control" id="nombre_proveedor" name="nombre_proveedor" required
-                                       value="<?= htmlspecialchars($proveedor['nombre_proveedor']) ?>">
-                                <div class="invalid-feedback">Por favor ingrese el nombre del proveedor</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="nombre_empresa" class="form-label">Empresa</label>
-                                <input type="text" class="form-control" id="nombre_empresa" name="nombre_empresa"
-                                       value="<?= htmlspecialchars($proveedor['nombre_empresa']) ?>">
-                            </div>
-                        </div>
-                        
-                        <!-- Sección Contacto -->
-                        <div class="col-md-6 form-section">
-                            <h5><i class="bi bi-person-lines-fill"></i> Datos de Contacto</h5>
-                            
-                            <div class="mb-3">
-                                <label for="nombre_contacto" class="form-label required-field">Persona de Contacto</label>
-                                <input type="text" class="form-control" id="nombre_contacto" name="nombre_contacto" required
-                                       value="<?= htmlspecialchars($proveedor['nombre_contacto']) ?>">
-                                <div class="invalid-feedback">Por favor ingrese el nombre de contacto</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="telefono" class="form-label required-field">Teléfono</label>
-                                <input type="tel" class="form-control" id="telefono" name="telefono" required
-                                       pattern="[0-9]{10,15}" 
-                                       value="<?= htmlspecialchars($proveedor['telefono']) ?>">
-                                <div class="invalid-feedback">Ingrese un teléfono válido (10-15 dígitos)</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="email" class="form-label required-field">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="email" name="email" required
-                                       value="<?= htmlspecialchars($proveedor['email']) ?>">
-                                <div class="invalid-feedback">Ingrese un correo electrónico válido</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Sección Productos -->
-                    <div class="form-section">
-                        <h5><i class="bi bi-box-seam"></i> Productos</h5>
-                        <div class="mb-3">
-                            <label for="productos" class="form-label">Productos que provee</label>
-                            <textarea class="form-control" id="productos" name="productos" rows="3"><?= htmlspecialchars($proveedor['productos']) ?></textarea>
-                        </div>
-                    </div>
-                    
-                    <!-- Sección Facturación -->
-                    <div class="form-section">
-                        <h5><i class="bi bi-receipt"></i> Datos de Facturación</h5>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">¿Requiere facturación?</label>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si" 
-                                    <?= !empty($proveedor['rfc']) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="opcion-si">Sí</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="opcion" id="opcion-no" value="no"
-                                    <?= empty($proveedor['rfc']) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="opcion-no">No</label>
-                            </div>
-                        </div>
-                        
-                        <div id="datos-fiscales" class="bg-light p-3 rounded <?= !empty($proveedor['rfc']) ? 'show' : '' ?>">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="rfc" class="form-label">RFC</label>
-                                    <input type="text" class="form-control" id="rfc" name="rfc" 
-                                           value="<?= htmlspecialchars($proveedor['rfc']) ?>">
-                                    <div class="rfc-example">Ejemplo: XAXX010101000 (Personas físicas) o EKU900317SA7 (Personas morales)</div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <label for="domicilio_fiscal" class="form-label">Domicilio Fiscal</label>
-                                    <textarea class="form-control" id="domicilio_fiscal" name="domicilio_fiscal" rows="2"><?= htmlspecialchars($proveedor['domicilio_fiscal']) ?></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="lista_proveedores.php" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save"></i> Guardar Cambios
-                        </button>
-                    </div>
-                </form>
+<main class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Proveedor</h2>
+                <a href="lista_proveedores.php" class="btn btn-light">
+                    <i class="bi bi-arrow-left"></i> Volver a la lista
+                </a>
             </div>
         </div>
-    </main>
+        
+        <div class="card-body">
+            <?php if (isset($_SESSION['error_message'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <?= htmlspecialchars($_SESSION['error_message']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <?php unset($_SESSION['error_message']); ?>
+            <?php endif; ?>
+            
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-exclamation-triangle-fill"></i> <?= htmlspecialchars($error) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
 
-    <?php include_once __DIR__ . '/../../includes/footer.php'; ?>
+            <form method="post" class="needs-validation" novalidate>
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                
+                <div class="row g-3">
+                    <!-- Sección Información Básica -->
+                    <div class="col-md-6 form-section">
+                        <h5><i class="bi bi-info-circle"></i> Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="alias" class="form-label">Alias (Opcional)</label>
+                            <input type="text" class="form-control" id="alias" name="alias" 
+                                    value="<?= htmlspecialchars($proveedor['alias']) ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="nombre_proveedor" class="form-label required-field">Nombre/Razón Social</label>
+                            <input type="text" class="form-control" id="nombre_proveedor" name="nombre_proveedor" required
+                                    value="<?= htmlspecialchars($proveedor['nombre_proveedor']) ?>">
+                            <div class="invalid-feedback">Por favor ingrese el nombre del proveedor</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="nombre_empresa" class="form-label">Empresa</label>
+                            <input type="text" class="form-control" id="nombre_empresa" name="nombre_empresa"
+                                    value="<?= htmlspecialchars($proveedor['nombre_empresa']) ?>">
+                        </div>
+                    </div>
+                    
+                    <!-- Sección Contacto -->
+                    <div class="col-md-6 form-section">
+                        <h5><i class="bi bi-person-lines-fill"></i> Datos de Contacto</h5>
+                        
+                        <div class="mb-3">
+                            <label for="nombre_contacto" class="form-label required-field">Persona de Contacto</label>
+                            <input type="text" class="form-control" id="nombre_contacto" name="nombre_contacto" required
+                                    value="<?= htmlspecialchars($proveedor['nombre_contacto']) ?>">
+                            <div class="invalid-feedback">Por favor ingrese el nombre de contacto</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label required-field">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefono" name="telefono" required
+                                    pattern="[0-9]{10,15}" 
+                                    value="<?= htmlspecialchars($proveedor['telefono']) ?>">
+                            <div class="invalid-feedback">Ingrese un teléfono válido (10-15 dígitos)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label required-field">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="email" name="email" required
+                                    value="<?= htmlspecialchars($proveedor['email']) ?>">
+                            <div class="invalid-feedback">Ingrese un correo electrónico válido</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sección Productos -->
+                <div class="form-section">
+                    <h5><i class="bi bi-box-seam"></i> Productos</h5>
+                    <div class="mb-3">
+                        <label for="productos" class="form-label">Productos que provee</label>
+                        <textarea class="form-control" id="productos" name="productos" rows="3"><?= htmlspecialchars($proveedor['productos']) ?></textarea>
+                    </div>
+                </div>
+                
+                <!-- Sección Facturación -->
+                <div class="form-section">
+                    <h5><i class="bi bi-receipt"></i> Datos de Facturación</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">¿Requiere facturación?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si" 
+                                <?= !empty($proveedor['rfc']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="opcion-si">Sí</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="opcion" id="opcion-no" value="no"
+                                <?= empty($proveedor['rfc']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="opcion-no">No</label>
+                        </div>
+                    </div>
+                    
+                    <div id="datos-fiscales" class="bg-light p-3 rounded <?= !empty($proveedor['rfc']) ? 'show' : '' ?>">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="rfc" class="form-label">RFC</label>
+                                <input type="text" class="form-control" id="rfc" name="rfc" 
+                                        value="<?= htmlspecialchars($proveedor['rfc']) ?>">
+                                <div class="rfc-example">Ejemplo: XAXX010101000 (Personas físicas) o EKU900317SA7 (Personas morales)</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="domicilio_fiscal" class="form-label">Domicilio Fiscal</label>
+                                <textarea class="form-control" id="domicilio_fiscal" name="domicilio_fiscal" rows="2"><?= htmlspecialchars($proveedor['domicilio_fiscal']) ?></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="lista_proveedores.php" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<?php include_once __DIR__ . '/../../includes/footer.php'; ?>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Mostrar/ocultar datos fiscales
-        const opcionSi = document.getElementById('opcion-si');
-        const opcionNo = document.getElementById('opcion-no');
-        const datosFiscales = document.getElementById('datos-fiscales');
-        
-        function toggleDatosFiscales() {
-            if (opcionSi.checked) {
-                datosFiscales.classList.add('show');
-            } else {
-                datosFiscales.classList.remove('show');
-            }
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar/ocultar datos fiscales
+    const opcionSi = document.getElementById('opcion-si');
+    const opcionNo = document.getElementById('opcion-no');
+    const datosFiscales = document.getElementById('datos-fiscales');
+    
+    function toggleDatosFiscales() {
+        if (opcionSi.checked) {
+            datosFiscales.classList.add('show');
+        } else {
+            datosFiscales.classList.remove('show');
         }
-        
-        opcionSi.addEventListener('change', toggleDatosFiscales);
-        opcionNo.addEventListener('change', toggleDatosFiscales);
-        
-        // Validación del formulario
-        const form = document.querySelector('.needs-validation');
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        }, false);
-    });
-    </script>
-</body>
-</html>
+    }
+    
+    opcionSi.addEventListener('change', toggleDatosFiscales);
+    opcionNo.addEventListener('change', toggleDatosFiscales);
+    
+    // Validación del formulario
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    }, false);
+});
+</script>
