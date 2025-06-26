@@ -1,9 +1,5 @@
 <?php
-
 require_once __DIR__ . '/../../includes/config.php';
-
-// Iniciar buffer de salida
-ob_start();
 
 $db = new Database();
 $conexion = $db->conectar();
@@ -235,8 +231,7 @@ try {
     $errorVariedades = "Error al cargar variedades: " . $e->getMessage();
 }
 
-// Limpiar buffer y mostrar HTML
-ob_end_flush();
+
 
 // Configuración de encabezado
 $titulo = "Gestión de Variedades";
@@ -389,7 +384,6 @@ require('../../includes/header.php');
 </main>
 
 <?php require('../../includes/footer.php'); ?>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Inicializar toast
