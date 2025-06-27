@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 
 // Configuración de encabezado
 $titulo = "Registrar Proveedor";
-$encabezado = "Regstro Proveedor";
+$encabezado = "Registro Proveedor";
 $subtitulo = "Administra los proveedores de tu sistema";
 
 // Incluir la cabecera (ruta relativa al archivo actual)

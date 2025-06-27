@@ -261,17 +261,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const opcionSi = document.getElementById('opcion-si');
     const opcionNo = document.getElementById('opcion-no');
     const datosFiscales = document.getElementById('datos-fiscales');
+datosFiscales.style.display = opcionSi.checked ? 'block' : 'none';
     
     function toggleDatosFiscales() {
-        if (opcionSi.checked) {
-            datosFiscales.classList.add('show');
-        } else {
-            datosFiscales.classList.remove('show');
-            document.getElementById('rfc').value = '';
-            document.getElementById('domicilio_fiscal').value = '';
-        }
+    if (opcionSi.checked) {
+        datosFiscales.style.display = 'block';
+    } else {
+        datosFiscales.style.display = 'none';
+        document.getElementById('rfc').value = '';
+        document.getElementById('domicilio_fiscal').value = '';
     }
-    
+}
     opcionSi.addEventListener('change', toggleDatosFiscales);
     opcionNo.addEventListener('change', toggleDatosFiscales);
     

@@ -61,7 +61,7 @@ if (isset($_GET['ajax'])) {
 <?php
 // Configuración de encabezado
 $encabezado = "Lista los Clientes";
-$subtitulo = "Muestra lso cliente registrados en el  sistema";
+$subtitulo = "Muestra clientes registrados en el  sistema";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
 require('../../includes/header.php');
@@ -74,9 +74,7 @@ require('../../includes/header.php');
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Clientes</h2>
                 <div>
-                    <a href="dashboard.php" class="btn btn-light btn-sm">
-                        <i class="bi bi-arrow-left"></i> Regresar
-                    </a>
+                
                     <a href="registro_cliente.php" class="btn btn-success btn-sm ms-2">
                         <i class="bi bi-plus-circle"></i> Nuevo
                     </a>
@@ -85,22 +83,17 @@ require('../../includes/header.php');
         </div>
         
         <div class="card-body">
-            <!-- Barra de búsqueda -->
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="input-group">
-                        <span class="input-group-text bg-primary text-white">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="busqueda" 
-                               placeholder="Buscar clientes por nombre, alias, empresa o contacto..."
-                               value="<?= htmlspecialchars($busqueda) ?>">
-                        <button class="btn btn-outline-secondary" type="button" id="limpiar-busqueda">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <div class="input-group">
+    <span class="input-group-text" style="background-color: var(--color-primary); color: white;">
+        <i class="bi bi-search"></i>
+    </span>
+    <input type="text" class="form-control" id="busqueda" 
+           placeholder="Buscar clientes por nombre, alias, empresa o contacto..."
+           value="<?= htmlspecialchars($busqueda) ?>">
+    <button class="btn btn-outline-secondary" type="button" id="limpiar-busqueda">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>
 
             <?php if (isset($_SESSION['success_message'])): ?>
                 <div class="alert alert-success alert-dismissible fade show">

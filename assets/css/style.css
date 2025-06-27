@@ -401,6 +401,14 @@ form button {
   color: white;
 }
 
+.table thead th {
+    background-color: #45814d;
+    color: white;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 1rem;
+}
+
 /* =========================
    TABLA DE CLIENTES (ESTILOS MEJORADOS)
    ========================= */
@@ -527,6 +535,25 @@ form button {
   justify-content: space-between;
   min-height: 280px;
 }
+
+/* =========================
+   TARJETAS
+   ========================= */
+.card-header {
+  background-color: var(--color-primary) !important; /* Verde como el encabezado */
+  color: white !important;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 
 .card:hover {
   transform: scale(1.02);
