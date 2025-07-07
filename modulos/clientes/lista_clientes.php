@@ -73,29 +73,29 @@ require('../../includes/header.php');
 <main class="container mt-4 mb-5">
     <div class="card card-lista">
         <div class="card-header bg-primary text-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Clientes</h2>
-                <div>
-                
-                    <a href="registro_cliente.php" class="btn btn-success btn-sm ms-2">
-                        <i class="bi bi-plus-circle"></i> Nuevo
-                    </a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Clientes</h2>
+                    <div>
+                    
+                        <a href="registro_cliente.php" class="btn btn-success btn-sm ms-2">
+                            <i class="bi bi-plus-circle"></i> Nuevo
+                        </a>
+                    </div>
                 </div>
             </div>
+            
+            <div class="card-body">
+                <div class="input-group">
+            <span class="input-group-text" style="background-color: var(--color-primary); color: white;">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control" id="busqueda" 
+                placeholder="Buscar clientes por nombre, alias, empresa o contacto..."
+                value="<?= htmlspecialchars($busqueda) ?>">
+            <button class="btn btn-outline-secondary" type="button" id="limpiar-busqueda">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
-        
-        <div class="card-body">
-            <div class="input-group">
-    <span class="input-group-text" style="background-color: var(--color-primary); color: white;">
-        <i class="bi bi-search"></i>
-    </span>
-    <input type="text" class="form-control" id="busqueda" 
-           placeholder="Buscar clientes por nombre, alias, empresa o contacto..."
-           value="<?= htmlspecialchars($busqueda) ?>">
-    <button class="btn btn-outline-secondary" type="button" id="limpiar-busqueda">
-        <i class="bi bi-x-lg"></i>
-    </button>
-</div>
 
             <?php if (isset($_SESSION['success_message'])): ?>
                 <div class="alert alert-success alert-dismissible fade show">
