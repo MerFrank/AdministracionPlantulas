@@ -362,11 +362,11 @@ require('../../includes/header.php');
                                 <td class="actions-cell">
                                     <a href="Registro_variedades.php?editar=<?= $variedad['id_variedad'] ?>" 
                                         class="btn btn-sm btn-warning" title="Editar">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-edit"></i> Editar
                                     </a>
                                     <button onclick="confirmarEliminacion(<?= $variedad['id_variedad'] ?>)" 
                                             class="btn btn-sm btn-danger" title="Eliminar">
-                                        <i class="fas fa-trash"></i>
+                                        <i class="fas fa-trash"></i> Eliminar
                                     </button>
                                 </td>
                             </tr>
