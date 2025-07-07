@@ -18,17 +18,20 @@ $sql = "SELECT
     c.nombre_Cliente AS nombre_cliente,
     np.fechaPedido,
     dnp.monto_total,
-    sa.monto_pago,
-    SUM(sa.monto_pago) OVER (PARTITION BY sa.numero_venta ORDER BY sa.fecha_pago) AS total_abonado,
-    dnp.monto_total - SUM(sa.monto_pago) OVER (PARTITION BY sa.numero_venta ORDER BY sa.fecha_pago) AS saldo_pendiente,
-    sa.fecha_pago,
-    sa.estado_pago,
-    sa.metodo_pago
+    COALESCE(SUM(sa.monto_pago), 0) AS total_abonado,
+    (dnp.monto_total - COALESCE(SUM(sa.monto_pago), 0)) AS saldo_pendiente,
+    MAX(sa.fecha_pago) AS ultima_fecha_pago,
+    CASE 
+        WHEN COALESCE(SUM(sa.monto_pago), 0) >= dnp.monto_total THEN 'Pagado completo'
+        WHEN COALESCE(SUM(sa.monto_pago), 0) > 0 THEN 'Pago parcial'
+        ELSE 'Pendiente de pago'
+    END AS estado_pago
 FROM notaspedidos np
 JOIN detallesnotapedido dnp ON np.id_notaPedido = dnp.id_notaPedido
-JOIN seguimientoanticipos sa ON np.id_notaPedido = sa.numero_venta
 JOIN clientes c ON np.id_cliente = c.id_cliente
-ORDER BY np.id_notaPedido, sa.fecha_pago";
+LEFT JOIN seguimientoanticipos sa ON np.id_notaPedido = sa.numero_venta
+GROUP BY np.id_notaPedido, np.id_cliente, c.nombre_Cliente, np.fechaPedido, dnp.monto_total
+ORDER BY np.id_notaPedido";
 
 $stmt = $conexion->prepare($sql);
 $stmt->execute();
@@ -135,40 +138,54 @@ require('../../includes/header.php');
               </tr>
             </thead>
             <tbody>
+              <?php if (empty($notasAgrupadas)): ?>
               <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>
-                  <span class="payment-method payment-cash"
-                    ></span
-                  >
-                </td>
-                <td>
-                  <span class="status-badge status-pending"
-                    ></span
-                  >
-                </td>
-                <td>
-                  <button
-                    class="btn btn-sm btn-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#paymentDetailsModal"
-                  >
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <button
-                    class="btn btn-sm btn-success"
-                    data-bs-toggle="modal"
-                    data-bs-target="#newPaymentModal"
-                  >
-                    <i class="bi bi-cash-coin"></i>
-                  </button>
-                </td>
+                  <td colspan="8" class="text-center py-4">
+                      <i class="bi bi-people text-muted" style="font-size: 2rem;"></i>
+                      <p class="mt-2">No se encontraron pagos <?= isset($_GET['busqueda']) && !empty($_GET['busqueda']) ? 'con el criterio de búsqueda' : '' ?></p>
+                  </td>
+              </tr>
+          <?php else: ?>
+            <?php foreach ($notasAgrupadas as $nota): 
+                $estadoClase = ($nota['saldo_pendiente'] <= 0) ? 'status-completed' : 'status-pending';
+                $estadoTexto = ($nota['saldo_pendiente'] <= 0) ? 'Completado' : 'Pendiente';
+                $metodoClase = ($nota['metodo_pago'] == 'transfer') ? 'payment-transfer' : 'payment-cash';
+                $metodoTexto = ($nota['metodo_pago'] == 'transfer') ? 'Transferencia' : 'Efectivo'; ?>
+              <tr data-id="<?= $nota['id_notaPedido'] ?>">
+                  <td><?= htmlspecialchars($nota['id_notaPedido']) ?></td>
+                  <td><?= htmlspecialchars($nota['nombre_cliente']) ?></td>
+                  <td><?= date('d/m/Y', strtotime($nota['fechaPedido'])) ?></td>
+                  <td>$<?= number_format($nota['monto_total'], 2) ?></td>
+                  <td>$<?= number_format($nota['total_abonado'], 2) ?></td>
+                  <td>$<?= number_format($nota['saldo_pendiente'], 2) ?></td>
+                  <td><?= date('d/m/Y', strtotime($nota['fecha_pago'])) ?></td>
+                  <td>
+                      <span class="payment-method <?= $metodoClase ?>">
+                          <?= $metodoTexto ?>
+                      </span>
+                  </td>
+                  <td>
+                      <span class="status-badge <?= $estadoClase ?>">
+                          <?= $estadoTexto ?>
+                      </span>
+                  </td>
+                  <td>
+                      <button class="btn btn-sm btn-primary view-details" 
+                              data-bs-toggle="modal" 
+                              data-bs-target="#paymentDetailsModal"
+                              data-id="<?= $nota['id_notaPedido'] ?>">
+                          <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-success new-payment"
+                              data-bs-toggle="modal"
+                              data-bs-target="#newPaymentModal"
+                              data-id="<?= $nota['id_notaPedido'] ?>">
+                          <i class="bi bi-cash-coin"></i>
+                      </button>
+                  </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
             </tbody>
           </table>
         </div>
