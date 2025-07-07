@@ -56,7 +56,12 @@ if (!empty($busqueda)) {
 }
 
 // Incluir el header principal (solo una vez)
-require_once __DIR__ . '/../../includes/header.php';
+
+$encabezado = "Lista de Proveedores";
+$ruta = "dashboard_proveedores.php";
+$texto_boton = "Regresar";
+require('../../includes/header.php');
+
 ?>
 
 <main class="container mt-3 mb-4">

@@ -125,16 +125,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 }
 
 // Incluir header
-require_once __DIR__ . '/../../includes/header.php';?>
+$titulo = "Editar de Proveedores";
+$encabezado = "Panel Edición de Proveedores";
+$subtitulo = "";
+$ruta = "dashboard_proveedores.php";
+$texto_boton = "Regresar";
+require('../../includes/header.php');
+?>
 
 <main class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Proveedor</h2>
-                <a href="lista_proveedores.php" class="btn btn-light">
-                    <i class="bi bi-arrow-left"></i> Volver a la lista
-                </a>
             </div>
         </div>
         

@@ -5,6 +5,8 @@ $encabezado = "Este es el index";
 $subtitulo = "En esta página puedes ver el contenido del index";
 
 // Incluir la cabecera
+$ruta = "";
+$texto_boton = "Cerrar Secion (falta)";
 require('./includes/header.php');
 ?>
 

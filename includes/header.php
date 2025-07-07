@@ -28,8 +28,8 @@ define('BASE_URL', '/Administrativa');
         <nav class="navbar bg-body-tertiary">
           <div class="container-fluid">
             <div class="Opciones-barra">
-              <button class="save-button" onclick="window.history.back()">
-                <i class="bi bi-arrow-left"></i>  Regresar
+              <button class="save-button" onclick="window.location.href='<?php echo $ruta; ?>'">
+                <i class="bi bi-arrow-left"></i>  <?php echo $texto_boton; ?>
               </button>
             </div>
           </div>

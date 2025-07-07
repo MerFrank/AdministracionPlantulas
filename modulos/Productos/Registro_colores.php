@@ -98,6 +98,8 @@ $encabezado = "Gestión de Colores";
 $subtitulo = "Administra inventario de colores.";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
+$ruta = "dashboard_registroProducto.php";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 

@@ -123,40 +123,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 }
 
 // Incluir header
-require_once __DIR__ . '/../../includes/header.php';
+$titulo = "Esditar Clientes";
+$encabezado = "Editar Clientes";
+$subtitulo = "";
+$ruta = "lista_clientes.php";
+$texto_boton = "Regresar";
+require('../../includes/header.php');
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Cliente - Plantulas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="/Administrativa/assets/css/style.css" rel="stylesheet">
-    <style>
-        .invalid-feedback { display: none; color: #dc3545; }
-        .was-validated .form-control:invalid ~ .invalid-feedback { display: block; }
-        #datos-fiscales { transition: all 0.3s ease; max-height: 0; overflow: hidden; }
-        #datos-fiscales.show { max-height: 500px; }
-        .form-section { margin-bottom: 1.5rem; }
-        .form-section h5 { margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #45814d; color: #45814d; }
-        .required-field::after { content: " *"; color: #dc3545; }
-        .rfc-example { font-size: 0.85rem; color: #6c757d; font-style: italic; }
-    </style>
-</head>
-<body>
-    <?php include_once __DIR__ . '/../../includes/header.php'; ?>
-    
     <main class="container mt-4">
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <h2 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Cliente</h2>
-                    <a href="lista_clientes.php" class="btn btn-light">
-                        <i class="bi bi-arrow-left"></i> Volver a la lista
-                    </a>
+
                 </div>
             </div>
             

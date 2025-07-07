@@ -6,6 +6,8 @@ $encabezado = "Panel de Ventas y Seguimiento de Pagos";
 $subtitulo = "Administra cotizaciones, ventas, seguimiento de pagos";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
+$ruta = "../../index.php";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 

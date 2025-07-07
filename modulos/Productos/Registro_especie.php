@@ -79,6 +79,8 @@ $encabezado = "Registro de Especies";
 $subtitulo = "Registra nuevas Especies en el sistema";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
+$ruta = "dashboard_registroProducto.php";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 

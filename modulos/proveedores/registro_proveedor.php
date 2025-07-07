@@ -112,7 +112,9 @@ $encabezado = "Registro Proveedor";
 $subtitulo = "Administra los proveedores de tu sistema";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
-require __DIR__ . '/../../includes/header.php';
+$ruta = "dashboard_proveedores.php";
+$texto_boton = "Regresar";
+require('../../includes/header.php');
 ?>
 
 <main class="container mt-4">

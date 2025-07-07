@@ -6,6 +6,8 @@ $encabezado = "Panel de Control de Productos";
 $subtitulo = "Administra inventario, colores, especies y variedades";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
+$ruta = "../../index.php";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 

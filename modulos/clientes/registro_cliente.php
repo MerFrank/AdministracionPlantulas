@@ -112,6 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 }
 
 // Incluir la cabecera (ruta relativa al archivo actual)
+$ruta = "dashboard_clientes.php";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 
