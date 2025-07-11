@@ -105,13 +105,6 @@ require('../../includes/header.php');
       <button class="btn btn-primary" id="searchButton">
         <i class="bi bi-search"></i> Buscar
       </button>
-      <button
-        class="btn btn-success ms-2"
-        data-bs-toggle="modal"
-        data-bs-target="#newPaymentModal"
-      >
-        <i class="bi bi-plus-circle"></i> Registrar Pago
-      </button>
     </div>
 
     <div class="card">
@@ -143,7 +136,7 @@ require('../../includes/header.php');
                   <td colspan="8" class="text-center py-4">
                       <i class="bi bi-people text-muted" style="font-size: 2rem;"></i>
                       <p class="mt-2">No se encontraron pagos <?= isset($_GET['busqueda']) && !empty($_GET['busqueda']) ? 'con el criterio de búsqueda' : '' ?></p>
-                  </td>
+                  </td> 
               </tr>
           <?php else: ?>
             <?php foreach ($notasAgrupadas as $nota): 
@@ -151,7 +144,7 @@ require('../../includes/header.php');
                 $estadoTexto = ($nota['saldo_pendiente'] <= 0) ? 'Completado' : 'Pendiente';
                 $metodoClase = ($nota['metodo_pago'] == 'transfer') ? 'payment-transfer' : 'payment-cash';
                 $metodoTexto = ($nota['metodo_pago'] == 'transfer') ? 'Transferencia' : 'Efectivo'; ?>
-              <tr data-id="<?= $nota['id_notaPedido'] ?>">
+              <tr data-id="<?= $nota['id_notaPedido'] ?>" data-idcliente="<?= $nota['id_cliente'] ?>">
                   <td><?= htmlspecialchars($nota['id_notaPedido']) ?></td>
                   <td><?= htmlspecialchars($nota['nombre_cliente']) ?></td>
                   <td><?= date('d/m/Y', strtotime($nota['fechaPedido'])) ?></td>
@@ -193,324 +186,295 @@ require('../../includes/header.php');
     </div>
   </div>
 
-  <!-- Modal Detalles de Pagos -->
-  <div
-    class="modal fade"
-    id="paymentDetailsModal"
-    tabindex="-1"
-    aria-labelledby="paymentDetailsModalLabel"
-    aria-hidden="true"
-  >
-    <div class="modal-dialog modal-lg">
+<!-- Modal Detalles de Pagos -->
+<div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="paymentDetailsModalLabel">Detalles de Venta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <!-- Información del cliente se cargará aquí -->
+          </div>
+          <div class="col-md-6">
+            <!-- Información de la venta se cargará aquí -->
+          </div>
+        </div>
+
+        <h6 class="mb-3">Historial de Pagos</h6>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Método</th>
+                <th>Recibido por</th>
+                <th>Comentarios</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Historial de pagos se cargará aquí -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" 
+                data-bs-target="#newPaymentModal" data-bs-dismiss="modal">
+          Registrar Nuevo Pago
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Modal Registrar Nuevo Pago -->
+  <div class="modal fade" id="newPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title" id="paymentDetailsModalLabel">
-          </h5>
-          <button
-            type="button"
-            class="btn-close btn-close-white"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">Registrar Nuevo Pago</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <h6>Información del Cliente</h6>
-              <p><strong>Nombre:</strong></p>
-              <p><strong>Teléfono:</strong></p>
-              <p>
-                <strong>Dirección:</strong></p>
-            </div>
-            <div class="col-md-6">
-              <h6>Información de la Venta</h6>
-              <p><strong>Fecha:</strong> </p>
-              <p><strong>Total:</strong> </p>
-              <p><strong>Abonado:</strong></p>
-              <p><strong>Saldo:</strong></p>
-            </div>
+          <form id="paymentForm">
+            <div class="mb-3">
+              <label for="folioAnticipo" class="form-label">Folio Anticipo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="folioAnticipo" required>
+            </div>  
+            <div class="mb-3">
+            <label for="saleNumber" class="form-label">Número de Venta</label>
+            <input type="text" class="form-control" id="saleNumber" readonly>
           </div>
-
-          <h6 class="mb-3">Historial de Pagos</h6>
-          <div class="table-responsive">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Monto</th>
-                  <th>Método</th>
-                  <th>Recibido por</th>
-                  <th>Comentarios</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($notasAgrupadas as $notas):
-                 $estadoClase = ($nota['saldo_pendiente'] <= 0) ? 'status-completed' : 'status-pending';
-                 $estadoTexto = ($nota['saldo_pendiente'] <= 0) ? 'Completado' : 'Pendiente';
-                 $metodoClase = ($nota['metodo_pago'] == 'transfer') ? 'payment-transfer' : 'payment-cash';
-                 $metodoTexto = ($nota['metodo_pago'] == 'transfer') ? 'Transferencia' : 'Efectivo';
-                ?>
-                <tr data-id="<?= $nota['id_notaPedido']?>">
-                  <a href=""></a>
-                  <td><?= htmlspecialchars($nota['id_notaPedido']) ?></td>
-                  <td><?= htmlspecialchars($nota['nombre_cliente']) ?></td>
-                  <td><?= date('d/m/Y', strtotime($nota['fechaPedido'])) ?></td>
-                  <td>$<?= number_format($nota['monto_total'], 2) ?></td>
-                  <td>$<?= number_format($nota['total_abonado'], 2) ?></td>
-                  <td>$<?= number_format($nota['saldo_pendiente'], 2) ?></td>
-                  <td><?= date('d/m/Y', strtotime($nota['fecha_pago'])) ?></td>
-                  <td>
-                    <span class="payment-method <?= $metodoClase ?>">
-                      <?= $metodoTexto ?>
-                    </span>
-                  </td>
-                  <td>
-                    <span class="status-badge <?= $estadoClase ?>">
-                      <?= $estadoTexto ?>
-                    </span>
-                  </td>
-                  <td>
-                      <button class="btn btn-sm btn-primary view-details" 
-                              data-bs-toggle="modal" 
-                              data-bs-target="#paymentDetailsModal"
-                              data-id="<?= $nota['id_notaPedido'] ?>">
-                          <i class="bi bi-eye"></i>
-                      </button>
-                      <button class="btn btn-sm btn-success new-payment"
-                              data-bs-toggle="modal"
-                              data-bs-target="#newPaymentModal"
-                              data-id="<?= $nota['id_notaPedido'] ?>">
-                          <i class="bi bi-cash-coin"></i>
-                      </button>
-                  </td>
-                </tr>
-                <?php endforeach ?>
-              </tbody>
-            </table>
+          <div class="mb-3">
+            <label for="clientName" class="form-label">Cliente</label>
+            <input type="text" class="form-control" id="clientName" readonly>
+            <input type="hidden" id="clienteId">
           </div>
+            <div class="mb-3">
+              <label for="paymentDate" class="form-label">Fecha de Pago <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="paymentDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="paymentAmount" class="form-label">Monto del Pago <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" id="paymentAmount" 
+                      min="0.01" step="0.01" required>
+              </div>
+              <small class="text-muted"></small>
+            </div>
+            <div class="mb-3">
+              <label for="paymentMethod" class="form-label">Método de Pago <span class="text-danger">*</span></label>
+              <select class="form-select" id="paymentMethod" required>
+                <option value="">Seleccionar...</option>
+                <option value="cash">Efectivo</option>
+                <option value="transfer">Transferencia Bancaria</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="paymentComments" class="form-label">Comentarios (Opcional)</label>
+              <textarea class="form-control" id="paymentComments" rows="2"></textarea>
+            </div>
+          </form>
         </div>
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-            Cerrar
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#newPaymentModal"
-            data-bs-dismiss="modal"
-          >
-            Registrar Nuevo Pago
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" id="savePayment">
+            <i class="bi bi-save"></i> Guardar Pago
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal Registrar Nuevo Pago -->
-  <div
-    class="modal fade"
-    id="newPaymentModal"
-    tabindex="-1"
-    aria-labelledby="newPaymentModalLabel"
-    aria-hidden="true"
-  >
-  <form action="" method="POST">
-    <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header bg-success text-white">
-            <h5 class="modal-title" id="newPaymentModalLabel">
-              Registrar Nuevo Pago
-            </h5>
-            <button
-              type="button"
-              class="btn-close btn-close-white"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <form id="paymentForm">
-              <div class="mb-3">
-                <label for="saleNumber" class="form-label"
-                  >Número de Venta</label
-                >
-                <input
-                  type="text"
-                  class="form-control"
-                  id="saleNumber"
-                  readonly
-                />
-              </div>
-              <div class="mb-3">
-                <label for="saleNumber" class="form-label"
-                  >Folio de anticipo</label
-                >
-                <input
-                  type="text"
-                  class="form-control"
-                  id="saleNumber"
-                  readonly
-                />
-              </div>
-              <div class="mb-3">
-                <label for="clientName" class="form-label">Cliente</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="clientName"
-                  readonly
-                />
-              </div>
-              <div class="mb-3">
-                <label for="paymentDate" class="form-label"
-                  >Fecha de Pago</label
-                >
-                <input
-                  type="date"
-                  class="form-control"
-                  id="paymentDate"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label for="paymentAmount" class="form-label"
-                  >Monto del Pago</label
-                >
-                <div class="input-group">
-                  <span class="input-group-text">$</span>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="paymentAmount"
-                    min="1"
-                    step="0.01"
-                    required
-                  />
-                </div>
-                <small class="text-muted"></small>
-              </div>
-              <div class="mb-3">
-                <label for="paymentMethod" class="form-label"
-                  >Método de Pago</label
-                >
-                <select class="form-select" id="paymentMethod" required>
-                  <option value="">Seleccionar...</option>
-                  <option value="cash">Efectivo</option>
-                  <option value="transfer">Transferencia Bancaria</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="paymentComments" class="form-label"
-                  >Comentarios (Opcional)</label
-                >
-                <textarea
-                  class="form-control"
-                  id="paymentComments"
-                  rows="2"
-                ></textarea>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancelar
-            </button>
-            <button type="button" class="btn btn-success" id="savePayment">
-              Guardar Pago
-            </button>
-          </div>
-        </div>
-      </div>
-  
-    </div>
-  </form>  
-
 </main>
 <?php require('../../includes/footer.php'); ?>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Manejar clic en botón de ver detalles
-    document.querySelectorAll('.view-details').forEach(button => {
-        button.addEventListener('click', function() {
-            const notaId = this.getAttribute('data-id');
-            cargarDetallesNota(notaId);
-        });
+document.addEventListener('DOMContentLoaded', function () {
+  // 🔍 Buscar por cliente, venta y estado
+  document.getElementById('searchButton').addEventListener('click', function () {
+    const cliente = document.getElementById('searchClient').value.toLowerCase();
+    const venta = document.getElementById('searchSale').value.toLowerCase();
+    const estado = document.getElementById('filterStatus').value;
+
+    document.querySelectorAll('#creditosTable tbody tr').forEach(row => {
+      const textCliente = row.cells[1].textContent.toLowerCase();
+      const textVenta = row.cells[0].textContent.toLowerCase();
+      const textEstado = row.cells[8].textContent.toLowerCase();
+
+      const matchCliente = textCliente.includes(cliente);
+      const matchVenta = textVenta.includes(venta);
+      const matchEstado = (estado === 'all') ||
+        (estado === 'pending' && textEstado.includes('pendiente')) ||
+        (estado === 'completed' && textEstado.includes('completado'));
+
+      row.style.display = (matchCliente && matchVenta && matchEstado) ? '' : 'none';
     });
-    
-    // Manejar clic en botón de nuevo pago
-    document.querySelectorAll('.new-payment').forEach(button => {
-        button.addEventListener('click', function() {
-            const notaId = this.getAttribute('data-id');
-            document.getElementById('saleNumber').value = notaId;
-        });
-    });
-    
-    // Función para cargar detalles de una nota específica
-    function cargarDetallesNota(notaId) {
-        fetch(`obtener_detalles_nota.php?id=${notaId}`)
-            .then(response => response.json())
-            .then(data => {
-                // Actualizar modal de detalles
-                document.getElementById('paymentDetailsModalLabel').textContent = `Detalles de Venta #${data.nota.id_notaPedido}`;
-                
-                // Información del cliente
-                document.querySelector('#paymentDetailsModal .modal-body p:nth-child(1)').innerHTML = `<strong>Nombre:</strong> ${data.nota.nombre_cliente}`;
-                // Agrega más campos según sea necesario
-                
-                // Información de la venta
-                document.querySelector('#paymentDetailsModal .modal-body p:nth-child(4)').innerHTML = `<strong>Fecha:</strong> ${new Date(data.nota.fechaPedido).toLocaleDateString()}`;
-                document.querySelector('#paymentDetailsModal .modal-body p:nth-child(5)').innerHTML = `<strong>Total:</strong> $${data.nota.monto_total.toFixed(2)}`;
-                document.querySelector('#paymentDetailsModal .modal-body p:nth-child(6)').innerHTML = `<strong>Abonado:</strong> $${data.nota.total_abonado.toFixed(2)}`;
-                document.querySelector('#paymentDetailsModal .modal-body p:nth-child(7)').innerHTML = `<strong>Saldo:</strong> $${data.nota.saldo_pendiente.toFixed(2)}`;
-                
-                // Historial de pagos
-                const tbody = document.querySelector('#paymentDetailsModal tbody');
-                tbody.innerHTML = '';
-                data.pagos.forEach(pago => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${new Date(pago.fecha_pago).toLocaleDateString()}</td>
-                        <td>$${pago.monto_pago.toFixed(2)}</td>
-                        <td><span class="payment-method ${pago.metodo_pago === 'transfer' ? 'payment-transfer' : 'payment-cash'}">
-                            ${pago.metodo_pago === 'transfer' ? 'Transferencia' : 'Efectivo'}
-                        </span></td>
-                        <td>${pago.recibido_por || 'N/A'}</td>
-                        <td>${pago.comentarios || ''}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+  });
+
+  // 👁️ Cargar detalles en modal
+  document.querySelectorAll('.view-details').forEach(button => {
+    button.addEventListener('click', function () {
+      const notaId = this.getAttribute('data-id');
+      fetch(`obtener_detalles_nota.php?id=${notaId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+
+          // Título
+          document.getElementById('paymentDetailsModalLabel').textContent =
+            `Detalles de Venta #${data.nota.id_notaPedido}`;
+
+          // Cliente
+          document.querySelector('#paymentDetailsModal .col-md-6:first-child').innerHTML = `
+            <h6>Información del Cliente</h6>
+            <p><strong>Nombre:</strong> ${data.nota.nombre_Cliente}</p>
+            <p><strong>Teléfono:</strong> ${data.cliente.telefono || 'No disponible'}</p>
+            <p><strong>Dirección:</strong> ${data.cliente.domicilio_fiscal || 'No disponible'}</p>
+          `;
+
+          // Venta
+          document.querySelector('#paymentDetailsModal .col-md-6:last-child').innerHTML = `
+            <h6>Información de la Venta</h6>
+            <p><strong>Fecha:</strong> ${new Date(data.nota.fechaPedido).toLocaleDateString()}</p>
+            <p><strong>Total:</strong> $${parseFloat(data.nota.monto_total).toFixed(2)}</p>
+            <p><strong>Abonado:</strong> $${parseFloat(data.nota.total_abonado).toFixed(2)}</p>
+            <p><strong>Saldo:</strong> $${parseFloat(data.nota.saldo_pendiente).toFixed(2)}</p>
+          `;
+
+          // Historial
+          const tbody = document.querySelector('#paymentDetailsModal tbody');
+          tbody.innerHTML = '';
+
+          if (data.pagos.length === 0) {
+            tbody.innerHTML = `
+              <tr><td colspan="5" class="text-center py-3 text-muted">No se han registrado pagos</td></tr>
+            `;
+          } else {
+            data.pagos.forEach(pago => {
+              tbody.innerHTML += `
+                <tr>
+                  <td>${new Date(pago.fecha_pago).toLocaleDateString()}</td>
+                  <td>$${parseFloat(pago.monto_pago).toFixed(2)}</td>
+                  <td>${pago.metodo_pago === 'transfer' ? 'Transferencia' : 'Efectivo'}</td>
+                  <td>${pago.recibido_por || 'N/A'}</td>
+                  <td>${pago.comentarios || ''}</td>
+                </tr>
+              `;
             });
-    }
-    
-    // Manejar búsqueda
-    document.getElementById('searchButton').addEventListener('click', function() {
-        const cliente = document.getElementById('searchClient').value.toLowerCase();
-        const venta = document.getElementById('searchSale').value.toLowerCase();
-        const estado = document.getElementById('filterStatus').value;
-        
-        document.querySelectorAll('#creditosTable tbody tr').forEach(row => {
-            const textCliente = row.cells[1].textContent.toLowerCase();
-            const textVenta = row.cells[0].textContent.toLowerCase();
-            const textEstado = row.cells[8].textContent.toLowerCase();
-            
-            const matchCliente = textCliente.includes(cliente);
-            const matchVenta = textVenta.includes(venta);
-            const matchEstado = (estado === 'all') || 
-                               (estado === 'pending' && textEstado.includes('pendiente')) || 
-                               (estado === 'completed' && textEstado.includes('completado'));
-            
-            row.style.display = (matchCliente && matchVenta && matchEstado) ? '' : 'none';
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error al cargar los detalles: ' + error.message);
         });
     });
+  });
+
+  // 💾 Guardar nuevo pago
+  document.getElementById('savePayment').addEventListener('click', function () {
+    const notaId = document.getElementById('saleNumber').value;
+    const fechaPago = document.getElementById('paymentDate').value;
+    const montoPago = parseFloat(document.getElementById('paymentAmount').value);
+    const metodoPago = document.getElementById('paymentMethod').value;
+    const comentarios = document.getElementById('paymentComments').value;
+    const folioAnticipo = document.getElementById('folioAnticipo').value;
+    const clienteId = document.getElementById('clienteId').value;
+
+
+    if (!notaId || !fechaPago || !montoPago || !metodoPago) {
+      alert('Por favor complete todos los campos obligatorios');
+      return;
+    }
+
+    if (montoPago <= 0) {
+      alert('El monto debe ser mayor a cero');
+      return;
+    }
+
+    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+    this.disabled = true;
+
+    fetch('registrar_pago.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        folio_anticipo: folioAnticipo,
+        nota_id: notaId,
+        fecha_pago: fechaPago,
+        monto_pago: montoPago,
+        metodo_pago: metodoPago,
+        comentarios: comentarios,
+        id_cliente: clienteId
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+
+        bootstrap.Modal.getInstance(document.getElementById('newPaymentModal')).hide();
+        alert('Pago registrado correctamente');
+        location.reload();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al registrar el pago: ' + error.message);
+      })
+      .finally(() => {
+        this.innerHTML = '<i class="bi bi-save"></i> Guardar Pago';
+        this.disabled = false;
+      });
+  });
+
+  // 🟢 Configurar datos al abrir el modal de nuevo pago
+  document.getElementById('newPaymentModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const notaId = button.getAttribute('data-id');
+
+    const fila = document.querySelector(`tr[data-id="${notaId}"]`);
+    if (!fila) return;
+
+    const numeroVenta = fila.cells[0].textContent.trim();
+    const nombreCliente = fila.cells[1].textContent.trim();
+    const saldoText = fila.cells[5].textContent.replace('$', '').replace(',', '').trim();
+    const saldoPendiente = parseFloat(saldoText) || 0;
+
+    document.getElementById('saleNumber').value = numeroVenta;
+    document.getElementById('clientName').value = nombreCliente;
+
+    const small = document.querySelector('#newPaymentModal small.text-muted');
+    if (small) small.textContent = `Saldo pendiente: $${saldoPendiente.toFixed(2)}`;
+
+    const amountInput = document.getElementById('paymentAmount');
+    if (amountInput) {
+      amountInput.max = saldoPendiente;
+      amountInput.setAttribute('max', saldoPendiente);
+    }
+
+    document.getElementById('paymentDate').valueAsDate = new Date();
+
+    const idCliente = fila.getAttribute('data-idcliente');
+    document.getElementById('clienteId').value = idCliente
+  });
+
+  // ✏️ Validación en tiempo real del monto
+  document.getElementById('paymentAmount').addEventListener('input', function () {
+    const max = parseFloat(this.max) || Infinity;
+    const value = parseFloat(this.value) || 0;
+
+    if (value > max) {
+      this.setCustomValidity(`El monto no puede exceder $${max.toFixed(2)}`);
+    } else {
+      this.setCustomValidity('');
+    }
+  });
+
 });
 </script>
