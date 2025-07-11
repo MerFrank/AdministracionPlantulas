@@ -10,6 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
+$ruta = "../../index.php";
+$texto_boton = "";
 require_once __DIR__ . '/../../includes/header.php';
 
 // Conexión a la base de datos

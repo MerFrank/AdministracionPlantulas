@@ -27,6 +27,8 @@ $cuentas = $con->query("
 
 $titulo = 'Cuentas Bancarias';
 $encabezado = 'Listado de Cuentas Bancarias';
+$ruta = "dashboard_cuentas.php";
+$texto_boton = "";
 require __DIR__ . '/../../includes/header.php';
 ?>
 

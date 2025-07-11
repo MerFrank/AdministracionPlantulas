@@ -9,14 +9,19 @@ define('BASE_URL', '/Administrativa');
   <title><?php echo $titulo ?? 'Panel Plantas Agrodex'; ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="/Administracion/assets/css/style.css">
+  <link rel="stylesheet" href="/Administrativa/assets/css/style.css">
+   <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 <body>
   <div class="contenedor-pagina">
     <header>
       <div class="encabezado d-flex align-items-center">
         <a class="navbar-brand" href="/">
-          <img src="/Administracion/assets/img/logoplantulas.png" alt="Logo" width="130" height="124">
+          <img src="/Administrativa/assets/img/logoplantulas.png" alt="Logo" width="130" height="124">
         </a>
         <div>
           <h2><?php echo $encabezado ?? 'Panel de Control'; ?></h2>
