@@ -31,6 +31,8 @@ $egresos = $con->query("
 ")->fetchAll();
 
 $titulo = 'Listado de Egresos';
+$ruta = "dashboard_egresos.php";
+$texto_boton = "";
 require __DIR__ . '/../../includes/header.php';
 
 // Función para convertir número a letras

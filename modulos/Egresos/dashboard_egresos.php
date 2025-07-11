@@ -7,6 +7,8 @@ $active_page = "egresos";
 
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
+$ruta = "../../index.php";
+$texto_boton = "";
 require_once __DIR__ . '/../../includes/header.php';
 
 // Conexión a la base de datos
@@ -35,16 +37,6 @@ $ultimos_egresos = $con->query("
     LIMIT 5
 ")->fetchAll();
 ?>
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($titulo); ?> - Plantulas</title>
-    <!-- Favicon y estilos ya incluidos desde header.php -->
-</head>
-<body class="dashboard-body">
     <main class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -184,12 +176,10 @@ $ultimos_egresos = $con->query("
                     </div>
 
                     
-                    </div>
+                
                 </div>
             </div>
         </div>
     </main>
 
-    <?php require __DIR__ . '/../../includes/footer.php'; ?>
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>
