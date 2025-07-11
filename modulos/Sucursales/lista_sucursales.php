@@ -19,6 +19,8 @@ $sucursales = $con->query("SELECT * FROM sucursales WHERE activo = 1 ORDER BY no
 
 $titulo = 'Sucursales';
 $encabezado = 'Listado de Sucursales';
+$ruta = "dashboard_sucursales.php";
+$texto_boton = "";
 require('../../includes/header.php');
 ?>
 

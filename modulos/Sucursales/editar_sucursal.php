@@ -71,7 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = $e->getMessage();
     }
 }
-
+$ruta = "dashboard_sucursales.php";
+$texto_boton = "";
 require('../../includes/header.php');
 ?>
 

@@ -51,6 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$ruta = "dashboard_sucursales.php";
+$texto_boton = "";
 require('../../includes/header.php');
 ?>
 
