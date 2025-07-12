@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             'curp' => isset($_POST['curp']) ? strtoupper(htmlspecialchars(trim($_POST['curp']), ENT_QUOTES, 'UTF-8')) : '',
             'rfc' => isset($_POST['rfc']) ? strtoupper(htmlspecialchars(trim($_POST['rfc']), ENT_QUOTES, 'UTF-8')) : '',
             'nss' => isset($_POST['nss']) ? preg_replace('/[^0-9]/', '', $_POST['nss']) : '',
-            'estatus' => isset($_POST['estatus']) ? 1 : 0
+            'activo' => isset($_POST['activo']) ? 1 : 0
         ];
 
         // Validaciones
@@ -136,12 +136,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                   nombre, apellido_paterno, apellido_materno, fecha_nacimiento, fecha_contratacion, nivel_estudios,
                   telefono, email, direccion, contacto_emergencia_nombre, 
                   contacto_emergencia_parentesco, contacto_emergencia_telefono, hobbies,
-                  red_social, red_social_usuario, tipo_sangre, curp, rfc, nss, estatus
+                  red_social, red_social_usuario, tipo_sangre, curp, rfc, nss, activo
                 ) VALUES (
                   :nombre, :apellido_paterno, :apellido_materno, :fecha_nacimiento, :fecha_contratacion, :nivel_estudios,
                   :telefono, :email, :direccion, :contacto_emergencia_nombre,
                   :contacto_emergencia_parentesco, :contacto_emergencia_telefono, :hobbies,
-                  :red_social, :red_social_usuario, :tipo_sangre, :curp, :rfc, :nss, :estatus
+                  :red_social, :red_social_usuario, :tipo_sangre, :curp, :rfc, :nss, :activo
                 )";
 
         $db = new Database();
@@ -171,6 +171,8 @@ $encabezado = "Registrar Empleado";
 $subtitulo = "Formulario para registrar nuevos empleados";
 
 // Incluir la cabecera
+$ruta = "dashboard_empleados.php";
+$texto_boton = "";
 require('../../includes/header.php');
 ?>
 
@@ -383,8 +385,8 @@ require('../../includes/header.php');
                 </div>
                 
                 <div class="mb-3 form-check mt-3">
-                    <input type="checkbox" class="form-check-input" id="estatus" name="estatus" value="1" checked>
-                    <label class="form-check-label" for="estatus">Empleado activo</label>
+                    <input type="checkbox" class="form-check-input" id="activo" name="activo" value="1" checked>
+                    <label class="form-check-label" for="activo">Empleado activo</label>
                 </div>
                 
                 <!-- Botón de acción -->

@@ -19,6 +19,8 @@ $tipos = $con->query("SELECT * FROM tipos_egreso WHERE activo = 1 ORDER BY nombr
 
 $titulo = 'Tipos de Egreso';
 $encabezado = 'Listado de Tipos de Egreso';
+$ruta = "../dashboard_egresos.php";
+$texto_boton = "";
 require __DIR__ . '/../../../includes/header.php';
 ?>
 

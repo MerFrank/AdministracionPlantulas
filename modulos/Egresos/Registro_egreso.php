@@ -167,13 +167,17 @@ require('../../includes/header.php');
         <h5 class="modal-title">Nuevo Tipo de Egreso</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="formTipoEgreso" action="../tipos_egreso/registro_tipo.php" method="post">
+      <form id="formTipoEgreso" action="./tipos_egreso/registro_tipo.php" method="post">
         <div class="modal-body">
           <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
           <div class="mb-3">
             <label class="form-label">Nombre del Tipo</label>
             <input type="text" class="form-control" name="nombre" required>
           </div>
+          <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -232,7 +236,7 @@ require('../../includes/header.php');
                             </button>
                         </div>
                         
-                        <div class="mb-3" id="proveedorContainer" style="display: none;">
+                        <div class="mb-3" id="proveedorContainer">
                             <label class="form-label">Proveedor</label>
                             <select class="form-select" name="id_proveedor" id="selectProveedor">
                                 <option value="">Seleccione...</option>
@@ -351,15 +355,14 @@ document.addEventListener('DOMContentLoaded', function() {
         tipoEgresoContainer.style.display = esReembolso ? 'none' : 'block';
         cuentaDestinoContainer.style.display = esReembolso ? 'block' : 'none';
         
+        
         // Para egresos normales, verificar si es tipo "proveedor"
         if (!esReembolso) {
             const selectedOption = tipoEgreso.options[tipoEgreso.selectedIndex];
             const esProveedor = selectedOption.text.toLowerCase().includes('proveedor');
-            proveedorContainer.style.display = esProveedor ? 'block' : 'none';
             
             // Actualizar atributo required
             tipoEgreso.required = true;
-            selectProveedor.required = esProveedor;
             
             if (!esProveedor) {
                 selectProveedor.value = '';

@@ -5,6 +5,8 @@ $encabezado = "Gestión de Empleados";
 $subtitulo = "Panel de administración de empleados";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
+$ruta = "../../index.php";
+$texto_boton = "";
 require('../../includes/header.php');
 ?>
 

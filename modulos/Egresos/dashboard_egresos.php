@@ -153,7 +153,22 @@ $ultimos_egresos = $con->query("
                                 </div>
                                 <h3 class="h5">Registrar Egreso</h3>
                                 <p class="text-muted">Registrar un nuevo egreso en el sistema</p>
-                                <a href="registro_egreso.php" class="btn btn-primary stretched-link">
+                                <a href="Registro_egreso.php" class="btn btn-primary stretched-link">
+                                    <i class="bi bi-plus-circle me-1"></i> Nuevo Egreso
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <div class="bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+                                    <i class="bi bi-plus-circle text-primary fs-1"></i>
+                                </div>
+                                <h3 class="h5">Registrar Tipos de Egreso</h3>
+                                <p class="text-muted">Registrar un nuevo tipo de egreso</p>
+                                <a href="./tipos_egreso/registro_tipo.php" class="btn btn-primary stretched-link">
                                     <i class="bi bi-plus-circle me-1"></i> Nuevo Egreso
                                 </a>
                             </div>
@@ -175,7 +190,21 @@ $ultimos_egresos = $con->query("
                         </div>
                     </div>
 
-                    
+
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <div class="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+                                    <i class="bi bi-list-ul text-success fs-1"></i>
+                                </div>
+                                <h3 class="h5">Lista Tipos de Egresos</h3>
+                                <p class="text-muted">Ver todos los tipos de egresos</p>
+                                <a href="./tipos_egreso/lista_tipos.php" class="btn btn-success stretched-link">
+                                    <i class="bi bi-list-ul me-1"></i> Ver Lista
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 
                 </div>
             </div>

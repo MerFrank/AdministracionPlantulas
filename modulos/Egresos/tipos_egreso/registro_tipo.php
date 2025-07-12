@@ -52,6 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$ruta = "../dashboard_egresos.php";
+$texto_boton = "";
 if (!isset($_GET['modal'])) {
     require __DIR__ . '/../../../includes/header.php';
 }
