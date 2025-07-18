@@ -5,7 +5,7 @@ $encabezado = "Panel de Control de Proveedores";
 $subtitulo = "Administra los proveedores de tu sistema";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
-$ruta = "../../index.php";
+$ruta = "../../session/login.php";
 $texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>

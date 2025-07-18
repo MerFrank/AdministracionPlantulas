@@ -27,7 +27,6 @@ if (isset($_SESSION['ID_Operador'])) {
 
 
 
-// Incluir archivos con rutas absolutas
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../session/session_manager.php';
 

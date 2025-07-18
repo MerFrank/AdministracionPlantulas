@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
-$ruta = "../../index.php";
+$ruta = "../../session/login.php";
 $texto_boton = "";
 require_once __DIR__ . '/../../includes/header.php';
 
