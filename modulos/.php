@@ -1,39 +1,16 @@
 <?php
-// 1. Incluir archivo de configuración y conexión a BD
-require_once(__DIR__ . '/../includes/config.php');
-
-// 4. Incluir el header
-require_once(__DIR__ . '/../includes/header.php');
 
 // Configuración de la página
 $titulo = "Panel de Control Principal";
 $encabezado = "Sistema de Gestión Plantulas";
 $subtitulo = "Seleccione el módulo que desea administrar";
 $active_page = "dashboard";
+$ruta = "../session/logout.php";
+$texto_boton = "Cerra Sessión";
+//Incluir el header
+require_once(__DIR__ . '/../includes/header.php');
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($titulo); ?> - Plantulas</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" href="<?php echo BASE_URL; ?>/assets/img/favicon.ico">
-    
-    <!-- CSS Principal -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-</head>
-<body class="dashboard-body">
-    <!-- Header incluido desde header.php -->
-    
     <main class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h2"><?php echo htmlspecialchars($encabezado); ?></h1>
@@ -46,24 +23,7 @@ $active_page = "dashboard";
         <p class="lead"><?php echo htmlspecialchars($subtitulo); ?></p>
         
         <div class="row g-4">
-            <!-- Módulo de Autenticación -->
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
-                                <i class="bi bi-shield-lock text-primary fs-2"></i>
-                            </div>
-                            <h3 class="h5 mb-0">Autenticación</h3>
-                        </div>
-                        <p class="card-text">Gestión de usuarios, roles y permisos del sistema.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/auth/dashboard_auth.php" class="btn btn-outline-primary stretched-link">
-                            Acceder <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
+                       
             <!-- Módulo de Clientes -->
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
@@ -93,7 +53,7 @@ $active_page = "dashboard";
                             <h3 class="h5 mb-0">Productos</h3>
                         </div>
                         <p class="card-text">Gestión de inventario y catálogo de productos.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/productos/dashboard_productos.php" class="btn btn-outline-info stretched-link">
+                        <a href="<?php echo BASE_URL; ?>/modulos/Productos/dashboard_registroProducto.php" class="btn btn-outline-info stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -111,7 +71,7 @@ $active_page = "dashboard";
                             <h3 class="h5 mb-0">Ventas</h3>
                         </div>
                         <p class="card-text">Gestión de transacciones y facturación.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/ventas/dashboard_ventas.php" class="btn btn-outline-warning stretched-link">
+                        <a href="<?php echo BASE_URL; ?>/modulos/ventas/dashboard_clientesVentas.php" class="btn btn-outline-warning stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -165,7 +125,7 @@ $active_page = "dashboard";
                             <h3 class="h5 mb-0">Cuentas</h3>
                         </div>
                         <p class="card-text">Gestión de cuentas bancarias y transacciones.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/cuentas/dashboard_cuentas.php" class="btn btn-outline-purple stretched-link">
+                        <a href="<?php echo BASE_URL; ?>/modulos/Cuentas/dashboard_cuentas.php" class="btn btn-outline-purple stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -183,7 +143,7 @@ $active_page = "dashboard";
                             <h3 class="h5 mb-0">Egresos</h3>
                         </div>
                         <p class="card-text">Registro y control de gastos y egresos.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/egresos/dashboard_egresos.php" class="btn btn-outline-orange stretched-link">
+                        <a href="<?php echo BASE_URL; ?>/modulos/Egresos/dashboard_egresos.php" class="btn btn-outline-orange stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -219,7 +179,7 @@ $active_page = "dashboard";
                             <h3 class="h5 mb-0">Sucursales</h3>
                         </div>
                         <p class="card-text">Gestión de sucursales y locales comerciales.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/sucursales/dashboard_sucursales.php" class="btn btn-outline-indigo stretched-link">
+                        <a href="<?php echo BASE_URL; ?>/modulos/Sucursales/dashboard_sucursales.php" class="btn btn-outline-indigo stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -232,7 +192,7 @@ $active_page = "dashboard";
     <?php require_once(__DIR__ . '/../includes/footer.php'); ?>
 
     <!-- JavaScript -->
-    <script src="<?php echo BASE_URL; ?>/assets/js/main.js"></script>
+    <!-- <script src="<?php echo BASE_URL; ?>/assets/js/main.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
