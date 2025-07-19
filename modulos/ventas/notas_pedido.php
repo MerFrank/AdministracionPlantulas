@@ -808,54 +808,79 @@ require('../../includes/header.php');
       // Función para convertir números a letras (versión mejorada)
       function numeroALetras(numero) {
         const unidades = [
-          "",
-          "UN",
-          "DOS",
-          "TRES",
-          "CUATRO",
-          "CINCO",
-          "SEIS",
-          "SIETE",
-          "OCHO",
-          "NUEVE",
-        ];
-        const decenas = [
-          "",
-          "DIEZ",
-          "VEINTE",
-          "TREINTA",
-          "CUARENTA",
-          "CINCUENTA",
-          "SESENTA",
-          "SETENTA",
-          "OCHENTA",
-          "NOVENTA",
+          "", "UNO", "DOS", "TRES", "CUATRO", "CINCO",
+          "SEIS", "SIETE", "OCHO", "NUEVE"
         ];
         const especiales = [
-          "DIEZ",
-          "ONCE",
-          "DOCE",
-          "TRECE",
-          "CATORCE",
-          "QUINCE",
-          "DIECISEIS",
-          "DIECISIETE",
-          "DIECIOCHO",
-          "DIECINUEVE",
+          "DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE",
+          "DIECISÉIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"
+        ];
+        const decenas = [
+          "", "", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA",
+          "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"
         ];
         const centenas = [
-          "",
-          "CIENTO",
-          "DOSCIENTOS",
-          "TRESCIENTOS",
-          "CUATROCIENTOS",
-          "QUINIENTOS",
-          "SEISCIENTOS",
-          "SETECIENTOS",
-          "OCHOCIENTOS",
-          "NOVECIENTOS",
+          "", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS",
+          "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"
         ];
+
+        function convertir(num) {
+          if (num === 0) return "CERO";
+
+          let palabras = "";
+
+          if (num >= 1000000) {
+            const millones = Math.floor(num / 1000000);
+            palabras += convertir(millones) + " MILLONES ";
+            num %= 1000000;
+          }
+
+          if (num >= 1000) {
+            const miles = Math.floor(num / 1000);
+            if (miles === 1) {
+              palabras += "MIL ";
+            } else {
+              palabras += convertir(miles) + " MIL ";
+            }
+            num %= 1000;
+          }
+
+          if (num >= 100) {
+            if (num === 100) {
+              palabras += "CIEN";
+              return palabras.trim();
+            }
+            const cent = Math.floor(num / 100);
+            palabras += centenas[cent] + " ";
+            num %= 100;
+          }
+
+          if (num >= 10 && num < 20) {
+            palabras += especiales[num - 10];
+          } else if (num >= 20) {
+            const dec = Math.floor(num / 10);
+            const uni = num % 10;
+            palabras += decenas[dec];
+            if (uni > 0) palabras += " Y " + unidades[uni];
+          } else if (num > 0) {
+            palabras += unidades[num];
+          }
+
+          return palabras.trim();
+        }
+
+        const entero = Math.floor(numero);
+        const decimal = Math.round((numero - entero) * 100);
+
+        let resultado = convertir(entero) + " PESOS";
+        if (decimal > 0) {
+          resultado += " CON " + convertir(decimal) + " CENTAVOS";
+        }
+
+        return resultado;
       }
+
+
       $("#generarPDF").on("click", function () {
         if (typeof generarPDF === "function") {
           generarPDF();
@@ -915,6 +940,12 @@ require('../../includes/header.php');
         });
 
         $("#totalGeneral").text(`$${total.toFixed(2)}`);
+        const totalRedondeado = Math.round((total + Number.EPSILON) * 100) / 100;
+        $("#totalGeneral").text(`$${totalRedondeado.toFixed(2)}`);
+
+        // Convertir el total a letras y actualizar el input
+        const letras = numeroALetras(totalRedondeado);
+        $("#importeLetra").val(letras);
         $tabla.toggle(productos.length > 0);
       }
 
