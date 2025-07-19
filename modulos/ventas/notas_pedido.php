@@ -156,8 +156,8 @@ require('../../includes/header.php');
                     <input
                       type="date"
                       class="form-control"
-                      id="fecha"
-                      name="fecha"
+                      id="fechaPedido"
+                      name="fechaPedio"
                       required
                     />
                   </div>
@@ -166,8 +166,8 @@ require('../../includes/header.php');
                     <input
                       type="date"
                       class="form-control"
-                      id="fecha"
-                      name="fecha_entrega"
+                      id="fechaEntrega"
+                      name="fechaEntrega"
                       required
                     />
                   </div>
@@ -890,7 +890,8 @@ require('../../includes/header.php');
         const descripcion = `${colorText} / ${especieText}`;
         const subtotal = cantidad * costo;
 
-        productos.push({ descripcion, cantidad, costo, subtotal });
+        productos.push({ id_color: color, descripcion, cantidad, costo, subtotal });
+
         actualizarTablaProductos();
       });
 
@@ -927,6 +928,48 @@ require('../../includes/header.php');
         });
         doc.save("nota_remision.pdf");
       });
+    
+        $("#guardarRemision").on("click", function () {
+            if (productos.length === 0) {
+              alert("Debes agregar al menos una planta al pedido.");
+              return;
+            }
+
+            const datosNota = {
+              numeroRemision: $("#numeroRemision").val(),
+              fechaPedido: $("#fechaPedido").val(),
+              fechaEntrega: $("#fechaEntrega").val(),
+              id_cliente: $("#id_cliente").val(),
+              tipo_pago: $("#tipoPago").val(),
+              metodo_Pago: $("#metodoPago").val(),
+              importe_letra: $("#importeLetra").val(),
+              observaciones: $("#observaciones").val(),
+              num_pagare: $("#numeroPagare").val(),
+              fecha_validez: $("#fechaVencimiento").val(),
+              lugar_pago: $("#lugarPago").val(),
+              productos: productos
+            };
+
+            $.ajax({
+              url: 'guardar_remision.php',
+              method: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify(datosNota),
+              success: function (response) {
+                if (response.success) {
+                  alert("Nota guardada correctamente");
+                  location.reload(); // o redirigir
+                } else {
+                  alert("Error al guardar: " + response.message);
+                }
+              },
+              error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+                alert("Error en la solicitud AJAX.");
+              }
+            });
+          });
+    
     });
   </script>
 <?php require('../../includes/footer.php'); ?>  
