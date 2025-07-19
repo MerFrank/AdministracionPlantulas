@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '/../db/config.php';
+require_once __DIR__ . '/../../includes/config.php';
 
 $db = new Database();
 $con = $db->conectar();
@@ -14,18 +14,19 @@ $sql = $con->prepare("
     v.nombre_variedad AS nombre_variedad,
     dsv.estado_pago
   FROM
-    SeguimientoVentas sv
-  LEFT JOIN Clientes c ON
+    seguimientoventas sv
+  LEFT JOIN clientes c ON
     sv.id_cliente = c.id_cliente
-  LEFT JOIN DetallesSeguimientoVentas dsv ON
+  LEFT JOIN detallesseguimientoventas dsv ON
     sv.id_notaPedido = dsv.id_detalleSeguimiento
-  LEFT JOIN Variedades v ON
+  LEFT JOIN variedades v ON
     dsv.id_variedad = v.id_variedad
   ORDER BY
     sv.fecha DESC
 ");
 $sql->execute();
 $resultados = $sql->fetchAll(PDO::FETCH_ASSOC);
+
 
 // Agrupar por pedidos
 $ventasAgrupadas = [];
@@ -45,6 +46,17 @@ foreach ($resultados as $venta) {
         $ventasAgrupadas[$idPedido]['estados_pago'][] = $venta['estado_pago'];
     }
 }
+
+
+// Variables para el encabezado
+$titulo = "Seguimiento Notas";
+$encabezado = "Seguimiento Notas";
+$subtitulo = "Ve y da seguimiento de todas las notas en el sistema";
+
+// Incluir la cabecera (ruta relativa al archivo actual)
+$ruta = "dashboard_clientesVentas.php";
+$texto_boton = "Regresar";
+require('../../includes/header.php');
 ?>
 
 <main>
@@ -158,6 +170,5 @@ foreach ($resultados as $venta) {
     </div>
   </main>
 
-  <script></script>
-</body>
-</html>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <?php require('../../includes/footer.php'); ?>  
