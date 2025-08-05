@@ -18,7 +18,7 @@ $sql = $con->prepare("
   LEFT JOIN clientes c ON
     sv.id_cliente = c.id_cliente
   LEFT JOIN detallesseguimientoventas dsv ON
-    sv.id_notaPedido = dsv.id_detalleSeguimiento
+    sv.id_notaPedido = dsv.id_detalleseguimiento
   LEFT JOIN variedades v ON
     dsv.id_variedad = v.id_variedad
   ORDER BY
