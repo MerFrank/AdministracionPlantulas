@@ -39,8 +39,8 @@ if ($id_venta === false || $id_venta === null) {
 // Obtener información de la venta
 $stmt = $con->prepare("
     SELECT np.*, c.nombre_Cliente as cliente_nombre, c.domicilio_fiscal as direccion, c.telefono
-    FROM NotasPedidos np
-    LEFT JOIN Clientes c ON np.id_cliente = c.id_cliente
+    FROM notaspedidos np
+    LEFT JOIN clientes c ON np.id_cliente = c.id_cliente
     WHERE np.id_notaPedido = ?
 ");
 $stmt->execute([$id_venta]);
@@ -54,13 +54,13 @@ if (!$venta) {
 $stmt = $con->prepare("
     SELECT col.nombre_color as color, 
            SUM(dnp.cantidad) as cantidad, 
-           dnp.precio_real as precio_unitario, 
+           dnp.precio_unitario as precio_unitario, 
            SUM(dnp.monto_total) as subtotal
-    FROM DetallesNotaPedido dnp
-    JOIN Variedades v ON dnp.id_variedad = v.id_variedad
-    JOIN Colores col ON v.id_color = col.id_color
+    FROM detallesnotapedido dnp
+    JOIN variedades v ON dnp.id_variedad = v.id_variedad
+    JOIN colores col ON v.id_color = col.id_color
     WHERE dnp.id_notaPedido = ?
-    GROUP BY col.nombre_color, dnp.precio_real
+    GROUP BY col.nombre_color, dnp.precio_unitario
     ORDER BY col.nombre_color
 ");
 $stmt->execute([$id_venta]);

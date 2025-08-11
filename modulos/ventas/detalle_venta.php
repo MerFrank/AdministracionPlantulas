@@ -266,7 +266,9 @@ $importe_letra = numeros_a_letras($venta['total']);
     
     <div class="no-print">
         <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Imprimir Nota</button>
-        <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Cerrar</button>
+        <a href="lista_ventas.php">
+            <button style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Cerrar</button>
+        </a>
     </div>
 </body>
 </html>

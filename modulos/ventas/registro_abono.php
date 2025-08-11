@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Obtener información de la venta
         $stmt = $con->prepare("
             SELECT np.id_notaPedido, np.id_cliente, np.total, np.saldo_pendiente, c.nombre_Cliente
-            FROM NotasPedidos np
-            JOIN Clientes c ON np.id_cliente = c.id_cliente
+            FROM notaspedidos np
+            JOIN clientes c ON np.id_cliente = c.id_cliente
             WHERE np.id_notaPedido = ? AND np.tipo_pago = 'credito'
         ");
         $stmt->execute([$_POST['id_notaPedido']]);
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Registrar el pago en PagosVentas (versión corregida sin id_cuenta)
         $stmt = $con->prepare("
-            INSERT INTO PagosVentas (
+            INSERT INTO pagosventas (
                 id_notaPedido, monto, fecha, metodo_pago, 
                 referencia, observaciones, id_empleado
             ) VALUES (
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $estado = $nuevo_saldo > 0 ? 'parcial' : 'completado';
         
         $stmt = $con->prepare("
-            UPDATE NotasPedidos 
+            UPDATE notaspedidos 
             SET saldo_pendiente = ?, estado = ?
             WHERE id_notaPedido = ?
         ");

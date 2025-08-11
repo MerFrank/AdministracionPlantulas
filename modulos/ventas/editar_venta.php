@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $con->commit();
         
         $_SESSION['success_message'] = "Venta actualizada correctamente";
-        header("Location: ver_venta.php?id=$id_venta");
+        header("Location: detalle_venta.php?id=$id_venta");
         exit;
     } catch (Exception $e) {
         $con->rollBack();
@@ -368,14 +368,16 @@ require __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
                 
+
                 <div class="d-flex justify-content-between mt-4">
-                    <a href="ver_venta.php?id=<?= $id_venta ?>" class="btn btn-secondary">
+                    <a href="lista_ventas.php" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Cancelar
                     </a>
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-save"></i> Guardar Cambios
                     </button>
                 </div>
+
             </form>
         </div>
     </div>
