@@ -23,6 +23,16 @@ $cuentas_bancarias = $con->query("
     ORDER BY nombre
 ")->fetchAll();
 
+$ventas_pendientes = $con->query("
+    SELECT np.id_notaPedido, c.nombre_Cliente, np.saldo_pendiente
+    FROM notaspedidos np
+    JOIN clientes c ON np.id_cliente = c.id_cliente
+    WHERE np.tipo_pago = 'credito'
+      AND np.saldo_pendiente > 0
+      AND np.estado IN ('pendiente', 'parcial')
+    ORDER BY np.id_notaPedido DESC
+")->fetchAll(PDO::FETCH_ASSOC);
+
 // Procesar formulario de abono
 $error = '';
 $success = '';
