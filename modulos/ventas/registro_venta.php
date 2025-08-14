@@ -87,6 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $metodo_Pago    = $_POST['metodo_Pago'] ?? ($_POST['metodo_pago'] ?? null);
         $observaciones  = trim($_POST['observaciones'] ?? '');
         $id_cliente     = isset($_POST['id_cliente']) ? (int)$_POST['id_cliente'] : null;
+         $id_cuenta      = isset($_POST['id_cuenta']) ? (int)$_POST['id_cuenta'] : null;
+
+        if ($id_cuenta <= 0) {
+            throw new Exception("Debe seleccionar una cuenta bancaria válida.");
+        }
 
         // Decodificar items JSON que envía tu JS (hidden input name="items")
         $items_json = $_POST['items'] ?? '[]';
@@ -145,6 +150,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Iniciar transacción
         $con->beginTransaction();
+
+        if ($anticipo > 0) {
+            $stmt_update_cuenta = $con->prepare("
+                UPDATE cuentas_bancarias 
+                SET saldo_actual = saldo_actual + :monto 
+                WHERE id_cuenta = :id_cuenta
+            ");
+            $stmt_update_cuenta->execute([
+                ':monto' => $anticipo,
+                ':id_cuenta' => $id_cuenta
+            ]);
+            
+            // Verificar que se actualizó correctamente
+            if ($stmt_update_cuenta->rowCount() === 0) {
+                throw new Exception("No se pudo actualizar el saldo de la cuenta bancaria.");
+            }
+        }
 
         // Generar folio y num_remision
         $countRow = (int)$con->query("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = YEAR(NOW())")->fetch(PDO::FETCH_ASSOC)['total'];

@@ -83,6 +83,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("El monto excede el saldo pendiente");
         }
         
+        $stmt_update_cuenta = $con->prepare("
+            UPDATE cuentas_bancarias 
+            SET saldo_actual = saldo_actual + :monto 
+            WHERE id_cuenta = :id_cuenta
+        ");
+        $stmt_update_cuenta->execute([
+            ':monto' => $monto_pago,
+            ':id_cuenta' => $id_cuenta
+        ]);
+        
+        // Verificar que se actualizó correctamente
+        if ($stmt_update_cuenta->rowCount() === 0) {
+            throw new Exception("No se pudo actualizar el saldo de la cuenta bancaria.");
+        }
+        
         // Registrar el pago en PagosVentas (versión corregida sin id_cuenta)
         $stmt = $con->prepare("
             INSERT INTO pagosventas (
