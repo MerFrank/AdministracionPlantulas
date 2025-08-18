@@ -451,8 +451,7 @@ require __DIR__ . '/../../includes/header.php';
             </div>
             
             <!-- Botones -->
-        </form>
-        <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
             <a href="lista_ventas.php" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Cancelar
             </a>
@@ -460,6 +459,9 @@ require __DIR__ . '/../../includes/header.php';
                 <i class="bi bi-check-circle"></i> Registrar Venta
             </button>
         </div>
+        
+        </form>
+        
         
     </div>
 </main>

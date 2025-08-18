@@ -210,8 +210,6 @@ require __DIR__ . '/../../includes/header.php';
                             <select class="form-select" name="metodo_pago" id="metodoPago" required>
                                 <option value="">Seleccione...</option>
                                 <option value="efectivo">Efectivo</option>
-                                <option value="transferencia">Transferencia</option>
-                                <option value="deposito">Depósito</option>
                                 <option value="tarjeta">Tarjeta</option>
                             </select>
                         </div>
