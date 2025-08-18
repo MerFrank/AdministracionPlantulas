@@ -164,12 +164,12 @@ $ultimas_ventas = $con->query("
                                             <td><?= htmlspecialchars($venta['cliente_nombre'] ?? 'Sin cliente') ?></td>
                                             <td>$<?= number_format($venta['total'], 2) ?></td>
                                             <td>
-                                                <span class="badge bg-<?= $venta['estado'] == 'completado' ? 'success' : ($venta['estado'] == 'pendiente' ? 'warning' : 'secondary') ?>">
+                                                <span class="badge bg-<?= $venta['estado'] == 'completado' ? 'success' : ($venta['estado'] == 'pendiente' ? 'secondary' : 'warning') ?>">
                                                     <?= ucfirst($venta['estado']) ?>
                                                 </span>
                                             </td>
                                             <td>
-                                                <?php if ($venta['tipo_pago'] == 'credito'): ?>
+                                                <?php if ($venta['tipo_pago'] == 'Crédito'): ?>
                                                     $<?= number_format($venta['saldo_pendiente'], 2) ?>
                                                 <?php else: ?>
                                                     <span class="text-muted">-</span>
