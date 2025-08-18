@@ -266,202 +266,201 @@ require __DIR__ . '/../../includes/header.php';
 <!-- ==============================================
 // CONTENIDO PRINCIPAL
 // ============================================== -->
-<main class="container mt-4">
-    <div class="card shadow">
+<main class="container-fluid mt-4 px-0">    
+    <div class="card shadow border-0 rounded-0">
         <div class="card-header bg-primary text-white">
             <h2><i class="bi bi-cart-plus"></i> <?= $encabezado ?></h2>
         </div>
         
-        <div class="card-body">
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        
+        <form method="post" id="ventaForm" class="form-doble-columna">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+            <input type="hidden" name="items" id="itemsVenta" value="">
             
-            <form method="post" id="ventaForm">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                <input type="hidden" name="items" id="itemsVenta" value="">
+            <!-- Sección Cliente y Fecha -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                        <select class="form-select" name="id_cliente" required>
+                            <option value="">Seleccione un cliente...</option>
+                            <?php foreach ($clientes as $cliente): ?>
+                                <option value="<?= $cliente['id_cliente'] ?>">
+                                    <?= htmlspecialchars($cliente['nombre_Cliente']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
                 
-                <!-- Sección Cliente y Fecha -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                            <select class="form-select" name="id_cliente" required>
-                                <option value="">Seleccione un cliente...</option>
-                                <?php foreach ($clientes as $cliente): ?>
-                                    <option value="<?= $cliente['id_cliente'] ?>">
-                                        <?= htmlspecialchars($cliente['nombre_Cliente']) ?>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha de Entrega <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="fechaPedido" required 
+                                min="<?= date('Y-m-d') ?>">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección Productos -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="h5 mb-0"><i class="bi bi-list-check"></i> Productos</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3" id="formItem">
+                        <div class="col-md-4">
+                            <label class="form-label">Especie <span class="text-danger">*</span></label>
+                            <select class="form-select" id="selectEspecie" required>
+                                <option value="">Seleccione...</option>
+                                <?php foreach ($especies as $especie): ?>
+                                    <option value="<?= $especie['id_especie'] ?>">
+                                        <?= htmlspecialchars($especie['nombre']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Fecha de Entrega <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" name="fechaPedido" required 
-                                   min="<?= date('Y-m-d') ?>">
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Color <span class="text-danger">*</span></label>
+                            <select class="form-select" id="selectColor" disabled required>
+                                <option value="">Seleccione especie primero</option>
+                            </select>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Sección Productos -->
-                <div class="card mb-4">
-                    <div class="card-header bg-secondary text-white">
-                        <h3 class="h5 mb-0"><i class="bi bi-list-check"></i> Productos</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3" id="formItem">
-                            <div class="col-md-4">
-                                <label class="form-label">Especie <span class="text-danger">*</span></label>
-                                <select class="form-select" id="selectEspecie" required>
-                                    <option value="">Seleccione...</option>
-                                    <?php foreach ($especies as $especie): ?>
-                                        <option value="<?= $especie['id_especie'] ?>">
-                                            <?= htmlspecialchars($especie['nombre']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label">Color <span class="text-danger">*</span></label>
-                                <select class="form-select" id="selectColor" disabled required>
-                                    <option value="">Seleccione especie primero</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label">Variedad <span class="text-danger">*</span></label>
-                                <select class="form-select" id="selectVariedad" disabled required>
-                                    <option value="">Seleccione color primero</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-2">
-                                <label class="form-label">Cantidad <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="inputCantidad" min="1" value="1" required>
-                            </div>
-                            
-                            <div class="col-md-2">
-                                <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="inputPrecio" step="0.01" min="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
-                                    <i class="bi bi-plus-circle"></i> Agregar
-                                </button>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Variedad <span class="text-danger">*</span></label>
+                            <select class="form-select" id="selectVariedad" disabled required>
+                                <option value="">Seleccione color primero</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="inputCantidad" min="1" value="1" required>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="inputPrecio" step="0.01" min="0.01" required>
                             </div>
                         </div>
                         
-                        <div class="mt-4">
-                            <div class="table-responsive">
-                                <table class="table table-striped" id="tablaItems">
-                                    <thead>
-                                        <tr>
-                                            <th>Especie</th>
-                                            <th>Color</th>
-                                            <th>Variedad</th>
-                                            <th>Cantidad</th>
-                                            <th>P. Unitario</th>
-                                            <th>Subtotal</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbodyItems">
-                                        <!-- Items dinámicos -->
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="5" class="text-end">Total:</th>
-                                            <th id="totalVenta">$0.00</th>
-                                            <th></th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
+                                <i class="bi bi-plus-circle"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="tablaItems">
+                                <thead>
+                                    <tr>
+                                        <th>Especie</th>
+                                        <th>Color</th>
+                                        <th>Variedad</th>
+                                        <th>Cantidad</th>
+                                        <th>P. Unitario</th>
+                                        <th>Subtotal</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyItems">
+                                    <!-- Items dinámicos -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="5" class="text-end">Total:</th>
+                                        <th id="totalVenta">$0.00</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección Pagos -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h3 class="h5 mb-0"><i class="bi bi-credit-card"></i> Información de Pago</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
+                            <select class="form-select" name="tipo_pago" id="tipoPago" required>
+                                <option value="Contado">Contado</option>
+                                <option value="Crédito">Crédito</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                            <select class="form-select" name="metodo_pago" required>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
+                            <select class="form-select" name="id_cuenta" required>
+                                <option value="">Seleccione una cuenta...</option>
+                                <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                    <option value="<?= $cuenta['id_cuenta'] ?>">
+                                        <?= htmlspecialchars("{$cuenta['banco']} - {$cuenta['nombre']} ({$cuenta['numero']})") ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6" id="montoPagoContainer">
+                            <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
+                            </div>
+                            <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
+                        </div>
+                        
+                        <div class="col-md-6" id="saldoContainer" style="display:none;">
+                            <label class="form-label">Saldo Pendiente</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control" name="total" id="inputSaldoPendiente" readonly>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Sección Pagos -->
-                <div class="card mb-4">
-                    <div class="card-header bg-info text-white">
-                        <h3 class="h5 mb-0"><i class="bi bi-credit-card"></i> Información de Pago</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
-                                <select class="form-select" name="tipo_pago" id="tipoPago" required>
-                                    <option value="Contado">Contado</option>
-                                    <option value="Crédito">Crédito</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
-                                <select class="form-select" name="metodo_pago" required>
-                                    <option value="Efectivo">Efectivo</option>
-                                    <option value="Transferencia">Transferencia</option>
-                                    <option value="Tarjeta">Tarjeta</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
-                                <select class="form-select" name="id_cuenta" required>
-                                    <option value="">Seleccione una cuenta...</option>
-                                    <?php foreach ($cuentas_bancarias as $cuenta): ?>
-                                        <option value="<?= $cuenta['id_cuenta'] ?>">
-                                            <?= htmlspecialchars("{$cuenta['banco']} - {$cuenta['nombre']} ({$cuenta['numero']})") ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-6" id="montoPagoContainer">
-                                <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
-                                </div>
-                                <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
-                            </div>
-                            
-                            <div class="col-md-6" id="saldoContainer" style="display:none;">
-                                <label class="form-label">Saldo Pendiente</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="text" class="form-control" name="total" id="inputSaldoPendiente" readonly>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Observaciones -->
-                <div class="mb-4">
-                    <label class="form-label">Observaciones</label>
-                    <textarea class="form-control" name="observaciones" rows="2"></textarea>
-                </div>
-                
-                <!-- Botones -->
-                <div class="d-flex justify-content-between">
-                    <a href="lista_ventas.php" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Registrar Venta
-                    </button>
-                </div>
-            </form>
+            </div>
+            
+            <!-- Observaciones -->
+            <div class="mb-4">
+                <label class="form-label">Observaciones</label>
+                <textarea class="form-control" name="observaciones" rows="2"></textarea>
+            </div>
+            
+            <!-- Botones -->
+        </form>
+        <div class="d-flex justify-content-between">
+            <a href="lista_ventas.php" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Registrar Venta
+            </button>
         </div>
+        
     </div>
 </main>
 
