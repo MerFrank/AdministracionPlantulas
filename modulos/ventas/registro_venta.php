@@ -87,7 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $metodo_Pago    = $_POST['metodo_Pago'] ?? ($_POST['metodo_pago'] ?? null);
         $observaciones  = trim($_POST['observaciones'] ?? '');
         $id_cliente     = isset($_POST['id_cliente']) ? (int)$_POST['id_cliente'] : null;
-         $id_cuenta      = isset($_POST['id_cuenta']) ? (int)$_POST['id_cuenta'] : null;
+        $id_cuenta      = isset($_POST['id_cuenta']) ? (int)$_POST['id_cuenta'] : null;
+        $opcion_garantia = $_POST['opcion'] ?? 'no'; // Obtener opción de garantía
 
         if ($id_cuenta <= 0) {
             throw new Exception("Debe seleccionar una cuenta bancaria válida.");
@@ -223,21 +224,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        // (Opcional) Registrar anticipo en seguimientoanticipos si anticipo > 0
-        if ($anticipo > 0) {
-            $stmt_ant = $con->prepare("
-                INSERT INTO seguimientoanticipos (numero_venta, folio_anticipo, id_cliente, fecha_pago, monto_pago, metodo_pago, id_cuenta, comentarios, estado_pago)
-                VALUES (:numero_venta, :folio_anticipo, :id_cliente, NOW(), :monto_pago, :metodo_pago, :id_cuenta, :comentarios, 'completado')
+        // Insertar datos de garantía si se seleccionó la opción
+        if ($opcion_garantia === 'si') {
+            $nom_bien = $_POST['nom-bien'] ?? '';
+            $num_regis = $_POST['num-regis'] ?? '';
+            $nom_aval = $_POST['nom-aval'] ?? '';
+            $monto_garantia = $_POST['monto'] ?? 0;
+            
+            $stmt_garantia = $con->prepare("
+                INSERT INTO datos_garantia (id_notaPedido, nom_bien, num_regis, nom_aval, monto)
+                VALUES (:id_notaPedido, :nom_bien, :num_regis, :nom_aval, :monto)
             ");
-            $folio_ant = 'ANT-' . date('Y') . '-' . str_pad($con->query("SELECT COUNT(*) FROM seguimientoanticipos WHERE YEAR(fecha_pago)=YEAR(NOW())")->fetchColumn() + 1, 5, '0', STR_PAD_LEFT);
-            $stmt_ant->execute([
-                ':numero_venta' => $id_notaPedido,
-                ':folio_anticipo' => $folio_ant,
-                ':id_cliente' => $id_cliente,
-                ':monto_pago' => $anticipo,
+            
+            $stmt_garantia->execute([
+                ':id_notaPedido' => $id_notaPedido,
+                ':nom_bien' => $nom_bien,
+                ':num_regis' => $num_regis,
+                ':nom_aval' => $nom_aval,
+                ':monto' => $monto_garantia
+            ]);
+        }
+
+        // Registrar pago en pagosventas (reemplazando seguimientoanticipos)
+        if ($anticipo > 0) {
+            $stmt_pago = $con->prepare("
+                INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta)
+                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta)
+            ");
+            
+            $referencia = 'PAG-' . date('Ymd') . '-' . str_pad($con->query("SELECT COUNT(*) FROM pagosventas WHERE DATE(fecha)=CURDATE()")->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
+            
+            $stmt_pago->execute([
+                ':id_notaPedido' => $id_notaPedido,
+                ':monto' => $anticipo,
                 ':metodo_pago' => $metodo_Pago,
-                ':id_cuenta' => $id_cuenta,
-                ':comentarios' => 'Anticipo de venta'
+                ':referencia' => $referencia,
+                ':observaciones' => 'Anticipo de venta',
+                ':id_cuenta' => $id_cuenta
             ]);
         }
 
@@ -450,6 +473,58 @@ require __DIR__ . '/../../includes/header.php';
                 <textarea class="form-control" name="observaciones" rows="2"></textarea>
             </div>
             
+            <!-- Garantia -->
+            <div class="form-section">
+                <h5><i class="bi bi-receipt"></i> Datos de Garantia</h5>
+                
+                <div class="mb-3">
+                    <label class="form-label">¿Requiere Garantia?</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si" 
+                            <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="opcion-si">Sí</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="opcion" id="opcion-no" value="no"
+                            <?= (!isset($_POST['opcion']) || $_POST['opcion'] === 'no') ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="opcion-no">No</label>
+                    </div>
+                </div>
+                
+                <div id="datos-garantia" class="bg-light p-3 rounded <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? '' : 'd-none' ?>">
+                    <div class="row g-3">
+                        
+                        <div class="col-md-6">
+                            <label for="nom-bien" class="form-label">Bien de intercambio</label>
+                            <input type="text" class="form-control" id="nom-bien" name="nom-bien" maxlength="14" 
+                                    placeholder="Carro, terreno, inmueble"
+                                    value="<?= htmlspecialchars($_POST['nom-bien'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="num-regis" class="form-label">Número de registro o de factura</label>
+                            <textarea class="form-control" id="num-regis" name="num-regis" maxlength="255"
+                                        placeholder="XAXX010101000"><?= htmlspecialchars($_POST['num-regis'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="nom-aval" class="form-label">Nombre del aval</label>
+                            <input type="text" class="form-control" id="nom-aval" name="nom-aval" maxlength="14" 
+                                    value="<?= htmlspecialchars($_POST['nom-aval'] ?? '') ?>">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label">Monto <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="monto" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <!-- Botones -->
             <div class="d-flex justify-content-between">
             <a href="lista_ventas.php" class="btn btn-secondary">
@@ -471,6 +546,27 @@ require __DIR__ . '/../../includes/header.php';
 // ============================================== -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+
+document.querySelectorAll('input[name="opcion"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const datosGarantia = document.getElementById('datos-garantia');
+        if (this.value === 'si') {
+            datosGarantia.classList.remove('d-none');
+        } else {
+            datosGarantia.classList.add('d-none');
+        }
+    });
+});
+
+// Estado inicial
+document.addEventListener('DOMContentLoaded', function() {
+    const datosGarantia = document.getElementById('datos-garantia');
+    if (!document.getElementById('opcion-si').checked) {
+        datosGarantia.classList.add('d-none');
+    }
+});
+
+
 $(document).ready(function() {
     const items = [];
     const tipoPago = $('#tipoPago');
