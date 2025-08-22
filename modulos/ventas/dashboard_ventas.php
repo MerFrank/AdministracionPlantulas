@@ -19,14 +19,14 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-// Obtener estadísticas de ventas (incluyendo abonos)
+// Obtener estadísticas de ventas (modificado para usar pagosventas)
 $estadisticas = $con->query("
     SELECT 
         COUNT(*) as total_ventas,
         SUM(total) as monto_total,
         (SELECT COUNT(*) FROM notaspedidos WHERE fechaPedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as ventas_recientes,
         (SELECT SUM(total) FROM notaspedidos WHERE estado = 'pendiente' OR estado = 'parcial') as pendientes,
-        (SELECT SUM(monto_pago) FROM seguimientoanticipos) as total_abonos,
+        (SELECT SUM(monto) FROM pagosventas) as total_abonos,
         (SELECT SUM(saldo_pendiente) FROM notaspedidos WHERE tipo_pago = 'credito') as credito_pendiente
     FROM notaspedidos
 ")->fetch();

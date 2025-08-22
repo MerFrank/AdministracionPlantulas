@@ -98,13 +98,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("No se pudo actualizar el saldo de la cuenta bancaria.");
         }
         
-        // Registrar el pago en PagosVentas (versión corregida sin id_cuenta)
+        // Registrar el pago en PagosVentas
         $stmt = $con->prepare("
             INSERT INTO pagosventas (
                 id_notaPedido, monto, fecha, metodo_pago, 
-                referencia, observaciones, id_empleado
+                referencia, observaciones, id_empleado, id_cuenta
             ) VALUES (
-                ?, ?, NOW(), ?, ?, ?, ?
+                ?, ?, NOW(), ?, ?, ?, ?, ?
             )
         ");
         
@@ -114,21 +114,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $metodo_pago,
             'Abono a cuenta', // referencia
             htmlspecialchars(trim($_POST['comentarios'] ?? '')),
-            $_SESSION['id_empleado'] ?? null // ID del empleado desde sesión
+            $_SESSION['id_empleado'] ?? null, // ID del empleado desde sesión
+            $id_cuenta 
         ]);
         
-        // Registrar relación pago-cuenta en otra tabla si es necesario
-        // (esto es opcional, dependiendo de tus requisitos)
-        if(in_array($metodo_pago, ['transferencia', 'deposito'])) {
-            $stmt = $con->prepare("
-                INSERT INTO pagos_cuentas (
-                    id_pago, id_cuenta
-                ) VALUES (
-                    LAST_INSERT_ID(), ?
-                )
-            ");
-            $stmt->execute([$id_cuenta]);
-        }
+        
         
         // Actualizar saldo pendiente en la nota de pedido
         $estado = $nuevo_saldo > 0 ? 'parcial' : 'completado';

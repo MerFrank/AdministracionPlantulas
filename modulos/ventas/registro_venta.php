@@ -149,6 +149,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $estado = $anticipo > 0 ? 'parcial' : 'pendiente';
         }
 
+        // Validar datos de garantía si se seleccionó la opción
+        if ($opcion_garantia === 'si') {
+            $nom_bien = $_POST['nom-bien'] ?? '';
+            $num_regis = $_POST['num-regis'] ?? '';
+            $nom_aval = $_POST['nom-aval'] ?? '';
+            $monto_garantia = $_POST['monto'] ?? 0;
+            
+            // Validar que los campos de garantía estén completos
+            if (empty($nom_bien)) {
+                throw new Exception("El campo 'Bien de intercambio' es requerido para garantía.");
+            }
+            if (empty($num_regis)) {
+                throw new Exception("El campo 'Número de registro' es requerido para garantía.");
+            }
+            if (empty($nom_aval)) {
+                throw new Exception("El campo 'Nombre del aval' es requerido para garantía.");
+            }
+            if (empty($monto_garantia) || $monto_garantia <= 0) {
+                throw new Exception("El monto de la garantía debe ser mayor a cero.");
+            }
+        }
+
         // Iniciar transacción
         $con->beginTransaction();
 
@@ -277,7 +299,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Error al guardar la nota de pedido: " . $e->getMessage();
     }
 }
-
 
 
 $ruta = "dashboard_ventas.php";
@@ -517,7 +538,7 @@ require __DIR__ . '/../../includes/header.php';
                             <label class="form-label">Monto <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="monto" step="0.01" min="0.01" required>
+                                <input type="number" class="form-control" id="monto" step="0.01" min="0.01">
                             </div>
                         </div>
 

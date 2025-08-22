@@ -15,10 +15,10 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-// Consulta para obtener las ventas con información de cliente
+// Consulta para obtener las ventas con información de cliente (modificada para usar pagosventas)
 $ventas = $con->query("
     SELECT np.*, c.nombre_Cliente as cliente_nombre, 
-           (SELECT SUM(monto_pago) FROM seguimientoanticipos WHERE numero_venta = np.id_notaPedido) as pagado
+           (SELECT SUM(monto) FROM pagosventas WHERE id_notaPedido = np.id_notaPedido) as pagado
     FROM notaspedidos np
     LEFT JOIN clientes c ON np.id_cliente = c.id_cliente
     ORDER BY np.fechaPedido DESC
