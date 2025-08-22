@@ -46,69 +46,70 @@ require __DIR__ . '/../../includes/header.php';
             </div>
         </div>
         
-        <div class="card-body">
-            <?php if (isset($_SESSION['success_message'])): ?>
-                <div class="alert alert-success alert-dismissible fade show">
-                    <?= htmlspecialchars($_SESSION['success_message']) ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                <?php unset($_SESSION['success_message']); ?>
-            <?php endif; ?>
-            
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Folio</th>
-                            <th>Fecha</th>
-                            <th>Cliente</th>
-                            <th>Total</th>
-                            <th>Pagado</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($ventas)): ?>
-                            <tr>
-                                <td colspan="7" class="text-center">No hay ventas registradas</td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($ventas as $venta): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($venta['num_remision']) ?></td>
-                                <td><?= date('d/m/Y', strtotime($venta['fechaPedido'])) ?></td>
-                                <td><?= htmlspecialchars($venta['cliente_nombre'] ?? 'Sin cliente') ?></td>
-                                <td>$<?= number_format($venta['total'], 2) ?></td>
-                                <td>$<?= number_format($venta['pagado'] ?? 0, 2) ?></td>
-                                <td>
-                                    <span class="badge bg-<?= 
-                                        $venta['estado'] == 'completado' ? 'success' : 
-                                        ($venta['estado'] == 'parcial' ? 'warning' : 
-                                        ($venta['estado'] == 'cancelado' ? 'danger' : 'secondary')) 
-                                    ?>">
-                                        <?= ucfirst($venta['estado']) ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="detalle_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-warning">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a href="generar_nota.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-info" target="_blank">
-                                            <i class="bi bi-receipt"></i> Nota
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success alert-dismissible fade show">
+                <?= htmlspecialchars($_SESSION['success_message']) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+        
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Pagado</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($ventas)): ?>
+                        <tr>
+                            <td colspan="7" class="text-center">No hay ventas registradas</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($ventas as $venta): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($venta['num_remision']) ?></td>
+                            <td><?= date('d/m/Y', strtotime($venta['fechaPedido'])) ?></td>
+                            <td><?= htmlspecialchars($venta['cliente_nombre'] ?? 'Sin cliente') ?></td>
+                            <td>$<?= number_format($venta['total'], 2) ?></td>
+                            <td>$<?= number_format($venta['pagado'] ?? 0, 2) ?></td>
+                            <td>
+                                <span class="badge bg-<?= 
+                                    $venta['estado'] == 'completado' ? 'success' : 
+                                    ($venta['estado'] == 'parcial' ? 'warning' : 
+                                    ($venta['estado'] == 'cancelado' ? 'danger' : 'secondary')) 
+                                ?>">
+                                    <?= ucfirst($venta['estado']) ?>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="detalle_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="generar_nota.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-info" target="_blank">
+                                        <i class="bi bi-receipt"></i> Nota
+                                    </a>
+                                    <a href="listar_pagosventa.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-info">
+                                        <i class="bi bi-receipt"></i>Pagos
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </main>
