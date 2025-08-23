@@ -23,13 +23,14 @@ $cuentas_bancarias = $con->query("
     ORDER BY nombre
 ")->fetchAll();
 
+// MODIFICACIÓN: Consulta corregida para incluir diferentes formatos de tipo de pago
 $ventas_pendientes = $con->query("
-    SELECT np.id_notaPedido, c.nombre_Cliente, np.saldo_pendiente
+    SELECT np.id_notaPedido, c.nombre_Cliente, np.saldo_pendiente, np.tipo_pago, np.estado
     FROM notaspedidos np
     JOIN clientes c ON np.id_cliente = c.id_cliente
-    WHERE np.tipo_pago = 'credito'
+    WHERE (np.tipo_pago = 'credito' OR np.tipo_pago = 'Crédito' OR np.tipo_pago = 'Pendiente')
       AND np.saldo_pendiente > 0
-      AND np.estado IN ('pendiente', 'parcial')
+      AND (np.estado IN ('pendiente', 'parcial') OR np.estado = 'Pendiente')
     ORDER BY np.id_notaPedido DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -62,12 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $id_cuenta = (int)$_POST['id_cuenta'];
         
+        // MODIFICACIÓN: Consulta corregida para incluir diferentes formatos de tipo de pago
         // Obtener información de la venta
         $stmt = $con->prepare("
             SELECT np.id_notaPedido, np.id_cliente, np.total, np.saldo_pendiente, c.nombre_Cliente
             FROM notaspedidos np
             JOIN clientes c ON np.id_cliente = c.id_cliente
-            WHERE np.id_notaPedido = ? AND np.tipo_pago = 'credito'
+            WHERE np.id_notaPedido = ? 
+            AND (np.tipo_pago = 'credito' OR np.tipo_pago = 'Crédito' OR np.tipo_pago = 'Pendiente de Pago')
         ");
         $stmt->execute([$_POST['id_notaPedido']]);
         $venta = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -108,17 +111,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             )
         ");
         
+        // MODIFICACIÓN: Asegurar que tenemos un id_empleado válido
+        $id_empleado = $_SESSION['id_empleado'] ?? 0;
+        if ($id_empleado <= 0) {
+            $id_empleado = null; // o un valor por defecto si es necesario
+        }
+        
         $stmt->execute([
             $venta['id_notaPedido'],
             $monto_pago,
             $metodo_pago,
             'Abono a cuenta', // referencia
             htmlspecialchars(trim($_POST['comentarios'] ?? '')),
-            $_SESSION['id_empleado'] ?? null, // ID del empleado desde sesión
+            $id_empleado,
             $id_cuenta 
         ]);
-        
-        
         
         // Actualizar saldo pendiente en la nota de pedido
         $estado = $nuevo_saldo > 0 ? 'parcial' : 'completado';
@@ -161,6 +168,13 @@ require __DIR__ . '/../../includes/header.php';
                 <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
             <?php endif; ?>
             
+            <!-- MODIFICACIÓN: Mensaje informativo si no hay ventas pendientes -->
+            <?php if (empty($ventas_pendientes)): ?>
+                <div class="alert alert-info">
+                    No hay ventas a crédito con saldo pendiente.
+                </div>
+            <?php else: ?>
+            
             <form method="post" id="abonoForm">
                 <div class="row g-3">
                     <!-- Selección de venta -->
@@ -174,6 +188,7 @@ require __DIR__ . '/../../includes/header.php';
                                         data-saldo="<?= $venta['saldo_pendiente'] ?>">
                                         #<?= $venta['id_notaPedido'] ?> - <?= htmlspecialchars($venta['nombre_Cliente']) ?> 
                                         (Saldo: $<?= number_format($venta['saldo_pendiente'], 2) ?>)
+                                        - <?= $venta['tipo_pago'] ?> (<?= $venta['estado'] ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -201,6 +216,7 @@ require __DIR__ . '/../../includes/header.php';
                                 <option value="">Seleccione...</option>
                                 <option value="efectivo">Efectivo</option>
                                 <option value="tarjeta">Tarjeta</option>
+                                <option value="transferencia">Transferencia</option>
                             </select>
                         </div>
                     </div>
@@ -238,6 +254,8 @@ require __DIR__ . '/../../includes/header.php';
                     </button>
                 </div>
             </form>
+            
+            <?php endif; ?>
         </div>
     </div>
 </main>

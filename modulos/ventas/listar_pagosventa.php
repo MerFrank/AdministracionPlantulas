@@ -53,6 +53,23 @@ require __DIR__ . '/../../includes/header.php';
 ?>
 
 <main class="container mt-4">
+        <!-- Mostrar mensajes de éxito/error -->
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <?= $_SESSION['success'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['success']); ?>
+    <?php endif; ?>
+    
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= $_SESSION['error'] ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
             <div class="d-flex justify-content-between align-items-center">
@@ -126,3 +143,16 @@ require __DIR__ . '/../../includes/header.php';
 </main>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>    
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('a[href*="eliminar_pago"]');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este pago?')) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
