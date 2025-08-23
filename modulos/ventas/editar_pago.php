@@ -113,25 +113,30 @@ function actualizarEstadoVenta($id_venta, $con) {
     // Calcular total pagado
     $sql_pagos = $con->prepare("SELECT SUM(monto) as total_pagado FROM pagosventas WHERE id_notaPedido = ?");
     $sql_pagos->execute([$id_venta]);
-    $total_pagado = $sql_pagos->fetch(PDO::FETCH_ASSOC)['total_pagado'];
+    $total_pagado_result = $sql_pagos->fetch(PDO::FETCH_ASSOC);
+    $total_pagado = $total_pagado_result ? $total_pagado_result['total_pagado'] : 0;
     
     // Obtener total de la venta
     $sql_venta = $con->prepare("SELECT total FROM notaspedidos WHERE id_notaPedido = ?");
     $sql_venta->execute([$id_venta]);
-    $total_venta = $sql_venta->fetch(PDO::FETCH_ASSOC)['total'];
+    $total_venta_result = $sql_venta->fetch(PDO::FETCH_ASSOC);
+    $total_venta = $total_venta_result ? $total_venta_result['total'] : 0;
+    
+    // Calcular saldo pendiente
+    $saldo_pendiente = $total_venta - $total_pagado;
     
     // Determinar nuevo estado
     if ($total_pagado >= $total_venta) {
         $nuevo_estado = 'Pagado';
     } elseif ($total_pagado > 0) {
-        $nuevo_estado = 'Parcialmente Pagado';
+        $nuevo_estado = 'Pendiente';
     } else {
         $nuevo_estado = 'Pendiente';
     }
     
-    // Actualizar estado
-    $sql_update = $con->prepare("UPDATE notaspedidos SET estado = ? WHERE id_notaPedido = ?");
-    $sql_update->execute([$nuevo_estado, $id_venta]);
+    // Actualizar estado y saldo pendiente
+    $sql_update = $con->prepare("UPDATE notaspedidos SET estado = ?, saldo_pendiente = ? WHERE id_notaPedido = ?");
+    $sql_update->execute([$nuevo_estado, $saldo_pendiente, $id_venta]);
 }
 
 $titulo = 'Editar Pago';
