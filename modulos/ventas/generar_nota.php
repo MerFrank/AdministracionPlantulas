@@ -17,7 +17,7 @@ try {
             <h2>Error de conexión</h2>
             <p>No se pudo conectar a la base de datos.</p>
             <p>Detalles: " . htmlspecialchars($e->getMessage()) . "</p>
-            <button onclick='window.history.back()' style='padding:10px 20px; margin-top:20px;'>Volver atrás</button>
+            <a href='seleccionar_venta_nota.php' class='btn btn-primary'>Volver a selección</a>
          </div>");
 }
 
@@ -32,40 +32,35 @@ if ($id_venta === false || $id_venta === null) {
     die("<div style='text-align:center; padding:20px;'>
             <h2>ID de venta no válido</h2>
             <p>No se ha proporcionado un ID de venta válido en la URL.</p>
-            <p>Ejemplo correcto: generar_nota.php?id=123</p>
-            <button onclick='window.history.back()' style='padding:10px 20px; margin-top:20px;'>Volver atrás</button>
+            <a href='seleccionar_venta_nota.php' class='btn btn-primary'>Seleccionar venta</a>
          </div>");
 }
 
 // Obtener información de la venta
 $stmt = $con->prepare("
     SELECT np.*, c.nombre_Cliente as cliente_nombre, c.domicilio_fiscal as direccion, c.telefono
-    FROM NotasPedidos np
-    LEFT JOIN Clientes c ON np.id_cliente = c.id_cliente
+    FROM notaspedidos np
+    LEFT JOIN clientes c ON np.id_cliente = c.id_cliente
     WHERE np.id_notaPedido = ?
 ");
 $stmt->execute([$id_venta]);
 $venta = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$venta) {
-    die("<div style='text-align:center; padding:20px;'>
-            <h2>Venta no encontrada</h2>
-            <p>No existe una venta con el ID: $id_venta</p>
-            <button onclick='window.history.back()' style='padding:10px 20px; margin-top:20px;'>Volver atrás</button>
-         </div>");
+    die("Venta no encontrada");
 }
 
 // Obtener detalles de la venta (solo colores)
 $stmt = $con->prepare("
     SELECT col.nombre_color as color, 
            SUM(dnp.cantidad) as cantidad, 
-           dnp.precio_real as precio_unitario, 
+           dnp.precio_unitario as precio_unitario, 
            SUM(dnp.monto_total) as subtotal
-    FROM DetallesNotaPedido dnp
-    JOIN Variedades v ON dnp.id_variedad = v.id_variedad
-    JOIN Colores col ON v.id_color = col.id_color
+    FROM detallesnotapedido dnp
+    JOIN variedades v ON dnp.id_variedad = v.id_variedad
+    JOIN colores col ON v.id_color = col.id_color
     WHERE dnp.id_notaPedido = ?
-    GROUP BY col.nombre_color, dnp.precio_real
+    GROUP BY col.nombre_color, dnp.precio_unitario
     ORDER BY col.nombre_color
 ");
 $stmt->execute([$id_venta]);
@@ -265,8 +260,8 @@ $importe_letra = numeros_a_letras($venta['total']);
     </div>
     
     <div class="no-print">
-        <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Imprimir Nota</button>
-        <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Cerrar</button>
+        <button onclick="window.print()" class="btn btn-primary">Imprimir Nota</button>
+        <button onclick="window.close()" class="btn btn-secondary">Cerrar</button>
     </div>
 </body>
 </html>

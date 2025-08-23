@@ -89,9 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             throw new Exception("Correo electrónico no válido");
         }
 
-        if ($datos['rfc'] !== null && !preg_match('/^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/', $datos['rfc'])) {
-            throw new Exception("Formato de RFC no válido");
-        }
 
         // Actualizar en BD
         $sql = "UPDATE clientes SET
@@ -204,10 +201,9 @@ require('../../includes/header.php');
                             </div>
                             
                             <div class="mb-3">
-                                <label for="email" class="form-label required-field">Correo Electrónico</label>
+                                <label for="email" class="form-label">Correo Electrónico</label>
                                 <input type="email" class="form-control" id="email" name="email" required
                                        value="<?= htmlspecialchars($cliente['email']) ?>">
-                                <div class="invalid-feedback">Ingrese un correo electrónico válido</div>
                             </div>
                         </div>
                     </div>

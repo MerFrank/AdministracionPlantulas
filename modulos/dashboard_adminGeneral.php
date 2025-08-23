@@ -1,15 +1,14 @@
 <?php
-// 1. Incluir archivo de configuración y conexión a BD
-require_once(__DIR__ . '/includes/config.php');
-
-// 4. Incluir el header
-require_once(__DIR__ . '/includes/header.php');
 
 // Configuración de la página
 $titulo = "Panel de Control Principal";
 $encabezado = "Sistema de Gestión Plantulas";
 $subtitulo = "Seleccione el módulo que desea administrar";
 $active_page = "dashboard";
+$ruta = "../session/logout.php";
+$texto_boton = "Cerra Sessión";
+//Incluir el header
+require_once(__DIR__ . '/../includes/header.php');
 ?>
 
     <main class="container py-4">
@@ -24,24 +23,7 @@ $active_page = "dashboard";
         <p class="lead"><?php echo htmlspecialchars($subtitulo); ?></p>
         
         <div class="row g-4">
-            <!-- Módulo de Autenticación -->
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
-                                <i class="bi bi-shield-lock text-primary fs-2"></i>
-                            </div>
-                            <h3 class="h5 mb-0">Autenticación</h3>
-                        </div>
-                        <p class="card-text">Gestión de usuarios, roles y permisos del sistema.</p>
-                        <a href="<?php echo BASE_URL; ?>/session/login.php" class="btn btn-outline-primary stretched-link">
-                            Acceder <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
+                       
             <!-- Módulo de Clientes -->
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
@@ -78,6 +60,24 @@ $active_page = "dashboard";
                 </div>
             </div>
             
+            <!-- Módulo de Cotizaciones -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded me-3">
+                                <i class="bi bi-currency-dollar text-warning fs-2"></i>
+                            </div>
+                            <h3 class="h5 mb-0">Cotizaciones</h3>
+                        </div>
+                        <p class="card-text">Crea y gestiona cotizaciones.</p>
+                        <a href="<?php echo BASE_URL; ?>/modulos/cotizacion/dashboard_cotizaciones.php" class="btn btn-outline-warning stretched-link">
+                            Acceder <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Módulo de Ventas -->
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
@@ -89,7 +89,7 @@ $active_page = "dashboard";
                             <h3 class="h5 mb-0">Ventas</h3>
                         </div>
                         <p class="card-text">Gestión de transacciones y facturación.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/ventas/dashboard_clientesVentas.php" class="btn btn-outline-warning stretched-link">
+                        <a href="<?php echo BASE_URL; ?>/modulos/ventas/dashboard_ventas.php" class="btn btn-outline-warning stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -113,24 +113,7 @@ $active_page = "dashboard";
                     </div>
                 </div>
             </div>
-            
-            <!-- Módulo de Reportes -->
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-secondary bg-opacity-10 p-3 rounded me-3">
-                                <i class="bi bi-graph-up text-secondary fs-2"></i>
-                            </div>
-                            <h3 class="h5 mb-0">Reportes</h3>
-                        </div>
-                        <p class="card-text">Generación de reportes y estadísticas.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/reportes/dashboard_reportes.php" class="btn btn-outline-secondary stretched-link">
-                            Acceder <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- Módulo de Cuentas -->
             <div class="col-md-6 col-lg-4">
@@ -207,7 +190,7 @@ $active_page = "dashboard";
     </main>
 
     <!-- Footer incluido desde footer.php -->
-    <?php require_once(__DIR__ . '/includes/footer.php'); ?>
+    <?php require_once(__DIR__ . '/../includes/footer.php'); ?>
 
     <!-- JavaScript -->
     <!-- <script src="<?php echo BASE_URL; ?>/assets/js/main.js"></script> -->

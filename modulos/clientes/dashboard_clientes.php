@@ -6,7 +6,7 @@ $encabezado = "Gestión de Clientes";
 $subtitulo = "Panel de administración de clientes";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
-$ruta = "../../index.php";
+$ruta = "../../session/login.php";
 $texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
