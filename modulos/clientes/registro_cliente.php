@@ -156,7 +156,7 @@ require('../../includes/header.php');
                         
                         <div class="mb-3">
                             <label for="nombre_Cliente" class="form-label required-field">Nombre/Razón Social</label>
-                            <input type="text" class="form-control" id="nombre_Cliente" name="nombre_Cliente" required maxlength="255"
+                            <input type="text" class="form-control" id="nombre_Cliente" name="nombre_Cliente"  maxlength="255"
                                     placeholder="Nombre completo o razón social"
                                     value="<?= htmlspecialchars($_POST['nombre_Cliente'] ?? '') ?>">
                             <div class="invalid-feedback">Por favor ingrese el nombre del cliente</div>

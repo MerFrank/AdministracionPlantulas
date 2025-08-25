@@ -32,6 +32,8 @@ $cotizaciones = $con->query("
 ")->fetchAll();
 
 $titulo = 'Listado de Cotizaciones';
+$ruta = "dashboard_cotizaciones.php";
+$texto_boton = "";
 require __DIR__ . '/../../includes/header.php';
 ?>
 

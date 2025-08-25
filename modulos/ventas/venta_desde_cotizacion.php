@@ -11,24 +11,28 @@ require_once __DIR__ . '/../../includes/config.php';
 // Funciones auxiliares para generar números secuenciales
 function generarFolioNotaPedido($con) {
     $year = date('Y');
-    $stmt = $con->query("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = $year");
-    $count = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt = $con->prepare("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = ?");
+    $stmt->execute([$year]);
+    $count = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
     return 'NP-' . $year . '-' . str_pad($count + 1, 5, '0', STR_PAD_LEFT);
 }
 
 function generarFolioAnticipo($con) {
     $year = date('Y');
-    $stmt = $con->query("SELECT COUNT(*) as total FROM seguimientoanticipos WHERE YEAR(fecha_pago) = $year");
-    $count = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $stmt = $con->prepare("SELECT COUNT(*) as total FROM seguimientoanticipos WHERE YEAR(fecha_pago) = ?");
+    $stmt->execute([$year]);
+    $count = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
     return 'ANT-' . $year . '-' . str_pad($count + 1, 5, '0', STR_PAD_LEFT);
 }
 
 function generarNumeroRemision($con) {
     $stmt = $con->query("SELECT MAX(num_remision) as max_num FROM notaspedidos");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    return ($result['max_num'] ?? 0) + 1;
+    
+    // Convertir a entero antes de sumar
+    $max_num = (int)($result['max_num'] ?? 0);
+    return $max_num + 1;
 }
-
 try {
     $db = new Database();
     $con = $db->conectar();
@@ -134,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             $stmt = $con->prepare("
                 INSERT INTO detallesnotapedido (
                     id_notaPedido, id_variedad, cantidad, precio_unitario, 
-                    precio_real, monto_total, color
+                    subtotal, monto_total, color
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?
                 )
