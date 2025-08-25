@@ -32,7 +32,7 @@ if (isset($_GET['ajax_action'])) {
         switch ($_GET['ajax_action']) {
             case 'get_colores':
                 $id_especie = (int)$_GET['id_especie'];
-                $stmt = $con->prepare("SELECT id_color, nombre_color FROM Colores WHERE id_especie = ? ORDER BY nombre_color");
+                $stmt = $con->prepare("SELECT id_color, nombre_color FROM colores WHERE id_especie = ? ORDER BY nombre_color");
                 $stmt->execute([$id_especie]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
@@ -40,7 +40,7 @@ if (isset($_GET['ajax_action'])) {
             case 'get_variedades':
                 $id_especie = (int)$_GET['id_especie'];
                 $id_color = (int)$_GET['id_color'];
-                $stmt = $con->prepare("SELECT id_variedad, nombre_variedad, codigo FROM Variedades WHERE id_especie = ? AND id_color = ? AND activo = 1 ORDER BY nombre_variedad");
+                $stmt = $con->prepare("SELECT id_variedad, nombre_variedad, codigo FROM variedades WHERE id_especie = ? AND id_color = ? AND activo = 1 ORDER BY nombre_variedad");
                 $stmt->execute([$id_especie, $id_color]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
@@ -71,7 +71,7 @@ $clientes = $con->query("SELECT id_cliente, nombre_Cliente as nombre, telefono, 
                         WHERE activo = 1 
                         ORDER BY nombre_Cliente")->fetchAll();
 
-$especies = $con->query("SELECT id_especie, nombre FROM Especies ORDER BY nombre")->fetchAll();
+$especies = $con->query("SELECT id_especie, nombre FROM especies ORDER BY nombre")->fetchAll();
 
 // Generar token CSRF
 if (empty($_SESSION['csrf_token'])) {
@@ -177,227 +177,183 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // CONFIGURACIÓN PARA EL HEADER
 // ==============================================
 
-$titulo_pagina = 'Nueva Cotización';
-$ruta_css = '../../assets/css/style.css';
-$ruta_logo = '../../assets/img/logoplantulas.png';
+$titulo = 'Nueva Cotización';
+$encabezado = 'Nueva Cotización';
+$ruta = "dashboard_cotizaciones.php";
+$texto_boton = "";
 
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
-<!-- ============================================== -->
-<!-- SECCIÓN HTML - CONTENIDO PRINCIPAL -->
-<!-- ============================================== -->
 
-<!-- ============================================== -->
-<!-- SECCIÓN HTML - CONTENIDO PRINCIPAL -->
-<!-- ============================================== -->
 
-<main class="container mt-4">
-    <div class="card shadow">
+<main class="container-fluid mt-4 px-0">
+    <div class="card shadow border-0 rounded-0">
         <div class="card-header bg-primary text-white">
             <div class="d-flex align-items-center">
-                <img src="<?= $ruta_logo ?>" alt="Logo Plantulas" height="40" class="me-2">
                 <h2 class="mb-0"><i class="bi bi-file-text"></i> Nueva Cotización</h2>
             </div>
         </div>
         
-        <div class="card-body">
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
-            
-            <?php if (!empty($success_message)): ?>
-                <div class="alert alert-success"><?= htmlspecialchars($success_message) ?></div>
-            <?php endif; ?>
+        
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        
+        <?php if (!empty($success_message)): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($success_message) ?></div>
+        <?php endif; ?>
 
-            <form method="post" id="cotizacionForm" novalidate>
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                <input type="hidden" name="items" id="itemsCotizacion" value="">
+        <form method="post" id="cotizacionForm" class="form-doble-columna" novalidate>
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+            <input type="hidden" name="items" id="itemsCotizacion" value="">
+            
+            <div class="row g-3">
+                <!-- Sección Datos Básicos -->
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Folio</label>
+                        <input type="text" class="form-control" value="<?= $folio ?>" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Fecha <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="fecha" required 
+                                value="<?= htmlspecialchars($_POST['fecha'] ?? date('Y-m-d')) ?>">
+                    </div>
+                </div>
                 
-                <div class="row g-3">
-                    <!-- Sección Datos Básicos -->
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Folio</label>
-                            <input type="text" class="form-control" value="<?= $folio ?>" readonly>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Fecha <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" name="fecha" required 
-                                   value="<?= htmlspecialchars($_POST['fecha'] ?? date('Y-m-d')) ?>">
-                        </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Válida hasta <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="valida_hasta" required 
+                                value="<?= htmlspecialchars($_POST['valida_hasta'] ?? date('Y-m-d', strtotime('+15 days'))) ?>">
                     </div>
                     
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Válida hasta <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" name="valida_hasta" required 
-                                   value="<?= htmlspecialchars($_POST['valida_hasta'] ?? date('Y-m-d', strtotime('+15 days'))) ?>">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <select class="form-select" name="id_cliente" id="selectCliente" required>
-                                    <option value="">Seleccione...</option>
-                                    <?php foreach ($clientes as $cliente): ?>
-                                        <option value="<?= $cliente['id_cliente'] ?>" 
-                                            <?= (isset($_POST['id_cliente']) && $_POST['id_cliente'] == $cliente['id_cliente']) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($cliente['nombre']) ?> - <?= htmlspecialchars($cliente['telefono']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
-                                    <i class="bi bi-plus"></i> Nuevo
-                                </button>
-                            </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <select class="form-select" name="id_cliente" id="selectCliente" required>
+                                <option value="">Seleccione...</option>
+                                <?php foreach ($clientes as $cliente): ?>
+                                    <option value="<?= $cliente['id_cliente'] ?>" 
+                                        <?= (isset($_POST['id_cliente']) && $_POST['id_cliente'] == $cliente['id_cliente']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($cliente['nombre']) ?> - <?= htmlspecialchars($cliente['telefono']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
-                    
-                    <!-- Sección Items -->
-                    <div class="col-12">
-                        <div class="card mb-4">
-                            <div class="card-header bg-secondary text-white">
-                                <h3 class="h5 mb-0"><i class="bi bi-list-check"></i> Items de Cotización</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3" id="formItem">
-                                    <div class="col-md-3 col-sm-6">
-                                        <label class="form-label">Especie <span class="text-danger">*</span></label>
-                                        <select class="form-select" id="selectEspecie" name="especie" required>
-                                            <option value="">Seleccione...</option>
-                                            <?php foreach ($especies as $especie): ?>
-                                                <option value="<?= $especie['id_especie'] ?>">
-                                                    <?= htmlspecialchars($especie['nombre']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="col-md-3 col-sm-6">
-                                        <label class="form-label">Color</label>
-                                        <select class="form-select" id="selectColor" name="color" disabled>
-                                            <option value="">Seleccione especie primero</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="col-md-3 col-sm-6">
-                                        <label class="form-label">Variedad</label>
-                                        <select class="form-select" id="selectVariedad" name="variedad" disabled>
-                                            <option value="">Seleccione color primero</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="col-md-1 col-sm-3">
-                                        <label class="form-label">Cantidad <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" id="inputCantidad" name="cantidad" min="1" value="1">
-                                    </div>
-                                    
-                                    <div class="col-md-2 col-sm-6">
-                                        <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="inputPrecio" name="precio_unitario" step="0.01" min="0.01" placeholder="0.00">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-md-1 col-sm-3 d-flex align-items-end">
-                                        <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
-                                            <i class="bi bi-plus-circle"></i> Agregar
-                                        </button>
+                </div>
+                
+                <!-- Sección Items -->
+                <div class="col-12">
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="h5 mb-0"><i class="bi bi-list-check"></i> Items de Cotización</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3" id="formItem">
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label">Especie <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="selectEspecie" name="especie" required>
+                                        <option value="">Seleccione...</option>
+                                        <?php foreach ($especies as $especie): ?>
+                                            <option value="<?= $especie['id_especie'] ?>">
+                                                <?= htmlspecialchars($especie['nombre']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label">Color</label>
+                                    <select class="form-select" id="selectColor" name="color" disabled>
+                                        <option value="">Seleccione especie primero</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label">Variedad</label>
+                                    <select class="form-select" id="selectVariedad" name="variedad" disabled>
+                                        <option value="">Seleccione color primero</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-1 col-sm-3">
+                                    <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="inputCantidad" name="cantidad" min="1" value="1">
+                                </div>
+                                
+                                <div class="col-md-2 col-sm-6">
+                                    <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="inputPrecio" name="precio_unitario" step="0.01" min="0.01" placeholder="0.00">
                                     </div>
                                 </div>
                                 
-                                <div class="mt-4">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped" id="tablaItems">
-                                            <thead>
-                                                <tr>
-                                                    <th>Especie</th>
-                                                    <th>Color</th>
-                                                    <th>Variedad</th>
-                                                    <th>Cantidad</th>
-                                                    <th>P. Unitario</th>
-                                                    <th>Subtotal</th>
-                                                    <th>Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="tbodyItems">
-                                                <!-- Items se agregarán aquí dinámicamente -->
-                                            </tbody>
-                                            <tfoot>
-                                                <tr>
-                                                    <th colspan="5" class="text-end">Total:</th>
-                                                    <th id="totalCotizacion">$0.00</th>
-                                                    <th></th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
+                                <div class="col-md-1 col-sm-3 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
+                                        <i class="bi bi-plus-circle"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="tablaItems">
+                                        <thead>
+                                            <tr>
+                                                <th>Especie</th>
+                                                <th>Color</th>
+                                                <th>Variedad</th>
+                                                <th>Cantidad</th>
+                                                <th>P. Unitario</th>
+                                                <th>Subtotal</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyItems">
+                                            <!-- Items se agregarán aquí dinámicamente -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <th colspan="5" class="text-end">Total:</th>
+                                                <th id="totalCotizacion">$0.00</th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Sección Observaciones (movida al final) -->
-                    <div class="col-12">
-                        <div class="mb-3">
-                            <label class="form-label">Observaciones</label>
-                            <textarea class="form-control" name="observaciones" rows="3"><?= htmlspecialchars($_POST['observaciones'] ?? '') ?></textarea>
-                        </div>
-                    </div>
                 </div>
                 
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="lista_cotizaciones.php" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-primary" id="btnRegistrar">
-                        <i class="bi bi-save"></i> Guardar Cotización
-                    </button>
+                <!-- Sección Observaciones (movida al final) -->
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="3"><?= htmlspecialchars($_POST['observaciones'] ?? '') ?></textarea>
+                    </div>
                 </div>
-            </form>
-        </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="lista_cotizaciones.php" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="btnRegistrar">
+                    <i class="bi bi-save"></i> Guardar Cotización
+                </button>
+            </div>
+        </form>
+        
     </div>
 </main>
 
-<!-- Modal para nuevo cliente -->
-<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Nuevo Cliente</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form id="formNuevoCliente" action="../clientes/registro_cliente.php" method="post">
-        <div class="modal-body">
-          <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-          <div class="mb-3">
-            <label class="form-label">Nombre <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" name="nombre" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Teléfono</label>
-            <input type="text" class="form-control" name="telefono">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" name="email">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Dirección</label>
-            <textarea class="form-control" name="direccion" rows="2"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+
 
 <!-- ============================================== -->
 <!-- SECCIÓN JAVASCRIPT -->

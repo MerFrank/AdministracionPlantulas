@@ -10,15 +10,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Configuración de la página
-$titulo_pagina = "Panel de Cotizaciones";
-$ruta_css = "../../assets/css/style.css";
-$ruta_logo = "../../assets/img/logoplantulas.png";
-$active_page = "cotizaciones";
 
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
-require_once __DIR__ . '/../../includes/header.php';
 
 // Conexión a la base de datos
 try {
@@ -30,22 +24,35 @@ try {
 
 // Obtener estadísticas de cotizaciones (ahora con "completadas" en lugar de "aprobadas")
 $estadisticas = $con->query("
-    SELECT 
-        COUNT(*) as total_cotizaciones,
-        SUM(total) as monto_total,
-        (SELECT COUNT(*) FROM cotizaciones WHERE fecha >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as cotizaciones_recientes,
-        (SELECT COUNT(*) FROM cotizaciones WHERE estado = 'completado') as completadas
-    FROM cotizaciones
+SELECT 
+COUNT(*) as total_cotizaciones,
+SUM(total) as monto_total,
+(SELECT COUNT(*) FROM cotizaciones WHERE fecha >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as cotizaciones_recientes,
+(SELECT COUNT(*) FROM cotizaciones WHERE estado = 'completado') as completadas
+FROM cotizaciones
 ")->fetch();
 
 // Obtener últimas cotizaciones registradas
 $ultimas_cotizaciones = $con->query("
-    SELECT c.id_cotizacion, c.folio, c.fecha, c.total, cl.nombre_Cliente as cliente_nombre, c.estado
-    FROM cotizaciones c
-    JOIN clientes cl ON c.id_cliente = cl.id_cliente
-    ORDER BY c.fecha DESC
-    LIMIT 5
+SELECT c.id_cotizacion, c.folio, c.fecha, c.total, cl.nombre_Cliente as cliente_nombre, c.estado
+FROM cotizaciones c
+JOIN clientes cl ON c.id_cliente = cl.id_cliente
+ORDER BY c.fecha DESC
+LIMIT 5
 ")->fetchAll();
+
+
+// Configuración de la página
+$titulo = "Panel de Cotizaciones";
+$encabezado = "Panel de adCotizaciones";
+$subtitulo = "Crea y gestiona cotizaciones.";
+
+$active_page = "cotizaciones";
+// boton
+$ruta = "../../session/login.php";
+$texto_boton = "Regresar";
+require_once __DIR__ . '/../../includes/header.php';
+
 ?>
 
 <!-- ============================================== -->
