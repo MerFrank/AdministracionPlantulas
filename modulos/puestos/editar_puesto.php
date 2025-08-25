@@ -12,8 +12,8 @@ $encabezado = "Editar Puesto";
 $subtitulo = "Modifique la información del puesto";
 $active_page = "puestos";
 
-$ruta = BASE_URL . '/vistas/puestos/lista_puestos.php';
-$texto_boton = "Volver al listado";
+$texto_boton = "";
+$ruta = "lista_puestos.php";
 
 // Generar token CSRF
 if (empty($_SESSION['csrf_token'])) {
