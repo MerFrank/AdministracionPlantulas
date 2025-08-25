@@ -7,11 +7,6 @@ if (function_exists('verificarRol')) {
     verificarRol('admin');
 }
 
-// Variables para el encabezado y la página activa.
-$titulo = "Puestos";
-$encabezado = "Puestos Registrados";
-$subtitulo = "Lista de todos los puestos de la organización.";
-$active_page = "puestos";
 
 $puestos = [];
 
@@ -24,12 +19,22 @@ try {
     $stmt = $con->prepare($sql);
     $stmt->execute();
     $puestos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    
 } catch (PDOException $e) {
     die("Error al obtener los puestos: " . $e->getMessage());
 }
 
 // Incluye el encabezado de la página.
+
+// Variables para el encabezado y la página activa.
+$titulo = "Puestos";
+$encabezado = "Puestos Registrados";
+$subtitulo = "Lista de todos los puestos de la organización.";
+$active_page = "puestos";
+
+//Botón
+$texto_boton = "";
+$ruta = "dashboard_puestos.php";
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 

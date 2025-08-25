@@ -2,10 +2,8 @@
 // Mueve esta línea al inicio del archivo para que BASE_URL esté definida.
 require_once __DIR__ . '/../../includes/config.php';
 
-// Definir la variable $ruta para el botón de volver
-$ruta = BASE_URL . '/vistas/puestos/dashboard_puestos.php';
-// El texto del botón es opcional, ya que el header tiene un valor por defecto.
-$texto_boton = "Volver a Puestos"; 
+$texto_boton = "";
+$ruta = "dashboard_puestos.php";
 
 require_once __DIR__ . '/../../includes/header.php';
 
@@ -104,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
         $con->commit();
 
         $_SESSION['success'] = "Puesto asignado correctamente al empleado.";
-        header("Location: " . BASE_URL . '/vistas/puestos/dashboard_puestos.php');
+        header("Location: " . BASE_URL . '/modulos/puestos/dashboard_puestos.php');
         exit();
 
     } catch (PDOException $e) {

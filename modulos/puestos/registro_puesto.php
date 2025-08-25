@@ -1,6 +1,15 @@
 <?php
 // Incluir el archivo de configuración para definir BASE_URL y otras constantes
 require_once __DIR__ . '/../../includes/config.php';
+// Variables para el encabezado
+$titulo = "Registrar Puesto";
+$encabezado = "Registrar Puesto";
+$subtitulo = "Registra nuevos puestos en la empresa.";
+
+//Botón
+$texto_boton = "";
+$ruta = "dashboard_puestos.php";
+
 require_once __DIR__ . '/../../includes/header.php';
 
 // Verificar permisos

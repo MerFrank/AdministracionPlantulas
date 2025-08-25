@@ -1,13 +1,7 @@
 <?php
-// Incluye el archivo de configuración para la conexión a la base de datos y otras constantes.
+// Incluye el archivo de configuración para la conexión a la base de datos 
 require_once __DIR__ . '/../../includes/config.php';
-require_once __DIR__ . '/../../includes/header.php';
 
-// Variables para el encabezado
-$titulo = "Puestos";
-$encabezado = "Gestión de Puestos";
-$subtitulo = "Panel de administración de puestos y asignaciones";
-$active_page = "puestos";
 
 // Obtener estadísticas de puestos
 $total_puestos = 0;
@@ -45,6 +39,18 @@ try {
 } catch (PDOException $e) {
     error_log("Error al obtener estadísticas: " . $e->getMessage());
 }
+
+
+// Variables para el encabezado
+$titulo = "Puestos";
+$encabezado = "Gestión de Puestos";
+$subtitulo = "Panel de administración de puestos y asignaciones";
+$active_page = "puestos";
+//Botón
+$texto_boton = " Regresar";
+$ruta = "../../session/login.php";
+
+require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <main class="container py-4">
