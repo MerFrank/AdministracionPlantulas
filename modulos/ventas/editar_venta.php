@@ -52,15 +52,17 @@ $detalles_venta = $con->query("
     WHERE d.id_notaPedido = $id_venta
 ")->fetchAll();
 
-// Obtener abonos registrados
+// Obtener abonos registrados (CAMBIO: usar pagosventas en lugar de seguimientoanticipos)
 $abonos = $con->query("
-    SELECT * FROM seguimientoanticipos
-    WHERE numero_venta = $id_venta
-    ORDER BY fecha_pago DESC
+    SELECT pv.*, cb.nombre as nombre_cuenta, cb.banco, cb.numero
+    FROM pagosventas pv
+    LEFT JOIN cuentas_bancarias cb ON pv.id_cuenta = cb.id_cuenta
+    WHERE pv.id_notaPedido = $id_venta
+    ORDER BY pv.fecha DESC
 ")->fetchAll();
 
 // Calcular total abonado
-$total_abonado = array_sum(array_column($abonos, 'monto_pago'));
+$total_abonado = array_sum(array_column($abonos, 'monto'));
 
 // Obtener datos para formulario
 $clientes = $con->query("SELECT id_cliente, nombre_Cliente FROM clientes WHERE activo = 1 ORDER BY nombre_Cliente")->fetchAll();
@@ -71,6 +73,14 @@ $variedades = $con->query("
     JOIN especies e ON v.id_especie = e.id_especie
     JOIN colores c ON v.id_color = c.id_color
     ORDER BY e.nombre, v.nombre_variedad
+")->fetchAll();
+
+// Obtener cuentas bancarias para el formulario de abonos
+$cuentas_bancarias = $con->query("
+    SELECT id_cuenta, nombre, banco, numero 
+    FROM cuentas_bancarias 
+    WHERE activo = 1
+    ORDER BY nombre
 ")->fetchAll();
 
 // Generar token CSRF
@@ -117,22 +127,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['nuevo_abono']) && $_POST['nuevo_abono'] > 0) {
             $monto_abono = (float)$_POST['nuevo_abono'];
             
+            // Validar cuenta bancaria para el abono
+            if (empty($_POST['id_cuenta_abono'])) {
+                throw new Exception("Seleccione una cuenta bancaria para el abono");
+            }
+            $id_cuenta_abono = (int)$_POST['id_cuenta_abono'];
+            
+            // CAMBIO: Insertar en pagosventas en lugar de seguimientoanticipos
             $stmt = $con->prepare("
-                INSERT INTO seguimientoanticipos (
-                    numero_venta, folio_anticipo, id_cliente, fecha_pago, 
-                    monto_pago, metodo_pago, comentarios, estado_pago
+                INSERT INTO pagosventas (
+                    id_notaPedido, monto, fecha, metodo_pago, 
+                    referencia, observaciones, id_empleado, id_cuenta
                 ) VALUES (
-                    ?, CONCAT('ANT-', YEAR(NOW()), '-', LPAD((SELECT COUNT(*) FROM seguimientoanticipos WHERE YEAR(fecha_pago) = YEAR(NOW())) + 1, 5, '0')), 
-                    ?, NOW(), ?, ?, 'Abono registrado desde edición', 'completado'
+                    ?, ?, NOW(), ?, ?, ?, ?, ?
                 )
             ");
             
             $stmt->execute([
                 $id_venta,
-                (int)$_POST['id_cliente'],
                 $monto_abono,
-                $_POST['metodo_pago_abono'] ?? 'efectivo'
+                $_POST['metodo_pago_abono'] ?? 'efectivo',
+                'Abono registrado desde edición',
+                htmlspecialchars(trim($_POST['comentarios_abono'] ?? '')),
+                $_SESSION['id_empleado'] ?? null,
+                $id_cuenta_abono
             ]);
+            
+            // ACTUALIZAR EL SALDO DE LA CUENTA BANCARIA
+            $stmt_update_cuenta = $con->prepare("
+                UPDATE cuentas_bancarias 
+                SET saldo_actual = saldo_actual + :monto 
+                WHERE id_cuenta = :id_cuenta
+            ");
+            $stmt_update_cuenta->execute([
+                ':monto' => $monto_abono,
+                ':id_cuenta' => $id_cuenta_abono
+            ]);
+            
+            // Verificar que se actualizó correctamente
+            if ($stmt_update_cuenta->rowCount() === 0) {
+                throw new Exception("No se pudo actualizar el saldo de la cuenta bancaria.");
+            }
             
             // Actualizar saldo pendiente
             $nuevo_saldo = max($venta['saldo_pendiente'] - $monto_abono, 0);
@@ -321,7 +356,29 @@ require __DIR__ . '/../../includes/header.php';
                                                 <option value="efectivo">Efectivo</option>
                                                 <option value="transferencia">Transferencia</option>
                                                 <option value="tarjeta">Tarjeta</option>
+                                                <option value="deposito">Depósito</option>
                                             </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
+                                            <select class="form-select" name="id_cuenta_abono" required>
+                                                <option value="">Seleccione una cuenta...</option>
+                                                <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                                    <option value="<?= $cuenta['id_cuenta'] ?>">
+                                                        <?= htmlspecialchars($cuenta['banco'] . ' - ' . $cuenta['nombre'] . ' (' . $cuenta['numero'] . ')') ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">Comentarios del Abono (opcional)</label>
+                                            <textarea class="form-control" name="comentarios_abono" rows="2"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -335,18 +392,26 @@ require __DIR__ . '/../../includes/header.php';
                                             <thead>
                                                 <tr>
                                                     <th>Fecha</th>
-                                                    <th>Folio</th>
                                                     <th>Monto</th>
                                                     <th>Método</th>
+                                                    <th>Cuenta</th>
+                                                    <th>Referencia</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($abonos as $abono): ?>
                                                 <tr>
-                                                    <td><?= date('d/m/Y', strtotime($abono['fecha_pago'])) ?></td>
-                                                    <td><?= htmlspecialchars($abono['folio_anticipo']) ?></td>
-                                                    <td>$<?= number_format($abono['monto_pago'], 2) ?></td>
+                                                    <td><?= date('d/m/Y H:i', strtotime($abono['fecha'])) ?></td>
+                                                    <td>$<?= number_format($abono['monto'], 2) ?></td>
                                                     <td><?= ucfirst($abono['metodo_pago']) ?></td>
+                                                    <td>
+                                                        <?php if ($abono['id_cuenta']): ?>
+                                                            <?= htmlspecialchars($abono['banco'] . ' - ' . $abono['nombre_cuenta']) ?>
+                                                        <?php else: ?>
+                                                            N/A
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td><?= htmlspecialchars($abono['referencia'] ?? '') ?></td>
                                                 </tr>
                                                 <?php endforeach; ?>
                                             </tbody>

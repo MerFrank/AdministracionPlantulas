@@ -538,7 +538,7 @@ require __DIR__ . '/../../includes/header.php';
                             <label class="form-label">Monto <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="monto" step="0.01" min="0.01">
+                                <input type="number" class="form-control" id="monto" name="monto" step="0.01" min="0.01">
                             </div>
                         </div>
 
