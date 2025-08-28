@@ -298,7 +298,7 @@ require __DIR__ . '/../../includes/header.php';
                                 </select>
                             </div>
                             
-                            <div class="mb-3" id="anticipoContainer" style="display: none;">
+                            <div class="mb-3" id="anticipoContainer">
                                 <label class="form-label">Anticipo <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
@@ -306,7 +306,7 @@ require __DIR__ . '/../../includes/header.php';
                                 </div>
                             </div>
                             
-                            <div class="mb-3" id="metodoPagoContainer" style="display: none;">
+                            <div class="mb-3" id="metodoPagoContainer">
                                 <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
                                 <select class="form-select" name="metodo_pago">
                                     <option value="efectivo">Efectivo</option>
@@ -366,22 +366,6 @@ require __DIR__ . '/../../includes/header.php';
                     </div>
                 </form>
                 
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const tipoPago = document.getElementById('tipoPago');
-                    const anticipoContainer = document.getElementById('anticipoContainer');
-                    const metodoPagoContainer = document.getElementById('metodoPagoContainer');
-                    
-                    tipoPago.addEventListener('change', function() {
-                        const esCredito = this.value === 'credito';
-                        anticipoContainer.style.display = esCredito ? 'block' : 'none';
-                        metodoPagoContainer.style.display = esCredito ? 'block' : 'none';
-                    });
-                    
-                    // Disparar evento al cargar
-                    tipoPago.dispatchEvent(new Event('change'));
-                });
-                </script>
             <?php endif; ?>
         </div>
     </div>
