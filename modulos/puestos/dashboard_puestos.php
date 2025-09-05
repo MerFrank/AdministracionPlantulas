@@ -71,6 +71,7 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
     </div>
 
+    <!-- Registar puesto -->
     <section class="dashboard-grid mb-5">
         <div class="row g-4">
             <div class="col-md-6 col-lg-4">
@@ -90,6 +91,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 </div>
             </div>
 
+            <!-- Listar puestos -->
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -107,6 +109,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 </div>
             </div>
 
+            <!-- Asignar Puestos -->
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -123,6 +126,45 @@ require_once __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
             </div>
+
+            <!-- Nuevas tarjetas -->
+
+            <!-- Actividades extras -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-teal bg-opacity-10 p-3 rounded me-3">
+                                <i class="bi bi-bookmark-plus text-teal fs-2"></i>
+                            </div>
+                            <h3 class="h5 mb-0">Actividades extras</h3>
+                        </div>
+                        <p class="card-text">Administra las actividades extras.</p>
+                        <a href="actividades_extras.php" class="btn btn-outline-teal stretched-link">
+                            Acceder <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- listado empleado puestos -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-teal bg-opacity-10 p-3 rounded me-3">
+                                <i class="bi bi-person-vcard text-teal fs-2"></i>
+                            </div>
+                            <h3 class="h5 mb-0">Listado de empleados con su puesto</h3>
+                        </div>
+                        <p class="card-text">Texto.</p>
+                        <a href="listado_empleados_puestos.php" class="btn btn-outline-teal stretched-link">
+                            Acceder <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 

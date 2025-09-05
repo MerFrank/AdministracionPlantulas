@@ -85,15 +85,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
         $stmt_insertar->execute([$id_empleado, $id_puesto, $sueldo_diario, $fecha_inicio, $fecha_fin, $dias_laborales, $hora_entrada, $hora_salida]);
         $id_asignacion = $con->lastInsertId();
 
-        // 3. Insertar las actividades extras si existen
+        // 3. Insertar las actividades extras si existen - CAMBIO AQUÍ
         if (isset($_POST['actividades']) && !empty($_POST['actividades'])) {
-            $sql_actividades = "INSERT INTO asignacion_actividad (id_empleado_puesto, id_actividad, dias_actividad) VALUES (?, ?, ?)";
+            $sql_actividades = "INSERT INTO empleado_actividades (id_asignacion, id_actividad, fecha, horas_trabajadas, pago_calculado, observaciones) 
+                                VALUES (?, ?, CURDATE(), ?, ?, ?)";
             $stmt_actividades = $con->prepare($sql_actividades);
             
             foreach ($_POST['actividades'] as $id_actividad => $actividad_data) {
-                if (isset($actividad_data['dias'])) {
-                    $dias_actividad = implode(',', $actividad_data['dias']);
-                    $stmt_actividades->execute([$id_asignacion, $id_actividad, $dias_actividad]);
+                if (isset($actividad_data['dias']) && !empty($actividad_data['dias'])) {
+                    // Obtener información de la actividad para calcular el pago
+                    $stmt_info_actividad = $con->prepare("SELECT pago_extra FROM actividades_extras WHERE id_actividad = ?");
+                    $stmt_info_actividad->execute([$id_actividad]);
+                    $info_actividad = $stmt_info_actividad->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($info_actividad) {
+                        $pago_extra = $info_actividad['pago_extra'];
+                        $dias_seleccionados = $actividad_data['dias'];
+                        $horas_trabajadas = count($dias_seleccionados) * 8; // Suponiendo 8 horas por día
+                        $pago_calculado = $pago_extra * $horas_trabajadas;
+                        $observaciones = "Asignación automática. Días: " . implode(', ', $dias_seleccionados);
+                        
+                        $stmt_actividades->execute([
+                            $id_asignacion, 
+                            $id_actividad, 
+                            $horas_trabajadas, 
+                            $pago_calculado, 
+                            $observaciones
+                        ]);
+                    }
                 }
             }
         }
