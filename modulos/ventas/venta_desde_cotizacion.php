@@ -17,14 +17,6 @@ function generarFolioNotaPedido($con) {
     return 'NP-' . $year . '-' . str_pad($count + 1, 5, '0', STR_PAD_LEFT);
 }
 
-function generarFolioAnticipo($con) {
-    $year = date('Y');
-    $stmt = $con->prepare("SELECT COUNT(*) as total FROM seguimientoanticipos WHERE YEAR(fecha_pago) = ?");
-    $stmt->execute([$year]);
-    $count = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    return 'ANT-' . $year . '-' . str_pad($count + 1, 5, '0', STR_PAD_LEFT);
-}
-
 function generarNumeroRemision($con) {
     $stmt = $con->query("SELECT MAX(num_remision) as max_num FROM notaspedidos");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -33,6 +25,7 @@ function generarNumeroRemision($con) {
     $max_num = (int)($result['max_num'] ?? 0);
     return $max_num + 1;
 }
+
 try {
     $db = new Database();
     $con = $db->conectar();
@@ -52,6 +45,8 @@ $cotizaciones = $con->query("
 // Procesar selección de cotización
 $cotizacion_seleccionada = null;
 $detalles_cotizacion = [];
+
+$cuentas_bancarias = $con->query("SELECT id_cuenta, nombre, banco, numero FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_cotizacion'])) {
     $id_cotizacion = (int)$_POST['id_cotizacion'];
@@ -159,24 +154,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
         $stmt = $con->prepare("UPDATE cotizaciones SET estado = 'completado' WHERE id_cotizacion = ?");
         $stmt->execute([$id_cotizacion]);
         
-        // Registrar anticipo si hay
+        // Registrar anticipo si hay (usando la nueva tabla de pagos)
         if ($anticipo > 0) {
-            $folioAnticipo = generarFolioAnticipo($con);
+            // Obtener ID del empleado desde la sesión (ajusta según tu sistema)
+            $id_empleado = $_SESSION['id_empleado'] ?? 1; // Valor por defecto si no existe
+            if (empty($_POST['id_cuenta'])) {
+                throw new Exception("Debe seleccionar una cuenta bancaria para registrar el pago.");
+            }
+
+            
             $stmt = $con->prepare("
-                INSERT INTO seguimientoanticipos (
-                    numero_venta, folio_anticipo, id_cliente, fecha_pago, 
-                    monto_pago, metodo_pago, comentarios, estado_pago
+                INSERT INTO pagosventas (
+                    id_notaPedido, monto, fecha, metodo_pago, referencia, 
+                    observaciones, id_empleado, id_cuenta
                 ) VALUES (
-                    ?, ?, ?, NOW(), ?, ?, 'Anticipo de venta desde cotización #$id_cotizacion', 'completado'
+                    ?, ?, NOW(), ?, NULL, 
+                    ?, ?, ?
                 )
             ");
             
+            $observaciones_pago = "Anticipo de venta desde cotización #$id_cotizacion";
+            
             $stmt->execute([
                 $id_notaPedido,
-                $folioAnticipo,
-                $id_cliente,
                 $anticipo,
-                $_POST['metodo_pago']
+                $_POST['metodo_pago'],
+                $observaciones_pago,
+                $id_empleado,
+                $_POST['id_cuenta']
             ]);
         }
         
@@ -192,7 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
 }
 
 $titulo = 'Venta desde Cotización';
-
 $subtitulo = "Panel de administración de cotizaciones";
 $ruta = "dashboard_ventas.php";
 $texto_boton = "";
@@ -307,11 +311,23 @@ require __DIR__ . '/../../includes/header.php';
                             </div>
                             
                             <div class="mb-3" id="metodoPagoContainer">
-                                <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
-                                <select class="form-select" name="metodo_pago">
-                                    <option value="efectivo">Efectivo</option>
-                                    <option value="transferencia">Transferencia</option>
-                                    <option value="tarjeta">Tarjeta</option>
+                                    <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="metodo_pago">
+                                        <option value="efectivo">Efectivo</option>
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="tarjeta">Tarjeta</option>
+                                    </select>
+                                </div>
+
+                                <div class="md-3">
+                                <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
+                                <select class="form-select" name="id_cuenta" required>
+                                    <option value="">Seleccione una cuenta...</option>
+                                    <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                        <option value="<?= $cuenta['id_cuenta'] ?>">
+                                            <?= htmlspecialchars("{$cuenta['banco']} - {$cuenta['nombre']} ({$cuenta['numero']})") ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
