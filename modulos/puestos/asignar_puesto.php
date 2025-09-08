@@ -85,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
         $stmt_insertar->execute([$id_empleado, $id_puesto, $sueldo_diario, $fecha_inicio, $fecha_fin, $dias_laborales, $hora_entrada, $hora_salida]);
         $id_asignacion = $con->lastInsertId();
 
+
         // 3. Insertar las actividades extras si existen - CAMBIO AQUÍ
         if (isset($_POST['actividades']) && !empty($_POST['actividades'])) {
             $sql_actividades = "INSERT INTO empleado_actividades (id_asignacion, id_actividad, fecha, horas_trabajadas, pago_calculado, observaciones) 
@@ -113,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                             $observaciones
                         ]);
                     }
+
                 }
             }
         }
@@ -374,4 +376,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
 </script>   
+

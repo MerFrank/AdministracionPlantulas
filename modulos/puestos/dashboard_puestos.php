@@ -71,7 +71,9 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
     </div>
 
+
     <!-- Registar puesto -->
+
     <section class="dashboard-grid mb-5">
         <div class="row g-4">
             <div class="col-md-6 col-lg-4">
@@ -91,7 +93,9 @@ require_once __DIR__ . '/../../includes/header.php';
                 </div>
             </div>
 
+
             <!-- Listar puestos -->
+
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -110,6 +114,7 @@ require_once __DIR__ . '/../../includes/header.php';
             </div>
 
             <!-- Asignar Puestos -->
+
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -126,6 +131,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
             </div>
+
 
             <!-- Nuevas tarjetas -->
 
@@ -164,6 +170,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
             </div>
+
 
         </div>
     </section>

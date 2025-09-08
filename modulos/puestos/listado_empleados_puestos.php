@@ -14,6 +14,7 @@ try {
     $db = new Database();
     $con = $db->conectar();
     
+
     
     $sql = "SELECT e.id_empleado, e.nombre AS nombre_empleado, e.apellido_paterno, e.email, 
                    p.nombre AS nombre_puesto, p.nivel_jerarquico 
@@ -21,6 +22,7 @@ try {
             LEFT JOIN empleado_puesto AS ep ON e.id_empleado = ep.id_empleado
             LEFT JOIN puestos AS p ON ep.id_puesto = p.id_puesto
             ORDER BY e.nombre, e.apellido_paterno";
+
     
     $stmt = $con->prepare($sql);
     $stmt->execute();
@@ -31,9 +33,11 @@ try {
 }
 
 // Incluye el encabezado de la página.
+
 //Botón
 $texto_boton = "";
 $ruta = "dashboard_puestos.php";
+
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -52,17 +56,22 @@ require_once __DIR__ . '/../../includes/header.php';
                             <th>Correo Electrónico</th>
                             <th>Puesto Asignado</th>
                             <th>Nivel Jerárquico</th>
+
                             <th>Acciones</th>
+
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($empleados)): ?>
                             <tr>
+
                                 <td colspan="5" class="text-center">No se encontraron empleados o asignaciones de puestos.</td>
+
                             </tr>
                         <?php else: ?>
                             <?php foreach ($empleados as $empleado): ?>
                                 <tr>
+
                                     <td><?= htmlspecialchars($empleado['nombre_empleado'] . ' ' . $empleado['apellido_paterno']) ?></td>
                                     <td><?= htmlspecialchars($empleado['email']) ?></td>
                                     <td><?= htmlspecialchars($empleado['nombre_puesto'] ?? 'Sin puesto') ?></td>
@@ -73,6 +82,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <i class="bi bi-clock-history"></i> Historial
                                         </a>
                                     </td>
+
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>

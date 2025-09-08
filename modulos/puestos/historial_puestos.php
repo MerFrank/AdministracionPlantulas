@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../../includes/config.php';
 
 // Verificar permisos
@@ -14,21 +15,26 @@ if ($id_empleado <= 0) {
     die("Error: No se recibió un ID de empleado válido. ID recibido: " . ($_GET['id'] ?? 'Ninguno'));
 }
 
+
 try {
     $db = new Database();
     $con = $db->conectar();
     
     // Obtener información del empleado
+
     $sql_empleado = "SELECT id_empleado, nombre, apellido_paterno, apellido_materno 
+ 
                      FROM empleados WHERE id_empleado = ?";
     $stmt_empleado = $con->prepare($sql_empleado);
     $stmt_empleado->execute([$id_empleado]);
     $empleado = $stmt_empleado->fetch(PDO::FETCH_ASSOC);
     
     if (!$empleado) {
+
         // Debug adicional para ver qué ID se está buscando
         die("Empleado no encontrado. ID buscado: " . $id_empleado . 
             ". ¿Existe el empleado con este ID en la base de datos?");
+
     }
     
     // Obtener historial de puestos
@@ -47,6 +53,7 @@ try {
     die($e->getMessage());
 }
 
+
 // Variables para el encabezado
 $titulo = "Puestos";
 $encabezado = "Historial de Puestos";
@@ -55,12 +62,14 @@ $active_page = "puestos";
 $texto_boton = "";
 $ruta = "dashboard_puestos.php";
 require_once __DIR__ . '/../../includes/header.php';
+
 ?>
 
 <main class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
             <h2><i class="bi bi-clock-history"></i> Historial de Puestos</h2>
+
             <h3 class="h5 mb-0"><?= htmlspecialchars($empleado['apellido_paterno'] . ' ' . ($empleado['apellido_materno'] ?? '') . ', ' . $empleado['nombre']) ?></h3>
         </div>
         
@@ -70,10 +79,12 @@ require_once __DIR__ . '/../../includes/header.php';
                     <i class="bi bi-plus-circle"></i> Asignar Nuevo Puesto
                 </a>
                 <a href="../empleados/lista_empleados.php" class="btn btn-secondary">
+
                     <i class="bi bi-arrow-left"></i> Volver a Empleados
                 </a>
             </div>
             
+
             <?php if (empty($historial)): ?>
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle"></i> Este empleado no tiene historial de puestos registrado.
@@ -121,6 +132,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     </table>
                 </div>
             <?php endif; ?>
+
         </div>
     </div>
 </main>

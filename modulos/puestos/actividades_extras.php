@@ -27,9 +27,11 @@ try {
     die("Error al obtener actividades: " . $e->getMessage());
 }
 
+
 //Botón
 $texto_boton = "";
 $ruta = "dashboard_puestos.php";
+
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -80,6 +82,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <td><?= ($actividad['activo'] == 1) ? 'Activa' : 'Inactiva' ?></td>
                                     <td>
                                         <a href="editar_actividad.php?id_actividad=<?= $actividad['id_actividad'] ?>" 
+
                                             class="btn btn-sm btn-warning" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
@@ -87,6 +90,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                             class="btn btn-sm btn-danger" title="Eliminar"
                                             onclick="return confirm('¿Está seguro de eliminar la actividad: <?= addslashes($actividad['nombre']) ?>?')">
                                                 <i class="bi bi-trash"></i>
+
                                         </a>
                                     </td>
                                 </tr>
