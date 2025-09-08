@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../includes/config.php';
 //     verificarRol('admin');
 // }
 
-// Obtener ID del empleado - CAMBIO: usar 'id' en lugar de 'id_empleado'
+// Obtener ID del empleado
 $id_empleado = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 // Debug: verificar que el ID está llegando

@@ -1,5 +1,5 @@
 <?php
-// Incluir el archivo de configuración para definir BASE_URL y otras constantes
+
 require_once __DIR__ . '/../../includes/config.php';
 // Variables para el encabezado
 $titulo = "Registrar Puesto";

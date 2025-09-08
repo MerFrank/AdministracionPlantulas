@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../includes/config.php';
 //     exit;
 // }
 
-// Obtener ID de la actividad a editar - CAMBIO: usar id_actividad en lugar de id
+// Obtener ID de la actividad a editar
 $id_actividad = isset($_GET['id_actividad']) ? (int)$_GET['id_actividad'] : 0;
 
 if ($id_actividad <= 0) {

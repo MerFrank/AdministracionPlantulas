@@ -14,7 +14,7 @@ try {
     $db = new Database();
     $con = $db->conectar();
     
-    // Consulta SQL CORREGIDA: Ahora incluye e.id_empleado
+    
     $sql = "SELECT e.id_empleado, e.nombre AS nombre_empleado, e.apellido_paterno, e.email, 
                    p.nombre AS nombre_puesto, p.nivel_jerarquico 
             FROM empleados AS e
@@ -84,6 +84,6 @@ require_once __DIR__ . '/../../includes/header.php';
 </main>
 
 <?php 
-// Incluye el pie de página.
+
 require_once __DIR__ . '/../../includes/footer.php';
 ?>
