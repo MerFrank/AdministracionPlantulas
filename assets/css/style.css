@@ -4,7 +4,7 @@
 :root {
   --color-primary: #45814d;
   --color-secondary: #6c757d;
-  --color-accent: #d9b310;
+  --color-accent: #d9cc10;
   --color-danger: #dc3545;
   --color-light: #ffffff;
   --color-dark: #212529;
@@ -159,13 +159,13 @@ main {
 }
 
 .save-button:hover {
-  background-color: #c49f0e;
+  background-color: #27a3d4;
   transform: translateY(-1px);
 }
 
 .btn-inicio {
   background-color: #3ba168;
-  color: white;
+  color: rgb(247, 241, 241);
   padding: 0.625rem 1.25rem;
   border-radius: var(--border-radius);
   transition: var(--transition);
@@ -177,8 +177,8 @@ main {
 }
 
 .btn-final {
-  background-color: #c0392b;
-  color: white;
+  background-color: #a93226;
+  color: rgb(250, 241, 241);
   padding: 0.625rem 1.25rem;
   border-radius: var(--border-radius);
   transition: var(--transition);
@@ -416,7 +416,7 @@ form button {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background-color: white;
+  background-color: rgb(240, 236, 236);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   border-radius: var(--border-radius);
   overflow: hidden;
@@ -524,7 +524,7 @@ form button {
    TARJETAS
    ========================= */
 .card {
-  background-color: white;
+  background-color: rgba(252, 236, 246, 1);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -636,17 +636,31 @@ footer {
 /* =========================
    MEDIA QUERIES
    ========================= */
+
+   /* configuracion de botones para la taba de clientes en movil*/
+   
 @media (max-width: 768px) {
-  .botones-accion {
+  .d-flex.gap-2 {
     flex-direction: column;
   }
   
-  .botones-accion .btn {
+  .d-flex.gap-2 .btn {
     max-width: 100%;
     width: 100%;
   }
+  /*configuracion de los botones de editar clietes*/
+  .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex.justify-content-between .btn {
+        width: 100%;
+        max-width: 100%;
+    }
+
   
-  .table-responsive table {
+  /*.table-responsive table {
     border: 0;
   }
   
@@ -680,17 +694,20 @@ footer {
     font-weight: bold;
     flex: 1;
     text-align: left;
-  }
+  }/*
   
   /* Estilos responsive específicos para tabla de clientes */
+
   .table-clientes {
-    min-width: 600px;
+    min-width: 0;
   }
   
   .table-container {
     border-radius: 0;
     box-shadow: none;
   }
+
+
 }
 
 @media (max-width: 576px) {
@@ -724,9 +741,10 @@ footer {
   }
   
   /* Ajustes para tabla de clientes en móviles */
+  
   .table-clientes th, 
   .table-clientes td {
-    padding: 0.6rem;
+    padding: 0.5rem;
   }
   
   .table-clientes .btn-action {
@@ -734,6 +752,11 @@ footer {
     height: 28px;
     padding: 0.25rem;
   }
+
+   .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; 
+    }
 }
 
 @media (min-width: 992px) {
