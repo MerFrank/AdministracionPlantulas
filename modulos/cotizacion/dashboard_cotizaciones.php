@@ -76,7 +76,8 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="col-md-3">
             <div class="card shadow-sm border-primary h-100">
                 <div class="card-body">
-                    <div class="d-flex align-items-center">
+
+                    <div class="text-center">
                         <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
                             <i class="bi bi-file-text text-primary fs-2"></i>
                         </div>
@@ -92,7 +93,8 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="col-md-3">
             <div class="card shadow-sm border-success h-100">
                 <div class="card-body">
-                    <div class="d-flex align-items-center">
+
+                    <div class="text-center">
                         <div class="bg-success bg-opacity-10 p-3 rounded me-3">
                             <i class="bi bi-check-circle text-success fs-2"></i>
                         </div>
@@ -108,7 +110,8 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="col-md-3">
             <div class="card shadow-sm border-info h-100">
                 <div class="card-body">
-                    <div class="d-flex align-items-center">
+
+                    <div class="text-center">
                         <div class="bg-info bg-opacity-10 p-3 rounded me-3">
                             <i class="bi bi-clock-history text-info fs-2"></i>
                         </div>
@@ -124,7 +127,8 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="col-md-3">
             <div class="card shadow-sm border-warning h-100">
                 <div class="card-body">
-                    <div class="d-flex align-items-center">
+
+                    <div class="text-center">
                         <div class="bg-warning bg-opacity-10 p-3 rounded me-3">
                             <i class="bi bi-cash-stack text-warning fs-2"></i>
                         </div>
@@ -192,7 +196,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <!-- Acciones Rápidas -->
         <div class="col-lg-5">
             <div class="row g-4">
-                <div class="col-md-6">
+                <div class="col-md-6">  
                     <div class="card shadow-sm h-100">
                         <div class="card-body text-center">
                             <div class="bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
@@ -200,7 +204,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             </div>
                             <h3 class="h5">Nueva Cotización</h3>
                             <p class="text-muted">Crear una nueva cotización</p>
-                            <a href="registro_cotizacion.php" class="btn btn-primary stretched-link">
+                            <a href="registro_cotizacion.php" class="btn1 btn-primary stretched-link">
                                 <i class="bi bi-plus-circle me-1"></i> Crear
                             </a>
                         </div>
@@ -215,7 +219,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             </div>
                             <h3 class="h5">Lista de Cotizaciones</h3>
                             <p class="text-muted">Ver todas las cotizaciones</p>
-                            <a href="lista_cotizaciones.php" class="btn btn-success stretched-link">
+                            <a href="lista_cotizaciones.php" class="btn1 btn-success stretched-link">
                                 <i class="bi bi-list-ul me-1"></i> Ver Lista
                             </a>
                         </div>
@@ -230,7 +234,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             </div>
                             <h3 class="h5">Clientes</h3>
                             <p class="text-muted">Administrar clientes</p>
-                            <a href="../clientes/lista_clientes.php" class="btn btn-warning stretched-link">
+                            <a href="../clientes/lista_clientes.php" class="btn1 btn-warning stretched-link">
                                 <i class="bi bi-people me-1"></i> Clientes
                             </a>
                         </div>
