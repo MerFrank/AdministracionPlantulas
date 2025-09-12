@@ -31,15 +31,25 @@
                     <td><?= htmlspecialchars($proveedor['telefono']) ?></td>
                     <td><?= htmlspecialchars($proveedor['email']) ?></td>
                     <td>
-                        <div class="btn-group btn-group-sm">
-                            <a href="editar_proveedor.php?id=<?= $proveedor['id_proveedor'] ?>" class="btn btn-primary" title="Editar">
+                         <div class="d-flex gap-2">
+
+                            
+                            <a href="editar_proveedor.php?id=<?= $proveedor['id_proveedor'] ?>" 
+                            class="btn btn-sm text-white"
+                            style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                            title="Editar">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <a href="eliminar_proveedor.php?id=<?= $proveedor['id_proveedor'] ?>" class="btn btn-danger" title="Eliminar" 
+                            <a href="eliminar_proveedor.php?id=<?= $proveedor['id_proveedor'] ?>" 
+                            class="btn btn-sm text-white"
+                            style="background-color: var(--color-danger); border-color: var(--color-danger);" 
+                            title="Eliminar" 
                                onclick="return confirm('¿Estás seguro de eliminar este proveedor?');">
                                 <i class="bi bi-trash"></i>
+                                
                             </a>
-                        </div>
+                           
+                    </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>
