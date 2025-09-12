@@ -24,6 +24,25 @@ require_once(__DIR__ . '/../includes/header.php');
         
         <div class="row g-4">
                        
+            <div class="row g-4">
+            <!-- Módulo de Usuarios -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
+                                <i class="bi bi-shield-lock text-primary fs-2"></i>
+                            </div>
+                            <h3 class="h5 mb-0">Usuarios</h3>
+                        </div>
+                        <p class="card-text">Gestión de usuarios, roles y permisos del sistema.</p>
+                        <a href="<?php echo BASE_URL; ?>/usuarios/panel_usuarios.php" class="btn btn-outline-primary stretched-link">
+                            Acceder <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Módulo de Clientes -->
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
