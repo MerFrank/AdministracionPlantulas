@@ -7,6 +7,8 @@ ob_start();
 
 $db = new Database();
 $conexion = $db->conectar();
+// variable para dar un valor y no de error
+$especieSeleccionada = isset($_GET['especie']) ? intval($_GET['especie']) : null;
 // Procesamiento de formularios (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idEspecie = $_POST['especie'];
@@ -97,9 +99,13 @@ $titulo = "Gestión de Colores";
 $encabezado = "Gestión de Colores";
 $subtitulo = "Administra inventario de colores.";
 
-// Incluir la cabecera (ruta relativa al archivo actual)
-$ruta = "dashboard_registroProducto.php";
-$texto_boton = "Regresar";
+// menu de opciones 
+$opciones_menu = [
+    'opcion1' => ['ruta' => 'dashboard_registroProducto.php', 'texto' => 'Regresar'],
+    'opcion3' => ['ruta' => 'Registro_variedades.php', 'texto' => 'Registro Variedades'],
+    'opcion4' => ['ruta' => 'Registro_especie.php', 'texto' => 'Registro Especie'],
+    
+];
 require('../../includes/header.php');
 ?>
 
