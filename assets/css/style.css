@@ -158,6 +158,27 @@ main {
   height: 42px;
 }
 
+/* Estilo del menú desplegable */
+.dropdown-menu {
+  background-color:#f7dfef; /* Color de fondo */
+  border-radius: var(--border-radius); /* Esquinas redondeadas */
+  padding: 0.5rem 0;
+  box-shadow: 0 4px 8px rgba(5, 91, 204, 0.897);
+}
+
+/* Estilo de las opciones del menú */
+.dropdown-item {
+  color:#000000b9; /* Texto en  */
+  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Estilo de las opciones del menú al pasar el cursor */
+.dropdown-item:hover {
+  background-color: #27a3d4;
+  color: var(--color-dark); /* Texto oscuro para el fondo */
+}
+
 .save-button:hover {
   background-color: #27a3d4;
   transform: translateY(-1px);
@@ -534,6 +555,16 @@ form button {
   flex-direction: column;
   justify-content: space-between;
   min-height: 280px;
+}
+
+/* ESTILO PARA EL TEXTO DENTRO DE LAS TARJETAS */
+.card-body {
+  /* Asegura que el texto no se salga del contenedor */
+  white-space: normal; /* Asegura que el texto fluya y se ajuste */
+  word-wrap: break-word; /* Rompe palabras largas */
+}
+.card-body a.btn1 {
+    margin-top: auto;
 }
 
 /* =========================
