@@ -79,8 +79,13 @@ $encabezado = "Registro de Especies";
 $subtitulo = "Registra nuevas Especies en el sistema";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
-$ruta = "dashboard_registroProducto.php";
-$texto_boton = "Regresar";
+$opciones_menu = [
+    'opcion1' => ['ruta' => 'dashboard_registroProducto.php', 'texto' => 'Regresar'],
+    'opcion2' => ['ruta' => 'Registro_colores.php', 'texto' => 'Registro Colores'],
+    'opcion3' => ['ruta' => 'Registro_variedades.php', 'texto' => 'Registro Variedades'],
+   
+    
+];
 require('../../includes/header.php');
 ?>
 

@@ -52,7 +52,7 @@ if (isset($_GET['ajax'])) {
 $encabezado = "Lista de Empleados";
 $subtitulo = "Muestra empleados registrados en el sistema (activos primero)";
 $ruta = "dashboard_empleados.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 

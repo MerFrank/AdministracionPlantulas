@@ -239,8 +239,12 @@ $encabezado = "Panel de Control de Variedadesuctos";
 $subtitulo = "Administra inventario de variedades";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
-$ruta = "dashboard_registroProducto.php";
-$texto_boton = "Regresar";
+$opciones_menu = [
+    'opcion1' => ['ruta' => 'dashboard_registroProducto.php', 'texto' => 'Regresar'],
+    'opcion2' => ['ruta' => 'Registro_colores.php', 'texto' => 'Registro Colores'],
+    'opcion4' => ['ruta' => 'Registro_especie.php', 'texto' => 'Registro Especie'],
+    
+];
 require('../../includes/header.php');
 ?>
 

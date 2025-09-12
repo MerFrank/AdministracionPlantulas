@@ -172,7 +172,7 @@ $subtitulo = "Formulario para registrar nuevos empleados";
 
 // Incluir la cabecera
 $ruta = "dashboard_empleados.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 
