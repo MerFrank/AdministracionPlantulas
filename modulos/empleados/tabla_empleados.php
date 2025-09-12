@@ -65,7 +65,7 @@
                         <!-- Contenedor flex para botones con espacio entre ellos -->
                         <div class="d-flex gap-2">
                             <!-- Botón para editar al empleado -->
-                            <div class="btn-group" role="group">
+                            
                                 <a href="editar_empleado.php?id_empleado=<?= $empleado['id_empleado'] ?>" 
                                    class="btn btn-sm text-white" 
                                    style="background-color: var(--color-accent); border-color: var(--color-accent);"
