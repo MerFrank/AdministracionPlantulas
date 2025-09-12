@@ -6,7 +6,7 @@ $subtitulo = "Panel de administración de empleados";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
 $ruta = "../../session/login.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 
