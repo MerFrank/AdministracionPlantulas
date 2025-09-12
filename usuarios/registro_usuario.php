@@ -2,82 +2,103 @@
 require_once(__DIR__ . '/../includes/config.php');
 
 // Funciones
-function generarUsuario($nombre, $apellido_p, $conn) {
+function generarUsuario($nombre, $apellido_p, $con) {
     $base = strtolower(trim($nombre)) . '.' . strtolower(trim($apellido_p));
     $usuario = $base;
     $i = 1;
 
-    // Consulta preparada para verificar usuario existente
-    $stmt = $conn->prepare("SELECT * FROM operadores WHERE Usuario = ?");
+    $stmt = $con->prepare("SELECT * FROM operadores WHERE Usuario = ?");
     while (true) {
-        $stmt->bind_param("s", $usuario);
+        $stmt->bindParam(1, $usuario, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
-        
-        if ($result->num_rows === 0) {
+        $result = $stmt->fetchAll();
+
+        if (count($result) === 0) {
             break;
         }
-        
+
         $usuario = $base . $i;
         $i++;
     }
-    $stmt->close();
-
     return $usuario;
 }
 
 function generarContrasena($longitud = 10) {
-    $caracteres = "1234567890abcdefghijklmñnopqrstuvwxyzABCDEFGHIJKLMNÑOPQRSTUVWXYZ.-_*/=[]{}#@|~¬&()?¿";
+    $caracteres = "1234567890abcdefghijklmñnopqrstuvwxyzABCDEFGHIJKLMNÑOPQRSTUVWXYZ.-_*/=[]{}#@~&()?¿";
     return substr(str_shuffle($caracteres), 0, $longitud);
 }
 
-// AJAX
-$roles = $con->query("SELECT ID_Rol, nombreRol FROM roles ORDER BY nombre")->fetchAll();
+try {
+    $db = new Database();
+    $con = $db->conectar();
+} catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
+}
+
+// Consutar roles para asignar al usuario
+$roles = $con->query("SELECT ID_Rol, nombreRol FROM roles ORDER BY nombreRol")->fetchAll();
 
 
-// Procesar formulario
-$mensaje = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validar y sanitizar datosr
-    $nombre = trim($_POST['nombre']);
-    $apellido_p = trim($_POST['apellido_p']);
-    $apellido_m = trim($_POST['apellido_m']);
-    $area = trim($_POST['area_produccion']);
-    $puesto = trim($_POST['puesto']);
-    $fecha_ingreso = $_POST['fecha_ingreso'];
-    $correo = trim($_POST['correo']);
-    
+    try {
+        // Datos del formulario
+        $nombre     = $_POST['nombre'] ?? '';
+        $apellido_p = $_POST['apellido_p'] ?? '';
+        $apellido_m = $_POST['apellido_m'] ?? '';
+        $puesto     = $_POST['puesto'] ?? '';
+        $fecha_ing  = $_POST['fecha_ingreso'] ?? '';
+        $correo     = $_POST['correo'] ?? null;
+        $activo     = $_POST['activo'] ?? 1;
+        $id_rol     = $_POST['ID_Rol'] ?? '';
 
-    // Validaciones básicas
-    if (empty($nombre) || empty($apellido_p) || empty($puesto) || empty($fecha_ingreso)) {
-        $mensaje = "<p style='color: red;'>❌ Error: Campos obligatorios faltantes</p>";
-    } else {
-        $usuario = generarUsuario($nombre, $apellido_p, $conn);
-        $contrasena = generarContrasena();
-        $hash = password_hash($contrasena, PASSWORD_DEFAULT);
+        // Generar usuario y contraseña
+        $usuario    = generarUsuario($nombre, $apellido_p, $con);
+        $contra     = generarContrasena();
+        $contra_hash= password_hash($contra, PASSWORD_BCRYPT);
 
-        // Consulta preparada para evitar inyección SQL
-        $sql = "INSERT INTO operadores (
-            Nombre, Apellido_P, Apellido_M, Area_Produccion, Puesto, Fecha_Ingreso,
-            Correo_Electronico, Usuario, Contrasena_Hash, Activo, ID_Rol, Fecha_Registro
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, CURDATE())";
+        // Construir array de datos
+        $datos = [
+            'Nombre'           => $nombre,
+            'Apellido_P'       => $apellido_p,
+            'Apellido_M'       => $apellido_m,
+            'Puesto'           => $puesto,
+            'Fecha_Ingreso'    => $fecha_ing,
+            'Correo_Electronico'=> $correo,
+            'Usuario'          => $usuario,
+            'Contrasena_Hash'  => $contra_hash,
+            'Activo'           => $activo,
+            'ID_Rol'           => $id_rol
+        ];
 
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssssssi", $nombre, $apellido_p, $apellido_m, $area, 
-                         $puesto, $fecha_ingreso, $correo, $usuario, $hash, $id_rol);
+        // Validaciones
+        if (empty($nombre)) throw new Exception("El nombre es requerido");
+        if (empty($apellido_p)) throw new Exception("El Apellido Paterno es requerido");
+        if (empty($apellido_m)) throw new Exception("El Apellido Materno es requerido");
+        if (empty($puesto)) throw new Exception("El Puesto es requerido");
 
-        if ($stmt->execute()) {
-            $mensaje = "<div style='color: green;'>
-                          <h3>✅ Operador registrado correctamente</h3>
-                          <p><strong>Usuario:</strong> $usuario</p>
-                          <p><strong>Contraseña:</strong> $contrasena</p>
-                        </div>";
+        // SQL
+        $sql = "INSERT INTO operadores
+            (Nombre, Apellido_P, Apellido_M, Puesto, Fecha_Ingreso, Correo_Electronico, Fecha_Registro, Usuario, Contrasena_Hash, Activo, ID_Rol) 
+            VALUES (:Nombre, :Apellido_P, :Apellido_M, :Puesto, :Fecha_Ingreso, :Correo_Electronico, current_timestamp(), :Usuario, :Contrasena_Hash, :Activo, :ID_Rol)";
+
+        $stmt = $con->prepare($sql);
+        $stmt->execute($datos);
+
+        if ($stmt->rowCount() > 0) {
+            echo "<script>
+                alert('Usuario registrado correctamente\\nUsuario: {$usuario}\\nContraseña: {$contra}');
+            </script>";
         } else {
-            $mensaje = "<p style='color: red;'>❌ Error al registrar operador: " . $stmt->error . "</p>";
+            throw new Exception("Error al registrar el cliente");
         }
-        $stmt->close();
+
+    } catch (Exception $e) {
+        $error = $e->getMessage();
+        echo "<div class='alert alert-danger'>$error</div>";
     }
 }
+
+
 
 // Configuración de la página
 $titulo = "Registro de Operador";
@@ -90,7 +111,7 @@ require_once(__DIR__ . '/../includes/header.php');
 ?>
 
 <main class="container py-4">
-    <?php if (!empty($mensaje)) echo $mensaje; ?>
+
     
     <form method="POST">
         <div class="mb-3">
@@ -128,8 +149,17 @@ require_once(__DIR__ . '/../includes/header.php');
             <input type="email" class="form-control" name="correo" placeholder="Opcional">
         </div>
 
-        <!-- Campo oculto para el rol (puedes cambiarlo por un select si necesitas) -->
-        <input type="hidden" name="id_rol" value="2">
+        <div class="mb-3">
+            <label class="form-label">Roles de los usuarios <span class="text-danger">*</span></label>
+            <select class="form-select" name="ID_Rol" required>
+                <option value="">Seleccionar un rol ...</option>
+                <?php foreach ($roles as $rol): ?>
+                    <option value="<?= htmlspecialchars($rol['ID_Rol']) ?>">
+                        <?= htmlspecialchars($rol['nombreRol']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
 
         <button type="submit" class="btn btn-primary">Registrar Operador</button>
     </form>
