@@ -196,18 +196,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $folio = 'NP-' . date('Y') . '-' . str_pad($countRow + 1, 5, '0', STR_PAD_LEFT);
         $num_remision = 'REM-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
-        // Insertar nota (fechaPedido = NOW(), fecha_entrega = lo que enviaste en formulario)
+        // Insertar nota 
         $stmt = $con->prepare("
             INSERT INTO notaspedidos (
                 folio, fechaPedido, id_cliente, tipo_pago, metodo_Pago,
                 subtotal, total, saldo_pendiente, estado, observaciones,
-                num_pagare, fecha_validez, fecha_entrega, lugar_pago, id_cuenta, num_remision
+                num_pagare, fecha_validez, fecha_entrega, lugar_pago, id_cuenta, num_remision, ID_Operador
             ) VALUES (:folio, NOW(), :id_cliente, :tipo_pago, :metodo_Pago, :subtotal, :total, :saldo_pendiente, :estado, :observaciones,
-                      :num_pagare, DATE_ADD(NOW(), INTERVAL 30 DAY), :fecha_entrega, 'Oficinas centrales', :id_cuenta, :num_remision)
+                      :num_pagare, DATE_ADD(NOW(), INTERVAL 30 DAY), :fecha_entrega, 'Oficinas centrales', :id_cuenta, :num_remision, :ID_Operador)
         ");
 
         // id_cuenta puede venir del formulario si existe; usar null si no
         $id_cuenta = isset($_POST['id_cuenta']) ? (int)$_POST['id_cuenta'] : null;
+        // Agregar el operador a la consulta
+        $ID_Operador = $_SESSION['ID_Operador'] ?? null;
 
         $stmt->execute([
             ':folio' => $folio,
@@ -222,6 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':num_pagare' => rand(1000, 9999),
             ':fecha_entrega' => $fecha_entrega,
             ':id_cuenta' => $id_cuenta,
+            ':ID_Operador' => $ID_Operador, //ID del operador 
             ':num_remision' => $num_remision
         ]);
 
@@ -271,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($anticipo > 0) {
             $stmt_pago = $con->prepare("
                 INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta)
-                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta)
+                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta, ID_Operador)
             ");
             
             $referencia = 'PAG-' . date('Ymd') . '-' . str_pad($con->query("SELECT COUNT(*) FROM pagosventas WHERE DATE(fecha)=CURDATE()")->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
@@ -282,7 +285,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':metodo_pago' => $metodo_Pago,
                 ':referencia' => $referencia,
                 ':observaciones' => 'Anticipo de venta',
-                ':id_cuenta' => $id_cuenta
+                ':id_cuenta' => $id_cuenta,
+                ':ID_Operador' => $ID_Operador //ID del operador 
             ]);
         }
 
