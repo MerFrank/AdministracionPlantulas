@@ -17,10 +17,11 @@ try {
 
 // Consulta para obtener las ventas con información de cliente (modificada para usar pagosventas)
 $ventas = $con->query("
-    SELECT np.*, c.nombre_Cliente as cliente_nombre, 
+    SELECT np.*, c.nombre_Cliente as cliente_nombre, o.Nombre as vendedor,
            (SELECT SUM(monto) FROM pagosventas WHERE id_notaPedido = np.id_notaPedido) as pagado
     FROM notaspedidos np
     LEFT JOIN clientes c ON np.id_cliente = c.id_cliente
+    LEFT JOIN operadores o ON np.ID_Operador = o.ID_Operador
     ORDER BY np.fechaPedido DESC
 ")->fetchAll();
 
@@ -64,6 +65,7 @@ require __DIR__ . '/../../includes/header.php';
                         <th>Total</th>
                         <th>Pagado</th>
                         <th>Estado</th>
+                        <th>Vendedor</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -88,6 +90,9 @@ require __DIR__ . '/../../includes/header.php';
                                 ?>">
                                     <?= ucfirst($venta['estado']) ?>
                                 </span>
+                            </td>
+                            <td>
+                                <?= htmlspecialchars($venta['vendedor'] ?? 'Sin informacion') ?>
                             </td>
                             <td>
                                 <div class="btn-group">
