@@ -54,7 +54,7 @@ $ultimas_ventas = $con->query("
                 <p class="lead mb-0"><?php echo htmlspecialchars($subtitulo); ?></p>
             </div>
             <div class="user-info">
-                <span class="me-2"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); ?></span>
+                <span class="me-2"><?php echo htmlspecialchars($_SESSION['Nombre'] ?? 'Usuario'); ?></span>
                 <i class="bi bi-person-circle"></i>
             </div>
         </div>

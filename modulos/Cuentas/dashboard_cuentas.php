@@ -70,7 +70,7 @@ $active_page = 'cuentas';
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h2"><i class="bi bi-bank"></i> <?php echo htmlspecialchars($encabezado); ?></h1>
             <div class="user-info">
-                <span class="me-2"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); ?></span>
+                <span class="me-2"><?php echo htmlspecialchars($_SESSION['Nombre'] ?? 'Usuario'); ?></span>
                 <i class="bi bi-person-circle"></i>
             </div>
         </div>

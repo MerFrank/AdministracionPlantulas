@@ -15,7 +15,7 @@ require_once(__DIR__ . '/../includes/header.php');
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h2"><?php echo htmlspecialchars($encabezado); ?></h1>
             <div class="user-info">
-                <span class="me-2"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); ?></span>
+                <span class="me-2"><?php echo htmlspecialchars($_SESSION['Nombre'] ?? 'Usuario'); ?></span>
                 <i class="bi bi-person-circle"></i>
             </div>
         </div>
