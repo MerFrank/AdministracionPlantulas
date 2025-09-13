@@ -1,5 +1,5 @@
 <?php
-
+require_once(__DIR__ . '/../includes/config.php');
 // Configuración de la página
 $titulo = "Panel de Control Principal";
 $encabezado = "Sistema de Gestión Plantulas";

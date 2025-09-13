@@ -37,9 +37,9 @@ if (!$venta) {
 }
 
 // Obtener pagos de la venta
-$sql_pagos = $con->prepare("SELECT p.*, e.nombre as empleado 
+$sql_pagos = $con->prepare("SELECT p.*, o.nombre as empleado 
                            FROM pagosventas p 
-                           LEFT JOIN empleados e ON p.id_empleado = e.id_empleado 
+                           LEFT JOIN operadores o ON p.ID_Operador = o.ID_Operador 
                            WHERE p.id_notaPedido = ? 
                            ORDER BY p.fecha DESC");
 $sql_pagos->execute([$id_venta]);

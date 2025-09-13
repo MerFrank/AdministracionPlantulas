@@ -273,8 +273,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Registrar pago en pagosventas (reemplazando seguimientoanticipos)
         if ($anticipo > 0) {
             $stmt_pago = $con->prepare("
-                INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta)
-                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta, ID_Operador)
+                INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta, ID_Operador)
+                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta, :ID_Operador)
             ");
             
             $referencia = 'PAG-' . date('Ymd') . '-' . str_pad($con->query("SELECT COUNT(*) FROM pagosventas WHERE DATE(fecha)=CURDATE()")->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
