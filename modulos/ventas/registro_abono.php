@@ -62,6 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Seleccione una cuenta bancaria");
         }
         $id_cuenta = (int)$_POST['id_cuenta'];
+
+        #$ID_Operador = $_SESSION['ID_Operador'] ?? null;
         
         // MODIFICACIÓN: Consulta corregida para incluir diferentes formatos de tipo de pago
         // Obtener información de la venta
@@ -105,16 +107,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $con->prepare("
             INSERT INTO pagosventas (
                 id_notaPedido, monto, fecha, metodo_pago, 
-                referencia, observaciones, id_empleado, id_cuenta
+                referencia, observaciones, id_operador, id_cuenta
             ) VALUES (
                 ?, ?, NOW(), ?, ?, ?, ?, ?
             )
         ");
         
         // MODIFICACIÓN: Asegurar que tenemos un id_empleado válido
-        $id_empleado = $_SESSION['id_empleado'] ?? 0;
-        if ($id_empleado <= 0) {
-            $id_empleado = null; // o un valor por defecto si es necesario
+        $ID_Operador = $_SESSION['ID_Operador'] ?? 0;
+        if ($ID_Operador <= 0) {
+            $ID_Operador = null; // o un valor por defecto si es necesario
         }
         
         $stmt->execute([
@@ -123,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $metodo_pago,
             'Abono a cuenta', // referencia
             htmlspecialchars(trim($_POST['comentarios'] ?? '')),
-            $id_empleado,
+            $ID_Operador,
             $id_cuenta 
         ]);
         
