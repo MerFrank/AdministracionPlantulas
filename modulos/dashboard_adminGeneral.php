@@ -154,7 +154,7 @@ require_once(__DIR__ . '/../includes/header.php');
                         class="btn btn-outline-info stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>
-                    </div>
+                    </div>  
                 </div>
             </div>
 
