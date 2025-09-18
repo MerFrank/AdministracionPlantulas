@@ -5,7 +5,7 @@ $encabezado = "Gestión de Ventas";
 $subtitulo = "Panel de administración de ventas";
 $active_page = "ventas";
 $ruta = "../../session/login.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
@@ -65,7 +65,7 @@ $ultimas_ventas = $con->query("
             <div class="col-md-3">
                 <div class="card shadow-sm border-success h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="text-center">
                             <div class="bg-success bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-currency-dollar text-success fs-2"></i>
                             </div>
@@ -82,7 +82,7 @@ $ultimas_ventas = $con->query("
             <div class="col-md-3">
                 <div class="card shadow-sm border-primary h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="text-center">
                             <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-list-check text-primary fs-2"></i>
                             </div>
@@ -99,7 +99,7 @@ $ultimas_ventas = $con->query("
             <div class="col-md-3">
                 <div class="card shadow-sm border-info h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="text-center">
                             <div class="bg-info bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-clock-history text-info fs-2"></i>
                             </div>
@@ -116,7 +116,7 @@ $ultimas_ventas = $con->query("
             <div class="col-md-3">
                 <div class="card shadow-sm border-danger h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="text-center">
                             <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-cash-coin text-danger fs-2"></i>
                             </div>
