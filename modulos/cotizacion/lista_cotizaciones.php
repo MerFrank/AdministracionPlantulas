@@ -33,7 +33,7 @@ $cotizaciones = $con->query("
 
 $titulo = 'Listado de Cotizaciones';
 $ruta = "dashboard_cotizaciones.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -100,12 +100,15 @@ require __DIR__ . '/../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="eliminar_cotizacion.php?id=<?= $cotizacion['id_cotizacion'] ?>" class="btn btn-sm btn-danger" 
+                                        <a href="eliminar_cotizacion.php?id=<?= $cotizacion['id_cotizacion'] ?>"
+                                        style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                        class="btn btn-sm btn-primary" 
                                            onclick="return confirm('¿Eliminar esta cotización?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                         <a href="generar_pdf_cotizacion.php?id=<?= $cotizacion['id_cotizacion'] ?>" 
-                                        class="btn btn-sm btn-info" 
+                                        class="btn btn-sm btn-primary " 
+                                        style="background-color: #2795d4ff; border-color: #2795d4ff "
                                         target="_blank">
                                         <i class="bi bi-file-earmark-pdf"></i> PDF
                                         </a>
