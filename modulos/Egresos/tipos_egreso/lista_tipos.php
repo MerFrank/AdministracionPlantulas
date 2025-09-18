@@ -20,7 +20,7 @@ $tipos = $con->query("SELECT * FROM tipos_egreso WHERE activo = 1 ORDER BY nombr
 $titulo = 'Tipos de Egreso';
 $encabezado = 'Listado de Tipos de Egreso';
 $ruta = "../dashboard_egresos.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../../includes/header.php';
 ?>
 
@@ -64,11 +64,16 @@ require __DIR__ . '/../../../includes/header.php';
                                 <td><?= htmlspecialchars($tipo['nombre']) ?></td>
                                 <td><?= htmlspecialchars($tipo['descripcion']) ?></td>
                                 <td>
+                                    
                                     <div class="btn-group">
-                                        <a href="editar_tipo.php?id=<?= $tipo['id_tipo'] ?>" class="btn btn-sm btn-primary">
+                                        <a href="editar_tipo.php?id=<?= $tipo['id_tipo'] ?>"
+                                        style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                        class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a href="eliminar_tipo.php?id=<?= $tipo['id_tipo'] ?>" class="btn btn-sm btn-danger" 
+                                        <a href="eliminar_tipo.php?id=<?= $tipo['id_tipo'] ?>"
+                                        style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                        class="btn btn-sm btn-primary" 
                                            onclick="return confirm('¿Eliminar este tipo?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
