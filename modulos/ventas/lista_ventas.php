@@ -26,7 +26,7 @@ $ventas = $con->query("
 
 $titulo = 'Listado de Ventas';
 $ruta = "dashboard_ventas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -91,17 +91,25 @@ require __DIR__ . '/../../includes/header.php';
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="detalle_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-primary">
+                                    <a href="detalle_venta.php?id=<?= $venta['id_notaPedido'] ?>"
+                                     style="background-color: var(--color-eye); border-color: var(--color-eye);"
+                                    class="btn btn-sm btn-primary">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-warning">
+                                    <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>"
+                                    style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                    class="btn btn-sm btn-primary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="generar_nota.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-info" target="_blank">
-                                        <i class="bi bi-receipt"></i> Nota
+                                    <a href="generar_nota.php?id=<?= $venta['id_notaPedido'] ?>"
+                                  style="background-color: var(--color-receipt); border-color: var(--color-receipt);"
+                                     class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="bi bi"></i> Nota
                                     </a>
-                                    <a href="listar_pagosventa.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-info">
-                                        <i class="bi bi-receipt"></i>Pagos
+                                    <a href="listar_pagosventa.php?id=<?= $venta['id_notaPedido'] ?>" 
+                                     style="background-color: var(--color-receipt2); border-color: var(--color-receipt2);"
+                                    class="btn btn-sm btn-primary">
+                                        <i class="bi bi"></i>Pagos
                                     </a>
                                 </div>
                             </td>
