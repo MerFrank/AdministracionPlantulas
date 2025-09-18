@@ -8,7 +8,7 @@ $active_page = "egresos";
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
 $ruta = "../../session/login.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require_once __DIR__ . '/../../includes/header.php';
 
 // Conexión a la base de datos
@@ -54,7 +54,7 @@ $ultimos_egresos = $con->query("
             <div class="col-md-4">
                 <div class="card shadow-sm border-danger h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-cash-stack text-danger fs-2"></i>
                             </div>
@@ -70,7 +70,7 @@ $ultimos_egresos = $con->query("
             <div class="col-md-4">
                 <div class="card shadow-sm border-warning h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-warning bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-list-check text-warning fs-2"></i>
                             </div>
@@ -86,7 +86,7 @@ $ultimos_egresos = $con->query("
             <div class="col-md-4">
                 <div class="card shadow-sm border-info h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-info bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-clock-history text-info fs-2"></i>
                             </div>
