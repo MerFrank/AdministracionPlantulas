@@ -106,7 +106,7 @@ require __DIR__ . '/../../includes/header.php';
                                 <td><?= $cuenta['ultimo_movimiento'] ? date('d/m/Y', strtotime($cuenta['ultimo_movimiento'])) : 'N/A' ?></td>
                                 <td>
                                      <!-- Contenedor flex para los botones de acción -->
-                                      <div class="d-flex gap-2">
+                                      <div class="btn-group">
                                      <!-- Grupo de botones -->
                                    
                                         <!-- Botón Editar (color amarillo/accent) -->
