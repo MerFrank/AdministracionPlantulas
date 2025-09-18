@@ -90,7 +90,7 @@ main {
    COMPONENTES DE BOTONES (MEJORADO)
    ========================= */
 .btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -105,10 +105,19 @@ main {
   transition: var(--transition);
   margin-top: auto;
   flex-direction: column;
-    justify-content: space-between; /* Esto distribuye el espacio */
+  justify-content: space-between; /* Esto distribuye el espacio */
 
   
 }
+
+.btn-group {
+    flex-wrap: wrap; /* Esto permite que los botones se envuelvan si no caben */
+    justify-content: center; /* Centra los botones cuando se envuelven */
+     gap: 0.3rem;
+     
+  }
+
+  
 
 .btn i {
   font-size: 1rem;
