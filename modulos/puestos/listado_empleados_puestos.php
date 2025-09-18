@@ -78,6 +78,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <td><?= htmlspecialchars($empleado['nivel_jerarquico'] ?? 'N/A') ?></td>
                                     <td>
                                         <a href="/AdministracionPlantulas/modulos/puestos/historial_puestos.php?id=<?= $empleado['id_empleado'] ?>" 
+                                        style="background-color: #14b3cfff; border-color: #f7dfef;"
                                         class="btn btn-sm btn-primary" title="Historial Puestos">
                                             <i class="bi bi-clock-history"></i> Historial
                                         </a>
