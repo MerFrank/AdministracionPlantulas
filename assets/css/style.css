@@ -87,7 +87,7 @@ main {
    COMPONENTES DE BOTONES (MEJORADO)
    ========================= */
 .btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -100,8 +100,11 @@ main {
   cursor: pointer;
   border: 2px solid transparent;
   transition: var(--transition);
-  min-width: 160px;
-  height: 42px;
+  margin-top: auto;
+  flex-direction: column;
+    justify-content: space-between; /* Esto distribuye el espacio */
+
+  
 }
 
 .btn i {
@@ -111,6 +114,7 @@ main {
 .btn-primary {
   background-color: var(--color-primary);
   color: var(--color-light);
+ 
 }
 
 .btn-primary:hover {
@@ -140,6 +144,8 @@ main {
   flex: 1;
   max-width: 200px;
 }
+
+
 
 /* Manteniendo tus estilos existentes de botones */
 .save-button {
@@ -554,8 +560,11 @@ form button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 280px;
+  
+  
 }
+
+
 
 /* ESTILO PARA EL TEXTO DENTRO DE LAS TARJETAS */
 .card-body {
@@ -563,9 +572,8 @@ form button {
   white-space: normal; /* Asegura que el texto fluya y se ajuste */
   word-wrap: break-word; /* Rompe palabras largas */
 }
-.card-body a.btn1 {
-    margin-top: auto;
-}
+
+
 
 /* =========================
    TARJETAS
