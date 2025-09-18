@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
 $ruta = "../../session/login.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require_once __DIR__ . '/../../includes/header.php';
 
 // Conexión a la base de datos
@@ -86,9 +86,9 @@ $active_page = 'cuentas';
         <!-- Sección de Estadísticas -->
         <div class="row mb-4 g-4">
             <div class="col-md-4">
-                <div class="card shadow-sm border-primary">
+                <div class="card shadow-sm border-primary h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-wallet2 text-primary fs-2"></i>
                             </div>
@@ -102,9 +102,9 @@ $active_page = 'cuentas';
             </div>
 
             <div class="col-md-4">
-                <div class="card shadow-sm border-success">
+                <div class="card shadow-sm border-success h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-success bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-bank text-success fs-2"></i>
                             </div>
@@ -118,9 +118,9 @@ $active_page = 'cuentas';
             </div>
 
             <div class="col-md-4">
-                <div class="card shadow-sm border-info">
+                <div class="card shadow-sm border-info h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-info bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-arrow-left-right text-info fs-2"></i>
                             </div>
