@@ -93,11 +93,15 @@ require_once __DIR__ . '/../../includes/header.php';
                                     </td>
                                     <td>
                                         <a href="editar_puesto.php?id_puesto=<?= $puesto['id_puesto'] ?>" 
-                                           class="btn btn-sm btn-primary" title="Editar">
+                                           class="btn btn-sm btn-primary" 
+                                           style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                           title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <a href="eliminar_puesto.php?id_puesto=<?= $puesto['id_puesto'] ?>" 
-                                           class="btn btn-sm btn-danger" title="Eliminar"
+                                           class="btn btn-sm btn-primary" 
+                                           style="background-color: var(--color-danger); border-color: var(--color-danger);" 
+                                           title="Eliminar"
                                            onclick="return confirm('¿Estás seguro de eliminar este puesto?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
