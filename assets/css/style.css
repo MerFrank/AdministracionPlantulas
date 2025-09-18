@@ -10,6 +10,9 @@
   --color-dark: #212529;
   --border-radius: 0.375rem;
   --transition: all 0.2s ease;
+  --color-eye:#af12dfff;
+  --color-receipt:#057988ff;
+  --color-receipt2:#08b4b4ff;
 }
 
 * {
@@ -87,7 +90,7 @@ main {
    COMPONENTES DE BOTONES (MEJORADO)
    ========================= */
 .btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -169,7 +172,7 @@ main {
   background-color:#f7dfef; /* Color de fondo */
   border-radius: var(--border-radius); /* Esquinas redondeadas */
   padding: 0.5rem 0;
-  box-shadow: 0 4px 8px rgba(5, 91, 204, 0.897);
+  box-shadow: 0 4px 8px rgba(5, 124, 204, 0.897);
 }
 
 /* Estilo de las opciones del menú */
