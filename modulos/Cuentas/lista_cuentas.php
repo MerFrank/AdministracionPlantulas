@@ -36,7 +36,7 @@ $cuentas = $con->query("
 $titulo = 'Cuentas Bancarias';
 $encabezado = 'Listado de Cuentas Bancarias';
 $ruta = "dashboard_cuentas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 // Incluye el archivo de cabecera (header) del sitio
 require __DIR__ . '/../../includes/header.php';
 ?>
@@ -108,7 +108,7 @@ require __DIR__ . '/../../includes/header.php';
                                      <!-- Contenedor flex para los botones de acción -->
                                       <div class="d-flex gap-2">
                                      <!-- Grupo de botones -->
-                                    <div class="btn-group">
+                                   
                                         <!-- Botón Editar (color amarillo/accent) -->
                                         <a href="editar_cuenta.php?id=<?= $cuenta['id_cuenta'] ?>" class="btn btn-sm text-white" 
                                style="background-color: var(--color-accent); border-color: var(--color-accent);">
@@ -125,9 +125,9 @@ require __DIR__ . '/../../includes/header.php';
                                         <a href="movimientos_cuenta.php?id=<?= $cuenta['id_cuenta'] ?>" 
                                                class="btn btn-sm text-white" 
                                                 style="background-color: var(--color-secondary); border-color: var(--color-secondary);">
-                                              <i class="bi bi-list-ul"></i> Movimientos
+                                              <i class="bi bi"></i> Movimientos
                                         </a>
-                                    </div>
+                                    
                                 </td>
                             </tr>
                             <?php endforeach; ?>
