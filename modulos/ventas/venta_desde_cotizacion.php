@@ -98,17 +98,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
         $saldo_pendiente = $tipo_pago === 'contado' ? 0 : ($total - $anticipo);
         $estado = $tipo_pago === 'contado' ? 'completado' : ($anticipo > 0 ? 'parcial' : 'pendiente');
         
+        
+        $ID_Operador = $_SESSION['ID_Operador'] ?? null;
+        $id_cuenta = isset($_POST['id_cuenta']) ? (int)$_POST['id_cuenta'] : null;
         // Insertar Nota de Pedido
         $stmt = $con->prepare("
             INSERT INTO notaspedidos (
                 folio, num_remision, fechaPedido, id_cliente, id_cotizacion, tipo_pago, metodo_Pago,
                 subtotal, descuento, total, saldo_pendiente, estado, 
-                observaciones, num_pagare, fecha_validez, fecha_entrega, lugar_pago
+                observaciones, num_pagare, fecha_validez, fecha_entrega, lugar_pago, id_cuenta, ID_Operador
             ) VALUES (
                 ?, ?, NOW(), ?, ?, ?, ?,
                 ?, 0, ?, ?, ?,
-                ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_ADD(NOW(), INTERVAL 7 DAY), 'Oficinas centrales'
-            )
+                ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_ADD(NOW(), INTERVAL 7 DAY), 'Oficinas centrales', 
+                :id_cuenta, :num_remision, :id_cuenta, :ID_Operador)
         ");
         
         $stmt->execute([
@@ -123,7 +126,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             $saldo_pendiente,
             $estado,
             $observaciones,
-            rand(1000, 9999)
+            rand(1000, 9999),
+            $id_cuenta,
+            $ID_Operador
         ]);
         
         $id_notaPedido = $con->lastInsertId();
@@ -156,8 +161,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
         
         // Registrar anticipo si hay (usando la nueva tabla de pagos)
         if ($anticipo > 0) {
-            // Obtener ID del empleado desde la sesión (ajusta según tu sistema)
-            $id_empleado = $_SESSION['id_empleado'] ?? 1; // Valor por defecto si no existe
             if (empty($_POST['id_cuenta'])) {
                 throw new Exception("Debe seleccionar una cuenta bancaria para registrar el pago.");
             }
@@ -166,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             $stmt = $con->prepare("
                 INSERT INTO pagosventas (
                     id_notaPedido, monto, fecha, metodo_pago, referencia, 
-                    observaciones, id_empleado, id_cuenta
+                    observaciones, id_operador, id_cuenta
                 ) VALUES (
                     ?, ?, NOW(), ?, NULL, 
                     ?, ?, ?
@@ -180,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
                 $anticipo,
                 $_POST['metodo_pago'],
                 $observaciones_pago,
-                $id_empleado,
+                $ID_Operador,
                 $_POST['id_cuenta']
             ]);
         }

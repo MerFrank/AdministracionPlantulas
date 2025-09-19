@@ -51,21 +51,23 @@ $ultimos_egresos = $con->query("
 
         <!-- Sección de Estadísticas -->
         <div class="row mb-4 g-4">
-            <div class="col-md-4">
-                <div class="card shadow-sm border-danger h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
-                                <i class="bi bi-cash-stack text-danger fs-2"></i>
-                            </div>
-                            <div>
-                                <h3 class="h5 mb-0">Total Egresos</h3>
-                                <p class="fs-3 mb-0">$<?= number_format($estadisticas['monto_total'] ?? 0, 2) ?></p>
+            <?php if ($_SESSION['Rol'] == 1 ): ?>
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-danger h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
+                                    <i class="bi bi-cash-stack text-danger fs-2"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h5 mb-0">Total Egresos</h3>
+                                    <p class="fs-3 mb-0">$<?= number_format($estadisticas['monto_total'] ?? 0, 2) ?></p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
 
             <div class="col-md-4">
                 <div class="card shadow-sm border-warning h-100">

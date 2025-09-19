@@ -95,7 +95,9 @@ require __DIR__ . '/../../includes/header.php';
                                 <th>Referencia</th>
                                 <th>Observaciones</th>
                                 <th>Empleado</th>
-                                <th>Acciones</th>
+                                <?php if ($_SESSION['Rol'] == 1 ): ?>
+                                    <th>Acciones</th>
+                                <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,14 +113,16 @@ require __DIR__ . '/../../includes/header.php';
                                     <td><?= !empty($pago['observaciones']) ? htmlspecialchars($pago['observaciones']) : '<span class="text-muted">Ninguna</span>' ?></td>
                                     <td><?= !empty($pago['empleado']) ? htmlspecialchars($pago['empleado']) : '<span class="text-muted">No especificado</span>' ?></td>
                                     <td>
-                                        <div class="btn-group">
-                                            <a href="editar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-info">
-                                                <i class="bi bi-pencil"></i> Editar
-                                            </a>
-                                            <a href="eliminar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-warning">
-                                                <i class="bi bi-trash"></i> Eliminar
-                                            </a>
-                                        </div>
+                                        <?php if ($_SESSION['Rol'] == 1 ): ?>
+                                            <div class="btn-group">
+                                                <a href="editar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-info">
+                                                    <i class="bi bi-pencil"></i> Editar
+                                                </a>
+                                                <a href="eliminar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-warning">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
                                         
                                     </td>
                                 </tr>

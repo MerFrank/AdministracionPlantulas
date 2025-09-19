@@ -99,9 +99,12 @@ require __DIR__ . '/../../includes/header.php';
                                     <a href="detalle_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-primary">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    <?php if ($_SESSION['Rol'] == 1 ): ?>
+                                        <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    <?php endif; ?>
+
                                     <a href="generar_nota.php?id=<?= $venta['id_notaPedido'] ?>" class="btn btn-sm btn-info" target="_blank">
                                         <i class="bi bi-receipt"></i> Nota
                                     </a>
