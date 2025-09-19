@@ -21,7 +21,7 @@ define('BASE_URL', '/AdministracionPlantulas');
     <header>
       <div class="encabezado d-flex align-items-center">
         <a class="navbar-brand" href="/">
-          <img src="/AdministracionPlantulas/assets/img/logoplantulas.jpeg" alt="Logo" width="130" height="124">
+          <img src="/AdministracionPlantulas/assets/img/logoplantulas.png" alt="Logo" width="130" height="124">
         </a>
         <div>
           <h2><?php echo $encabezado ?? 'Panel de Control'; ?></h2>

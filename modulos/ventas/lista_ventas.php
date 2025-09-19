@@ -17,10 +17,11 @@ try {
 
 // Consulta para obtener las ventas con información de cliente (modificada para usar pagosventas)
 $ventas = $con->query("
-    SELECT np.*, c.nombre_Cliente as cliente_nombre, 
+    SELECT np.*, c.nombre_Cliente as cliente_nombre, o.Nombre as vendedor,
            (SELECT SUM(monto) FROM pagosventas WHERE id_notaPedido = np.id_notaPedido) as pagado
     FROM notaspedidos np
     LEFT JOIN clientes c ON np.id_cliente = c.id_cliente
+    LEFT JOIN operadores o ON np.ID_Operador = o.ID_Operador
     ORDER BY np.fechaPedido DESC
 ")->fetchAll();
 
@@ -64,6 +65,7 @@ require __DIR__ . '/../../includes/header.php';
                         <th>Total</th>
                         <th>Pagado</th>
                         <th>Estado</th>
+                        <th>Vendedor</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -90,17 +92,23 @@ require __DIR__ . '/../../includes/header.php';
                                 </span>
                             </td>
                             <td>
+                                <?= htmlspecialchars($venta['vendedor'] ?? 'Sin informacion') ?>
+                            </td>
+                            <td>
                                 <div class="btn-group">
                                     <a href="detalle_venta.php?id=<?= $venta['id_notaPedido'] ?>"
                                      style="background-color: var(--color-eye); border-color: var(--color-eye);"
                                     class="btn btn-sm btn-primary">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>"
+                                    <?php if ($_SESSION['Rol'] == 1 ): ?>
+                                        <a href="editar_venta.php?id=<?= $venta['id_notaPedido'] ?>"
                                     style="background-color: var(--color-accent); border-color: var(--color-accent);"
                                     class="btn btn-sm btn-primary">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    <?php endif; ?>
+
                                     <a href="generar_nota.php?id=<?= $venta['id_notaPedido'] ?>"
                                   style="background-color: var(--color-receipt); border-color: var(--color-receipt);"
                                      class="btn btn-sm btn-primary" target="_blank">

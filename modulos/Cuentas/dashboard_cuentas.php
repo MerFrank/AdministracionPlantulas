@@ -70,7 +70,7 @@ $active_page = 'cuentas';
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h2"><i class="bi bi-bank"></i> <?php echo htmlspecialchars($encabezado); ?></h1>
             <div class="user-info">
-                <span class="me-2"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); ?></span>
+                <span class="me-2"><?php echo htmlspecialchars($_SESSION['Nombre'] ?? 'Usuario'); ?></span>
                 <i class="bi bi-person-circle"></i>
             </div>
         </div>
@@ -85,6 +85,23 @@ $active_page = 'cuentas';
 
         <!-- Sección de Estadísticas -->
         <div class="row mb-4 g-4">
+            <?php if ($_SESSION['ID_Operador'] == 1 ): ?>
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-primary">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
+                                    <i class="bi bi-wallet2 text-primary fs-2"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h5 mb-0">Total en Cuentas</h3>
+                                    <p class="fs-3 mb-0">$<?= number_format($estadisticas['saldo_total'] ?? 0, 2) ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
             <div class="col-md-4">
                 <div class="card shadow-sm border-primary h-100">
                     <div class="card-body">

@@ -1,5 +1,5 @@
 <?php
-
+require_once(__DIR__ . '/../includes/config.php');
 // Configuración de la página
 $titulo = "Panel de Control Principal";
 $encabezado = "Sistema de Gestión Plantulas";
@@ -15,7 +15,7 @@ require_once(__DIR__ . '/../includes/header.php');
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h2"><?php echo htmlspecialchars($encabezado); ?></h1>
             <div class="user-info">
-                <span class="me-2"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); ?></span>
+                <span class="me-2"><?php echo htmlspecialchars($_SESSION['Nombre'] ?? 'Usuario'); ?></span>
                 <i class="bi bi-person-circle"></i>
             </div>
         </div>
@@ -91,7 +91,7 @@ require_once(__DIR__ . '/../includes/header.php');
                             <h3 class="h5 mb-0">Ventas</h3>
                         </div>
                         <p class="card-text">Gestión de transacciones y facturación.</p>
-                        <a href="<?php echo BASE_URL; ?>/modulos/ventas/dashboard_clientesVentas.php" 
+                        <a href="<?php echo BASE_URL; ?>/modulos/ventas/dashboard_ventas.php" 
                         class="btn btn-outline-primary stretched-link">
                             Acceder <i class="bi bi-arrow-right ms-1"></i>
                         </a>

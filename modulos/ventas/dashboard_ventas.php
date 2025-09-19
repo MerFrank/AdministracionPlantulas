@@ -54,29 +54,31 @@ $ultimas_ventas = $con->query("
                 <p class="lead mb-0"><?php echo htmlspecialchars($subtitulo); ?></p>
             </div>
             <div class="user-info">
-                <span class="me-2"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); ?></span>
+                <span class="me-2"><?php echo htmlspecialchars($_SESSION['Nombre'] ?? 'Usuario'); ?></span>
                 <i class="bi bi-person-circle"></i>
             </div>
         </div>
 
         <!-- Sección de Estadísticas -->
         <div class="row mb-4 g-4">
-            <!-- Tarjeta 1: Total Ventas -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-success h-100">
-                    <div class="card-body">
-                        <div class="text-center">
-                            <div class="bg-success bg-opacity-10 p-3 rounded me-3">
-                                <i class="bi bi-currency-dollar text-success fs-2"></i>
-                            </div>
-                            <div>
-                                <h3 class="h5 mb-0">Total Ventas</h3>
-                                <p class="fs-3 mb-0">$<?= number_format($estadisticas['monto_total'] ?? 0, 2) ?></p>
+            <?php if ($_SESSION['Rol'] == 1 ): ?>
+                <!-- Tarjeta 1: Total Ventas -->
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-success h-100">
+                        <div class="card-body">
+                            <div class="text-center">
+                                <div class="bg-success bg-opacity-10 p-3 rounded me-3">
+                                    <i class="bi bi-currency-dollar text-success fs-2"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h5 mb-0">Total Ventas</h3>
+                                    <p class="fs-3 mb-0">$<?= number_format($estadisticas['monto_total'] ?? 0, 2) ?></p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
 
             <!-- Tarjeta 2: Ventas Registradas -->
             <div class="col-md-3">

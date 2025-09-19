@@ -66,7 +66,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <p class="lead mb-0">Panel de administración de cotizaciones</p>
         </div>
         <div class="user-info">
-            <span class="me-2"><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); ?></span>
+            <span class="me-2"><?php echo htmlspecialchars($_SESSION['Nombre'] ?? 'Usuario'); ?></span>
             <i class="bi bi-person-circle"></i>
         </div>
     </div>
