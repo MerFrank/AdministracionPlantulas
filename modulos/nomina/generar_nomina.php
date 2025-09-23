@@ -1,18 +1,12 @@
 <?php
-// Variables para el encabezado
-$titulo = "Generar Nómina";
-$encabezado = "Generar Nómina";
-$subtitulo = "Subir y analizar el archivo de asistencia";
-$active_page = "nomina";
 
 // Incluye los archivos necesarios
 // Estas rutas asumen que el archivo 'generar_nomina.php' está en /modulos/nomina/
 // y los archivos de inclusión en /includes/ y /vendor/
 require_once __DIR__ . '/../../includes/config.php';
-require_once __DIR__ . '/../../includes/header.php';
 
 // Incluye el autoloader de Composer con la ruta corregida
-// La carpeta 'vendor' se encuentra en la raíz del proyecto (Plantulas)
+// La carpeta 'vendor' se encuentra en la raíz del proyecto 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -124,6 +118,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
+
+// Variables para el encabezado
+$titulo = "Generar Nómina";
+$encabezado = "Generar Nómina";
+$subtitulo = "Subir y analizar el archivo de asistencia";
+$active_page = "nomina";
+require_once __DIR__ . '/../../includes/header.php';
+
 ?>
 
 <main>

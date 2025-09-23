@@ -1,17 +1,11 @@
 <?php
 require_once __DIR__ . '/../../includes/config.php';
-require_once __DIR__ . '/../../includes/header.php';
 
 // Verificar permisos
 if (function_exists('verificarRol')) {
     verificarRol('admin');
 }
 
-// Variables para el encabezado
-$titulo = "Nómina";
-$encabezado = "Dashboard de Nómina";
-$subtitulo = "Panel de administración de nómina";
-$active_page = "nomina";
 
 // Obtener estadísticas de nómina
 try {
@@ -41,6 +35,17 @@ try {
 } catch (PDOException $e) {
     error_log("Error al obtener estadísticas: " . $e->getMessage());
 }
+
+
+
+// Variables para el encabezado
+$titulo = "Nómina";
+$encabezado = "Dashboard de Nómina";
+$subtitulo = "Panel de administración de nómina";
+$active_page = "nomina";
+$ruta = "../../session/login.php";
+$texto_boton = "";
+require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <main class="container py-4">
