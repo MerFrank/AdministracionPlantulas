@@ -60,7 +60,7 @@ $ultimas_ventas = $con->query("
         </div>
 
         <!-- Sección de Estadísticas -->
-        <div class="row mb-4 g-4">
+        <div class="row mb-4 g-4 justify-content-center">
             <?php if ($_SESSION['Rol'] == 1 ): ?>
                 <!-- Tarjeta 1: Total Ventas -->
                 <div class="col-md-3">
@@ -81,7 +81,7 @@ $ultimas_ventas = $con->query("
             <?php endif; ?>
 
             <!-- Tarjeta 2: Ventas Registradas -->
-            <div class="col-md-3">
+            <div class="col-md-3 ">
                 <div class="card shadow-sm border-primary h-100">
                     <div class="card-body">
                         <div class="text-center">
