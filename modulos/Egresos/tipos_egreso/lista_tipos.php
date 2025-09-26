@@ -62,7 +62,7 @@ require __DIR__ . '/../../../includes/header.php';
                             <?php foreach ($tipos as $tipo): ?>
                             <tr>
                                 <td><?= htmlspecialchars($tipo['nombre']) ?></td>
-                                <td><?= htmlspecialchars($tipo['descripcion']) ?></td>
+                                <td><?= htmlspecialchars($tipo['descripcion']??'') ?></td>
                                 <td>
                                     
                                     <div class="btn-group">
