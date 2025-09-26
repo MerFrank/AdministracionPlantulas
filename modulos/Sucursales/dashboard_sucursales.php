@@ -9,7 +9,7 @@ $active_page = "sucursales";
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';
 $ruta = "../../session/login.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require_once __DIR__ . '/../../includes/header.php';
 
 // Conexión a la base de datos
