@@ -32,7 +32,7 @@ $egresos = $con->query("
 
 $titulo = 'Listado de Egresos';
 $ruta = "dashboard_egresos.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 
 // Función para convertir número a letras
@@ -99,14 +99,20 @@ function numeroALetras($numero) {
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="editar_egreso.php?id=<?= $egreso['id_egreso'] ?>" class="btn btn-sm btn-primary">
+                                        <a href="editar_egreso.php?id=<?= $egreso['id_egreso'] ?>"
+                                        class="btn btn-sm btn-primary" 
+                                        style="background-color: var(--color-accent); border-color: var(--color-accent);">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a href="eliminar_egreso.php?id=<?= $egreso['id_egreso'] ?>" class="btn btn-sm btn-danger" 
+                                        <a href="eliminar_egreso.php?id=<?= $egreso['id_egreso'] ?>" 
+                                        class="btn btn-sm btn-primary" 
+                                        style="background-color: var(--color-danger); border-color: var(--color-danger);"
                                            onclick="return confirm('¿Eliminar este egreso?')">
                                             <i class="bi bi-trash"></i>
                                         </a>
-                                        <a href="generar_vale.php?id=<?= $egreso['id_egreso'] ?>" class="btn btn-sm btn-info" target="_blank">
+                                        <a href="generar_vale.php?id=<?= $egreso['id_egreso'] ?>"
+                                         class="btn btn-sm btn-primary" target="_blank"
+                                         style="background-color: var(--color-receipt2); border-color: var(--color-receipt2);">
                                             <i class="bi bi-receipt"></i> Vale
                                         </a>
                                     </div>
