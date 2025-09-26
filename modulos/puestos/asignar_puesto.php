@@ -2,7 +2,7 @@
 // Mueve esta línea al inicio del archivo para que BASE_URL esté definida.
 require_once __DIR__ . '/../../includes/config.php';
 
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "dashboard_puestos.php";
 
 require_once __DIR__ . '/../../includes/header.php';
