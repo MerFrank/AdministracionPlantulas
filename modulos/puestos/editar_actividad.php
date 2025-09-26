@@ -83,7 +83,7 @@ $titulo = "Editar Actividad Extra";
 $encabezado = "Editar Actividad: " . ($actividad['nombre'] ?? '');
 $subtitulo = "Modifique los datos de la actividad extra";
 $active_page = "actividades";
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "actividades_extras.php";
 
 require_once __DIR__ . '/../../includes/header.php';
@@ -163,20 +163,20 @@ require_once __DIR__ . '/../../includes/header.php';
                             
                             <!-- Botones -->
                             <div class="col-12">
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-end">
                                     <a href="lista_actividades.php" class="btn btn-secondary">
                                         <i class="bi bi-arrow-left"></i> Cancelar
                                     </a>
-                                    <div>
+                                    
                                         <a href="eliminar_actividad.php?id_actividad=<?= $id_actividad ?>" 
-                                           class="btn btn-danger me-2"
+                                           class="btn btn-secondary"
                                            onclick="return confirm('¿Está seguro de eliminar esta actividad?')">
                                             <i class="bi bi-trash"></i> Eliminar
                                         </a>
                                         <button type="submit" class="btn btn-success">
                                             <i class="bi bi-save"></i> Guardar Cambios
                                         </button>
-                                    </div>
+                                
                                 </div>
                             </div>
                         </div>
