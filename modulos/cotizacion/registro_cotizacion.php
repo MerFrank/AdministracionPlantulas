@@ -180,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $titulo = 'Nueva Cotización';
 $encabezado = 'Nueva Cotización';
 $ruta = "dashboard_cotizaciones.php";
-$texto_boton = "";
+$texto_boton = "Regesar";
 
 require_once __DIR__ . '/../../includes/header.php';
 ?>
