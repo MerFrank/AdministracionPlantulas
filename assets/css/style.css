@@ -131,7 +131,7 @@ main {
 
 .btn-primary:hover {
   background-color: #3a6d42;
-  transform: translateY(-1px);
+  
 }
 
 .btn-secondary {
@@ -574,7 +574,11 @@ form button {
   justify-content: space-between;
   
   
+  
 }
+
+
+
 
 
 
