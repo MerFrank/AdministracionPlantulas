@@ -21,13 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Complete todos los campos obligatorios']);
         exit;
     }
-    
+
     try {
         if ($accion === 'eliminar' && $idColor) {
             $sql = "DELETE FROM colores WHERE id_color = :id_color";
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
-            
+
             if ($stmt->execute()) {
                 echo json_encode([
                     'success' => true,
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($accion === 'editar' && $idColor) {
                 $sqlCheck .= " AND id_color != :id_color_excluir";
             }
-            
+
             $stmtCheck = $conexion->prepare($sqlCheck);
             $stmtCheck->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
             $stmtCheck->bindParam(':color', $color);
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtCheck->bindParam(':id_color_excluir', $idColor, PDO::PARAM_INT);
             }
             $stmtCheck->execute();
-            
+
             if ($stmtCheck->rowCount() > 0) {
                 echo json_encode(['success' => false, 'message' => 'Este color ya existe para esta especie']);
                 exit;
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bindParam(':color', $color);
                 $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
             }
-            
+
             if ($stmt->execute()) {
                 $response = [
                     'success' => true,
@@ -77,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode($response);
             }
         }
-    } catch(PDOException $e) {
-        echo json_encode(['success' => false, 'message' => 'Error: '.$e->getMessage()]);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
     }
     exit;
 }
@@ -99,14 +99,17 @@ $titulo = "Gestión de Colores";
 $encabezado = "Gestión de Colores";
 $subtitulo = "Administra inventario de colores.";
 
+$ruta = "dashboard_registroProducto.php";
+$texto_boton = "Regresar";
+
 // menu de opciones 
 $opciones_menu = [
-    'opcion1' => ['ruta' => 'dashboard_registroProducto.php', 'texto' => 'Regresar'],
+
     'opcion3' => ['ruta' => 'Registro_variedades.php', 'texto' => 'Registro Variedades'],
     'opcion4' => ['ruta' => 'Registro_especie.php', 'texto' => 'Registro Especie'],
-    
+
 ];
-require('../../includes/header.php');
+require '../../includes/header.php';
 ?>
 
 
@@ -116,7 +119,7 @@ require('../../includes/header.php');
         <form id="colorForm" method="POST">
             <input type="hidden" name="accion" value="<?= isset($colorEditar) ? 'editar' : 'crear' ?>">
             <input type="hidden" name="id_color" value="<?= $colorEditar['id_color'] ?? '' ?>">
-            
+
             <div class="row g-3 mt-2">
                 <div class="col-md-6">
                     <label class="form-label">Especie <span class="text-danger">*</span></label>
@@ -132,12 +135,12 @@ require('../../includes/header.php');
                         ?>
                     </select>
                 </div>
-                
+
                 <div class="col-md-6">
                     <label class="form-label">Nombre del Color <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <input type="text" class="form-control" name="color" 
-                                value="<?= htmlspecialchars($colorEditar['nombre_color'] ?? '') ?>" required>
+                        <input type="text" class="form-control" name="color"
+                            value="<?= htmlspecialchars($colorEditar['nombre_color'] ?? '') ?>" required>
                         <button type="submit" class="btn btn-primary">
                             <?= isset($colorEditar) ? 'Actualizar' : 'Guardar' ?>
                         </button>
@@ -149,30 +152,32 @@ require('../../includes/header.php');
             </div>
         </form>
     </div>
+    <div class="card shadow">
+        <div class="card-body">
 
-    <div class="table-responsive">
-        <h4>Colores Registrados</h4>
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nombre del Color</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tablaColores">
-                <?php
-                if ($especieSeleccionada) {
-                    try {
-                        $sql = "SELECT id_color, nombre_color FROM colores 
+            <div class="table-responsive">
+                <h4>Colores Registrados</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre del Color</th>
+                            <th style="width: 20%;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaColores">
+                        <?php
+                        if ($especieSeleccionada) {
+                            try {
+                                $sql = "SELECT id_color, nombre_color FROM colores 
                                 WHERE id_especie = :id_especie 
                                 ORDER BY nombre_color";
-                        $stmt = $conexion->prepare($sql);
-                        $stmt->bindParam(':id_especie', $especieSeleccionada, PDO::PARAM_INT);
-                        $stmt->execute();
-                        
-                        if ($stmt->rowCount() > 0) {
-                            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                                echo "<tr data-id='{$row['id_color']}'>
+                                $stmt = $conexion->prepare($sql);
+                                $stmt->bindParam(':id_especie', $especieSeleccionada, PDO::PARAM_INT);
+                                $stmt->execute();
+
+                                if ($stmt->rowCount() > 0) {
+                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        echo "<tr data-id='{$row['id_color']}'>
                                         <td>{$row['nombre_color']}</td>
                                         <td>
                                             <a href='Registro_colores.php?editar={$row['id_color']}&especie={$especieSeleccionada}' 
@@ -181,223 +186,236 @@ require('../../includes/header.php');
                                                     class='btn btn-sm btn-danger'>Eliminar</button>
                                         </td>
                                         </tr>";
+                                    }
+                                } else {
+                                    echo '<tr><td colspan="2" class="text-center py-3">No hay colores registrados</td></tr>';
+                                }
+                            } catch (PDOException $e) {
+                                echo '<tr><td colspan="2" class="text-center text-danger py-3">Error al cargar colores</td></tr>';
                             }
                         } else {
-                            echo '<tr><td colspan="2" class="text-center py-3">No hay colores registrados</td></tr>';
+                            echo '<tr><td colspan="2" class="text-center py-3">Seleccione una especie</td></tr>';
                         }
-                    } catch(PDOException $e) {
-                        echo '<tr><td colspan="2" class="text-center text-danger py-3">Error al cargar colores</td></tr>';
-                    }
-                } else {
-                    echo '<tr><td colspan="2" class="text-center py-3">Seleccione una especie</td></tr>';
-                }
-                ?>
-            </tbody>
-        </table>
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Función para editar color
-function editarColor(idColor, idEspecie) {
-fetch(`Registro_colores.php?especie=${idEspecie}`)
-    .then(response => {
-        if (!response.ok) throw new Error('Error en la respuesta');
-        return response.json();
-    })
-    .then(colores => {
-        const colorEditar = colores.find(c => c.id_color == idColor);
-        if (colorEditar) {
-            const form = document.getElementById('colorForm');
-            if (form) {
-                // Cambiar a modo edición
-                form.elements['accion'].value = 'editar';
-                form.elements['id_color'].value = idColor;
-                form.elements['color'].value = colorEditar.nombre_color;
-                
-                // Cambiar texto del botón
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) submitBtn.textContent = 'Actualizar';
-                
-                // Agregar botón cancelar si no existe
-                if (!form.querySelector('.btn-cancelar')) {
-                    const cancelBtn = document.createElement('a');
-                    cancelBtn.className = 'btn btn-secondary btn-cancelar';
-                    cancelBtn.href = '#';
-                    cancelBtn.textContent = 'Cancelar';
-                    cancelBtn.onclick = function(e) {
-                        e.preventDefault();
-                        resetForm();
-                    };
-                    form.querySelector('.input-group').appendChild(cancelBtn);
-                }
-                
-                // Desplazarse al formulario
-                form.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error al cargar los datos del color');
-    });
-}
-
-// Función para resetear el formulario
-function resetForm() {
-const form = document.getElementById('colorForm');
-if (form) {
-    form.elements['accion'].value = 'crear';
-    form.elements['id_color'].value = '';
-    form.elements['color'].value = '';
-    
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn) submitBtn.textContent = 'Guardar';
-    
-    const cancelBtn = form.querySelector('.btn-cancelar');
-    if (cancelBtn) cancelBtn.remove();
-    
-    // Limpiar parámetros de la URL
-    window.history.pushState({}, '', 'Registro_colores.php');
-}
-}
-
-// Función para eliminar color
-function eliminarColor(idColor) {
-const especie = document.getElementById('selectEspecie').value;
-if (!especie) {
-    alert('Por favor seleccione una especie primero');
-    return;
-}
-
-if (!confirm('¿Está seguro de eliminar este color permanentemente?')) {
-    return;
-}
-
-const formData = new FormData();
-formData.append('accion', 'eliminar');
-formData.append('id_color', idColor);
-formData.append('especie', especie);
-
-fetch('Registro_colores.php', {
-    method: 'POST',
-    body: formData
-})
-.then(response => {
-    if (!response.ok) throw new Error('Error en la respuesta');
-    return response.json();
-})
-.then(data => {
-    if (data.success) {
-        alert('Color eliminado correctamente');
-        document.getElementById('selectEspecie').dispatchEvent(new Event('change'));
-    } else {
-        alert(data.message || 'Error al eliminar el color');
-    }
-})
-.catch(error => {
-    console.error('Error:', error);
-    alert('Error al conectar con el servidor');
-});
-}
-
-// Carga inicial y configuración de eventos
-document.addEventListener('DOMContentLoaded', function() {
-// Configurar el formulario
-const colorForm = document.getElementById('colorForm');
-if (colorForm) {
-    colorForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const especie = this.elements['especie'].value;
-        const color = this.elements['color'].value.trim();
-        
-        if (!especie) {
-            alert('Por favor seleccione una especie');
-            return;
-        }
-        
-        if (!color) {
-            alert('Por favor ingrese un color');
-            return;
-        }
-        
-        const formData = new FormData(this);
-        
-        fetch('Registro_colores.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Error en la respuesta');
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert(this.elements['accion'].value === 'crear' ? 
-                        'Color agregado correctamente' : 'Color actualizado');
-                
-                // Resetear el formulario
-                resetForm();
-                
-                // Actualizar la tabla
-                document.getElementById('selectEspecie').dispatchEvent(new Event('change'));
-            } else {
-                alert(data.message || 'Error en la operación');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al procesar la solicitud');
-        });
-    });
-}
-
-// Configurar el selector de especie
-const selectEspecie = document.getElementById('selectEspecie');
-if (selectEspecie) {
-    selectEspecie.addEventListener('change', function() {
-        const especieId = this.value;
-        const tbody = document.getElementById('tablaColores');
-        
-        if (!especieId) {
-            tbody.innerHTML = '<tr><td colspan="2" class="text-center py-3">Seleccione una especie</td></tr>';
-            return;
-        }
-
-        fetch(`Registro_colores.php?especie=${especieId}`)
+    // Función para editar color
+    function editarColor(idColor, idEspecie) {
+        fetch(`Registro_colores.php?especie=${idEspecie}`)
             .then(response => {
-                if (!response.ok) throw new Error('Error al cargar colores');
+                if (!response.ok) throw new Error('Error en la respuesta');
                 return response.json();
             })
             .then(colores => {
-                if (!colores || colores.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="2" class="text-center py-3">No hay colores registrados</td></tr>';
-                    return;
-                }
+                const colorEditar = colores.find(c => c.id_color == idColor);
+                if (colorEditar) {
+                    const form = document.getElementById('colorForm');
+                    if (form) {
+                        // Cambiar a modo edición
+                        form.elements['accion'].value = 'editar';
+                        form.elements['id_color'].value = idColor;
+                        form.elements['color'].value = colorEditar.nombre_color;
 
-                tbody.innerHTML = colores.map(c => `
-                    <tr data-id="${c.id_color}">
-                        <td>${c.nombre_color}</td>
-                        <td>
-                            <button onclick="editarColor(${c.id_color}, ${especieId})" 
-                                    class="btn btn-sm btn-warning">Editar</button>
-                            <button onclick="eliminarColor(${c.id_color})" 
-                                    class="btn btn-sm btn-danger">Eliminar</button>
-                        </td>
-                    </tr>`).join('');
+                        // Cambiar texto del botón
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        if (submitBtn) submitBtn.textContent = 'Actualizar';
+
+                        // Agregar botón cancelar si no existe
+                        if (!form.querySelector('.btn-cancelar')) {
+                            const cancelBtn = document.createElement('a');
+                            cancelBtn.className = 'btn btn-secondary btn-cancelar';
+                            cancelBtn.href = '#';
+                            cancelBtn.textContent = 'Cancelar';
+                            cancelBtn.onclick = function(e) {
+                                e.preventDefault();
+                                resetForm();
+                            };
+                            form.querySelector('.input-group').appendChild(cancelBtn);
+                        }
+
+                        // Desplazarse al formulario
+                        form.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-                tbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger py-3">Error al cargar colores</td></tr>';
+                alert('Error al cargar los datos del color');
             });
-    });
-
-    // Cargar colores si ya hay una especie seleccionada
-    if (selectEspecie.value) {
-        selectEspecie.dispatchEvent(new Event('change'));
     }
-}
-});
+
+    // Función para resetear el formulario
+    function resetForm() {
+        const form = document.getElementById('colorForm');
+        if (form) {
+            form.elements['accion'].value = 'crear';
+            form.elements['id_color'].value = '';
+            form.elements['color'].value = '';
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'Guardar';
+
+            const cancelBtn = form.querySelector('.btn-cancelar');
+            if (cancelBtn) cancelBtn.remove();
+
+            // Limpiar parámetros de la URL
+            window.history.pushState({}, '', 'Registro_colores.php');
+        }
+    }
+
+    // Función para eliminar color
+    function eliminarColor(idColor) {
+        const especie = document.getElementById('selectEspecie').value;
+        if (!especie) {
+            alert('Por favor seleccione una especie primero');
+            return;
+        }
+
+        if (!confirm('¿Está seguro de eliminar este color permanentemente?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('accion', 'eliminar');
+        formData.append('id_color', idColor);
+        formData.append('especie', especie);
+
+        fetch('Registro_colores.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Error en la respuesta');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('Color eliminado correctamente');
+                    document.getElementById('selectEspecie').dispatchEvent(new Event('change'));
+                } else {
+                    alert(data.message || 'Error al eliminar el color');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al conectar con el servidor');
+            });
+    }
+
+    // Carga inicial y configuración de eventos
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configurar el formulario
+        const colorForm = document.getElementById('colorForm');
+        if (colorForm) {
+            colorForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const especie = this.elements['especie'].value;
+                const color = this.elements['color'].value.trim();
+
+                if (!especie) {
+                    alert('Por favor seleccione una especie');
+                    return;
+                }
+
+                if (!color) {
+                    alert('Por favor ingrese un color');
+                    return;
+                }
+
+                const formData = new FormData(this);
+
+                fetch('Registro_colores.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Error en la respuesta');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            alert(this.elements['accion'].value === 'crear' ?
+                                'Color agregado correctamente' : 'Color actualizado');
+
+                            // Resetear el formulario
+                            resetForm();
+
+                            // Actualizar la tabla
+                            document.getElementById('selectEspecie').dispatchEvent(new Event('change'));
+                        } else {
+                            alert(data.message || 'Error en la operación');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al procesar la solicitud');
+                    });
+            });
+        }
+
+        // Configurar el selector de especie
+        const selectEspecie = document.getElementById('selectEspecie');
+        if (selectEspecie) {
+            selectEspecie.addEventListener('change', function() {
+                const especieId = this.value;
+                const tbody = document.getElementById('tablaColores');
+
+                if (!especieId) {
+                    tbody.innerHTML = '<tr><td colspan="2" class="text-center py-3">Seleccione una especie</td></tr>';
+                    return;
+                }
+
+                fetch(`Registro_colores.php?especie=${especieId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Error al cargar colores');
+                        return response.json();
+                    })
+                    .then(colores => {
+                        if (!colores || colores.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="2" class="text-center py-3">No hay colores registrados</td></tr>';
+                            return;
+                        }
+
+                        tbody.innerHTML = colores.map(c => `    
+                    <tr data-id="${c.id_color}">
+                        <td>${c.nombre_color}</td>
+                        <td>
+                        <div class="btn-group">
+                            <button onclick="editarColor(${c.id_color}, ${especieId})" 
+                             style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                    class="btn btn-sm btn-primary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                    </button>
+                            <button onclick="eliminarColor(${c.id_color})" 
+                             style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                    class="btn btn-sm btn-primary" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                    </button>
+                          </div>          
+                        </td>
+                    </tr>`).join('');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        tbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger py-3">Error al cargar colores</td></tr>';
+                    });
+            });
+
+            // Cargar colores si ya hay una especie seleccionada
+            if (selectEspecie.value) {
+                selectEspecie.dispatchEvent(new Event('change'));
+            }
+        }
+    });
 </script>
