@@ -9,7 +9,8 @@ $variedadEditar = null;
 $especieSeleccionada = $_POST['especie'] ?? $_GET['especie'] ?? null;
 
 // Función para enviar respuestas JSON
-function sendJsonResponse($success, $message, $data = []) {
+function sendJsonResponse($success, $message, $data = [])
+{
     ob_clean();
     header('Content-Type: application/json');
     echo json_encode(array_merge(['success' => $success, 'message' => $message], $data));
@@ -19,12 +20,12 @@ function sendJsonResponse($success, $message, $data = []) {
 // Procesamiento de formularios (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? 'crear';
-    
+
     try {
         if ($accion === 'eliminar') {
             // Validación para eliminación
             $idVariedad = filter_var($_POST['id_variedad'] ?? null, FILTER_VALIDATE_INT);
-            
+
             if (!$idVariedad || $idVariedad <= 0) {
                 sendJsonResponse(false, 'ID de variedad no válido');
             }
@@ -37,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtCheck = $conexion->prepare($sqlCheck);
             $stmtCheck->bindParam(':id', $idVariedad, PDO::PARAM_INT);
             $stmtCheck->execute();
-            
+
             if ($stmtCheck->rowCount() === 0) {
                 throw new Exception('La variedad no existe o ya fue eliminada');
             }
@@ -46,15 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql = "UPDATE variedades SET activo = 0 WHERE id_variedad = :id";
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':id', $idVariedad, PDO::PARAM_INT);
-            
+
             if (!$stmt->execute()) {
                 throw new Exception('Error al marcar la variedad como eliminada');
             }
 
             $conexion->commit();
-            
+
             sendJsonResponse(true, 'Variedad marcada como eliminada');
-            
         } else {
             // Validación para creación/edición
             $idVariedad = filter_var($_POST['id_variedad'] ?? null, FILTER_VALIDATE_INT);
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $idColor = filter_var($_POST['color'] ?? null, FILTER_VALIDATE_INT);
             $nombreVariedad = htmlspecialchars(trim($_POST['nombreVariedad'] ?? ''));
             $codigoVariedad = htmlspecialchars(trim($_POST['codigoVariedad'] ?? ''));
-            
+
             // Validar campos obligatorios
             if (empty($idEspecie) || empty($idColor) || empty($nombreVariedad) || empty($codigoVariedad)) {
                 sendJsonResponse(false, 'Complete todos los campos obligatorios');
@@ -82,14 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($accion === 'editar') {
                 $sqlCheck .= " AND id_variedad != :id_variedad";
             }
-            
+
             $stmtCheck = $conexion->prepare($sqlCheck);
             $stmtCheck->bindParam(':codigo', $codigoVariedad);
             if ($accion === 'editar') {
                 $stmtCheck->bindParam(':id_variedad', $idVariedad, PDO::PARAM_INT);
             }
             $stmtCheck->execute();
-            
+
             if ($stmtCheck->rowCount() > 0) {
                 sendJsonResponse(false, 'Este código ya está registrado');
             }
@@ -106,27 +106,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         codigo = :codigo 
                         WHERE id_variedad = :id_variedad";
             }
-            
+
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
             $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
             $stmt->bindParam(':nombre', $nombreVariedad);
             $stmt->bindParam(':codigo', $codigoVariedad);
-            
+
             if ($accion === 'editar') {
                 $stmt->bindParam(':id_variedad', $idVariedad, PDO::PARAM_INT);
             }
-            
+
             if (!$stmt->execute()) {
                 throw new Exception('Error al ejecutar la operación');
             }
-            
+
             // Obtener datos para respuesta
             $lastId = $accion === 'crear' ? $conexion->lastInsertId() : $idVariedad;
             $nombreEspecie = $conexion->query("SELECT nombre FROM especies WHERE id_especie = $idEspecie")->fetchColumn();
             $nombreColor = $conexion->query("SELECT nombre_color FROM colores WHERE id_color = $idColor")->fetchColumn();
-            
-            sendJsonResponse(true, 
+
+            sendJsonResponse(
+                true,
                 $accion === 'crear' ? 'Variedad registrada con éxito' : 'Variedad actualizada con éxito',
                 [
                     'id_variedad' => $lastId,
@@ -137,13 +138,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]
             );
         }
-    } catch(PDOException $e) {
+    } catch (PDOException $e) {
         if ($conexion->inTransaction()) {
             $conexion->rollBack();
         }
         error_log('Error en gestión de variedades: ' . $e->getMessage());
         sendJsonResponse(false, 'Error en la base de datos: ' . $e->getMessage());
-    } catch(Exception $e) {
+    } catch (Exception $e) {
         if ($conexion->inTransaction()) {
             $conexion->rollBack();
         }
@@ -173,8 +174,8 @@ if (isset($_GET['editar'])) {
         if (!$variedadEditar) {
             throw new Exception('Variedad no encontrada o eliminada');
         }
-    } catch(Exception $e) {
-        echo "<script>alert('".addslashes($e->getMessage())."');</script>";
+    } catch (Exception $e) {
+        echo "<script>alert('" . addslashes($e->getMessage()) . "');</script>";
     }
 }
 
@@ -184,7 +185,7 @@ try {
     $sql = "SELECT id_especie, nombre FROM especies ORDER BY nombre";
     $stmt = $conexion->query($sql);
     $especies = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch(PDOException $e) {
+} catch (PDOException $e) {
     $errorEspecies = "Error al cargar especies: " . $e->getMessage();
 }
 
@@ -198,7 +199,7 @@ if (isset($variedadEditar) || $especieSeleccionada) {
         $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
         $stmt->execute();
         $colores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch(PDOException $e) {
+    } catch (PDOException $e) {
         $errorColores = "Error al cargar colores: " . $e->getMessage();
     }
 }
@@ -212,22 +213,22 @@ try {
             JOIN especies e ON v.id_especie = e.id_especie
             JOIN colores c ON v.id_color = c.id_color
             WHERE v.activo = 1";
-    
+
     if ($especieSeleccionada) {
         $sql .= " AND v.id_especie = :id_especie";
     }
-    
+
     $sql .= " ORDER BY e.nombre, c.nombre_color, v.nombre_variedad";
-    
+
     $stmt = $especieSeleccionada ? $conexion->prepare($sql) : $conexion->query($sql);
-    
+
     if ($especieSeleccionada) {
         $stmt->bindParam(':id_especie', $especieSeleccionada, PDO::PARAM_INT);
         $stmt->execute();
     }
-    
+
     $variedades = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch(PDOException $e) {
+} catch (PDOException $e) {
     $errorVariedades = "Error al cargar variedades: " . $e->getMessage();
 }
 
@@ -237,19 +238,24 @@ try {
 $titulo = "Gestión de Variedades";
 $encabezado = "Panel de Control de Variedadesuctos";
 $subtitulo = "Administra inventario de variedades";
+$ruta = "dashboard_registroProducto.php";
+$texto_boton = "Regresar";
 
 // Incluir la cabecera (ruta relativa al archivo actual)
 $opciones_menu = [
-    'opcion1' => ['ruta' => 'dashboard_registroProducto.php', 'texto' => 'Regresar'],
+
     'opcion2' => ['ruta' => 'Registro_colores.php', 'texto' => 'Registro Colores'],
     'opcion4' => ['ruta' => 'Registro_especie.php', 'texto' => 'Registro Especie'],
-    
+
 ];
 require('../../includes/header.php');
 ?>
 
 
 <main class="container py-4">
+
+
+
     <div class="toast-container">
         <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
@@ -265,14 +271,14 @@ require('../../includes/header.php');
         <form id="variedadForm" method="POST">
             <input type="hidden" name="accion" value="<?= isset($variedadEditar) ? 'editar' : 'crear' ?>">
             <input type="hidden" name="id_variedad" value="<?= $variedadEditar['id_variedad'] ?? '' ?>">
-            
+
             <div class="row g-3">
                 <div class="col-md-6">
                     <label for="selectEspecie" class="form-label">Especie <span class="text-danger">*</span></label>
                     <select class="form-select" id="selectEspecie" name="especie" required>
                         <option value="">-- Seleccione una especie --</option>
                         <?php foreach ($especies as $especie): ?>
-                            <option value="<?= $especie['id_especie'] ?>" 
+                            <option value="<?= $especie['id_especie'] ?>"
                                 <?= ($especie['id_especie'] == ($variedadEditar['id_especie'] ?? $especieSeleccionada ?? '')) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($especie['nombre']) ?>
                             </option>
@@ -285,7 +291,7 @@ require('../../includes/header.php');
                         <option value="">-- Seleccione un color --</option>
                         <?php if (isset($variedadEditar) || $especieSeleccionada): ?>
                             <?php foreach ($colores as $color): ?>
-                                <option value="<?= $color['id_color'] ?>" 
+                                <option value="<?= $color['id_color'] ?>"
                                     <?= (isset($variedadEditar) && $color['id_color'] == $variedadEditar['id_color']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($color['nombre_color']) ?>
                                 </option>
@@ -298,15 +304,15 @@ require('../../includes/header.php');
             <div class="row g-3 mt-3">
                 <div class="col-md-6">
                     <label for="nombreVariedad" class="form-label">Nombre de la Variedad <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="nombreVariedad" name="nombreVariedad" 
-                            value="<?= htmlspecialchars($variedadEditar['nombre_variedad'] ?? '') ?>" 
-                            minlength="2" maxlength="100" required>
+                    <input type="text" class="form-control" id="nombreVariedad" name="nombreVariedad"
+                        value="<?= htmlspecialchars($variedadEditar['nombre_variedad'] ?? '') ?>"
+                        minlength="2" maxlength="100" required>
                 </div>
                 <div class="col-md-6">
                     <label for="codigoVariedad" class="form-label">Código Único <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="codigoVariedad" name="codigoVariedad" 
-                            value="<?= htmlspecialchars($variedadEditar['codigo'] ?? '') ?>" 
-                            minlength="2" maxlength="50" required>
+                    <input type="text" class="form-control" id="codigoVariedad" name="codigoVariedad"
+                        value="<?= htmlspecialchars($variedadEditar['codigo'] ?? '') ?>"
+                        minlength="2" maxlength="50" required>
                 </div>
             </div>
 
@@ -327,7 +333,7 @@ require('../../includes/header.php');
 
     <div class="table-container">
         <?php if ($especieSeleccionada): ?>
-            <?php 
+            <?php
             $nombreEspecie = '';
             foreach ($especies as $especie) {
                 if ($especie['id_especie'] == $especieSeleccionada) {
@@ -343,48 +349,55 @@ require('../../includes/header.php');
                 </a>
             </div>
         <?php endif; ?>
-
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Especie</th>
-                        <th>Color</th>
-                        <th>Variedad</th>
-                        <th>Código</th>
-                        <th class="actions-cell">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="listaVariedades">
-                    <?php if (!empty($variedades)): ?>
-                        <?php foreach ($variedades as $variedad): ?>
-                            <tr data-id="<?= $variedad['id_variedad'] ?>">
-                                <td><?= htmlspecialchars($variedad['especie']) ?></td>
-                                <td><?= htmlspecialchars($variedad['color']) ?></td>
-                                <td><?= htmlspecialchars($variedad['nombre_variedad']) ?></td>
-                                <td><?= htmlspecialchars($variedad['codigo']) ?></td>
-                                <td class="actions-cell">
-                                    <a href="Registro_variedades.php?editar=<?= $variedad['id_variedad'] ?>" 
-                                        class="btn btn-sm btn-warning" title="Editar">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </a>
-                                    <button onclick="confirmarEliminacion(<?= $variedad['id_variedad'] ?>)" 
-                                            class="btn btn-sm btn-danger" title="Eliminar">
-                                        <i class="fas fa-trash"></i> Eliminar
-                                    </button>
-                                </td>
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Especie</th>
+                                <th>Color</th>
+                                <th>Variedad</th>
+                                <th>Código</th>
+                                <th style="width: 20%;">Acciones</th>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="5" class="empty-message">
-                                <?= isset($errorVariedades) ? $errorVariedades : 'No hay variedades registradas' ?>
-                                <?= $especieSeleccionada ? ' para la especie seleccionada' : '' ?>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody id="listaVariedades">
+                            <?php if (!empty($variedades)): ?>
+                                <?php foreach ($variedades as $variedad): ?>
+                                    <tr data-id="<?= $variedad['id_variedad'] ?>">
+                                        <td><?= htmlspecialchars($variedad['especie']) ?></td>
+                                        <td><?= htmlspecialchars($variedad['color']) ?></td>
+                                        <td><?= htmlspecialchars($variedad['nombre_variedad']) ?></td>
+                                        <td><?= htmlspecialchars($variedad['codigo']) ?></td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="Registro_variedades.php?editar=<?= $variedad['id_variedad'] ?>"
+                                                    style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                                    class="btn btn-sm btn-primary" title="Editar">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button onclick="confirmarEliminacion(<?= $variedad['id_variedad'] ?>)"
+                                                    style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                                    class="btn btn-sm btn-primary" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="empty-message">
+                                        <?= isset($errorVariedades) ? $errorVariedades : 'No hay variedades registradas' ?>
+                                        <?= $especieSeleccionada ? ' para la especie seleccionada' : '' ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -395,30 +408,30 @@ require('../../includes/header.php');
     // Inicializar toast
     const toastLiveExample = document.getElementById('liveToast');
     const toast = new bootstrap.Toast(toastLiveExample);
-    
+
     // Función para mostrar notificación
     function mostrarNotificacion(titulo, mensaje, tipo = 'success') {
         const toastTitle = document.getElementById('toastTitle');
         const toastMessage = document.getElementById('toastMessage');
-        
+
         toastTitle.textContent = titulo;
         toastMessage.textContent = mensaje;
-        
+
         // Cambiar color según el tipo
         const toastHeader = toastLiveExample.querySelector('.toast-header');
         toastHeader.className = 'toast-header';
         toastHeader.classList.add(`bg-${tipo}`, 'text-white');
-        
+
         toast.show();
     }
 
     // Función para cargar colores
     function cargarColores(especieId) {
         const colorSelect = document.getElementById('selectColor');
-        
+
         colorSelect.innerHTML = '<option value="">-- Seleccione un color --</option>';
         colorSelect.disabled = !especieId;
-        
+
         if (especieId) {
             fetch(`get_colores.php?especie=${especieId}`)
                 .then(response => {
@@ -450,7 +463,7 @@ require('../../includes/header.php');
     document.getElementById('selectEspecie').addEventListener('change', function() {
         const especieId = this.value;
         cargarColores(especieId);
-        
+
         // Actualizar la tabla si no estamos editando
         <?php if (!isset($variedadEditar)): ?>
             if (especieId) {
@@ -472,7 +485,7 @@ require('../../includes/header.php');
     function eliminarVariedad(idVariedad) {
         const btn = document.querySelector(`button[onclick="confirmarEliminacion(${idVariedad})"]`);
         const originalHTML = btn.innerHTML;
-        
+
         // Mostrar spinner
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         btn.disabled = true;
@@ -480,103 +493,103 @@ require('../../includes/header.php');
         const formData = new FormData();
         formData.append('accion', 'eliminar');
         formData.append('id_variedad', idVariedad);
-        
+
         fetch('Registro_variedades.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(text || 'Error en la respuesta del servidor');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (!data) throw new Error('Respuesta vacía del servidor');
-            
-            if (data.success) {
-                mostrarNotificacion('Éxito', data.message);
-                // Eliminar la fila visualmente
-                document.querySelector(`tr[data-id="${idVariedad}"]`)?.remove();
-                
-                // Si no quedan filas, mostrar mensaje
-                if (!document.querySelector('#listaVariedades tr:not(.empty-message)')) {
-                    document.getElementById('listaVariedades').innerHTML = 
-                        '<tr><td colspan="5" class="empty-message">No hay variedades registradas</td></tr>';
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error en la respuesta del servidor');
+                    });
                 }
-            } else {
-                throw new Error(data.message || 'Error desconocido');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            mostrarNotificacion('Error', error.message || 'Error al eliminar variedad', 'danger');
-        })
-        .finally(() => {
-            // Restaurar el botón
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-        });
+                return response.json();
+            })
+            .then(data => {
+                if (!data) throw new Error('Respuesta vacía del servidor');
+
+                if (data.success) {
+                    mostrarNotificacion('Éxito', data.message);
+                    // Eliminar la fila visualmente
+                    document.querySelector(`tr[data-id="${idVariedad}"]`)?.remove();
+
+                    // Si no quedan filas, mostrar mensaje
+                    if (!document.querySelector('#listaVariedades tr:not(.empty-message)')) {
+                        document.getElementById('listaVariedades').innerHTML =
+                            '<tr><td colspan="5" class="empty-message">No hay variedades registradas</td></tr>';
+                    }
+                } else {
+                    throw new Error(data.message || 'Error desconocido');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarNotificacion('Error', error.message || 'Error al eliminar variedad', 'danger');
+            })
+            .finally(() => {
+                // Restaurar el botón
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            });
     }
 
     // Manejar envío del formulario con AJAX
     document.getElementById('variedadForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const form = this;
         const submitBtn = form.querySelector('button[type="submit"]');
         const btnText = submitBtn.querySelector('.btn-text');
         const spinner = submitBtn.querySelector('.fa-spinner');
-        
+
         // Mostrar spinner y ocultar texto
         btnText.classList.add('d-none');
         spinner.classList.remove('d-none');
         submitBtn.disabled = true;
-        
+
         const formData = new FormData(form);
-        
+
         fetch('Registro_variedades.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(text || 'Error en la respuesta del servidor');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (!data) throw new Error('Respuesta vacía del servidor');
-            
-            if (data.success) {
-                mostrarNotificacion('Éxito', data.message);
-                
-                // Recargar después de 1.5 segundos
-                setTimeout(() => {
-                    if (data.data?.id_variedad) {
-                        window.location.href = `Registro_variedades.php?especie=${document.getElementById('selectEspecie').value}`;
-                    } else {
-                        window.location.reload();
-                    }
-                }, 1500);
-            } else {
-                throw new Error(data.message || 'Error desconocido');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            mostrarNotificacion('Error', error.message || 'Error al procesar la solicitud', 'danger');
-        })
-        .finally(() => {
-            // Restaurar botón
-            btnText.classList.remove('d-none');
-            spinner.classList.add('d-none');
-            submitBtn.disabled = false;
-        });
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Error en la respuesta del servidor');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) throw new Error('Respuesta vacía del servidor');
+
+                if (data.success) {
+                    mostrarNotificacion('Éxito', data.message);
+
+                    // Recargar después de 1.5 segundos
+                    setTimeout(() => {
+                        if (data.data?.id_variedad) {
+                            window.location.href = `Registro_variedades.php?especie=${document.getElementById('selectEspecie').value}`;
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'Error desconocido');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarNotificacion('Error', error.message || 'Error al procesar la solicitud', 'danger');
+            })
+            .finally(() => {
+                // Restaurar botón
+                btnText.classList.remove('d-none');
+                spinner.classList.add('d-none');
+                submitBtn.disabled = false;
+            });
     });
 
     // Configuración inicial al cargar la página
