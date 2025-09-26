@@ -108,6 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $titulo = "Editar Empleado";
 $encabezado = "Editar Información de Empleado";
 $subtitulo = "Actualice la información del empleado seleccionado";
+$ruta = "lista_empleados.php";
+$texto_boton = "Regresar";
+
 
 // Incluir cabecera
 require_once __DIR__ . '/../../includes/header.php';
