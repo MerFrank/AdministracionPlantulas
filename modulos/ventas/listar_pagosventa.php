@@ -47,9 +47,15 @@ $pagos = $sql_pagos->fetchAll(PDO::FETCH_ASSOC);
 
 $titulo = 'Pagos de la Venta #' . $venta['id_notaPedido'];
 $encabezado = "Gestión de Pagos";
+
 $ruta = "lista_ventas.php";
 $texto_boton = "Volver a Ventas";
-require __DIR__ . '/../../includes/header.php';
+
+$opciones_menu = [
+    'opcion1' => ['ruta' => 'dashboard_ventas.php', 'texto' => 'Panel ventas'],
+    'opcion2' => ['ruta' => 'registro_abono.php?id_venta_auto=' . $id_venta, 'texto' => 'abono'],     
+];
+require __DIR__ .( '/../../includes/header.php');
 ?>
 
 <main class="container mt-4">
@@ -115,11 +121,15 @@ require __DIR__ . '/../../includes/header.php';
                                     <td>
                                         <?php if ($_SESSION['Rol'] == 1 ): ?>
                                             <div class="btn-group">
-                                                <a href="editar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-info">
-                                                    <i class="bi bi-pencil"></i> Editar
+                                                <a href="editar_pago.php?id=<?= $pago['id_pago'] ?>" 
+                                                 style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                                class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-pencil"></i> 
                                                 </a>
-                                                <a href="eliminar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-warning">
-                                                    <i class="bi bi-trash"></i> Eliminar
+                                                <a href="eliminar_pago.php?id=<?= $pago['id_pago'] ?>"
+                                                 style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                                 class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-trash"></i>
                                                 </a>
                                             </div>
                                         <?php endif; ?>
@@ -147,6 +157,7 @@ require __DIR__ . '/../../includes/header.php';
 </main>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>    
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
