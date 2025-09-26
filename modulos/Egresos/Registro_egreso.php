@@ -155,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $ruta = "dashboard_egresos.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 
@@ -315,11 +315,11 @@ require('../../includes/header.php');
                     </div>
                 </div>
                 
-                <div class="d-flex justify-content-between mt-4">
+                <div class="d-flex justify-content-end">
                     <a href="lista_egresos.php" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Cancelar
                     </a>
-                    <button type="submit" class="btn btn-primary" id="btnRegistrar">
+                    <button type="submit" class="btn btn-primary" id="btnRegistrar"> 
                         <i class="bi bi-save"></i> Registrar Operación
                     </button>
                 </div>
