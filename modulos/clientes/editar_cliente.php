@@ -231,13 +231,13 @@ require('../../includes/header.php');
                                 <div class="col-md-6">
                                     <label for="rfc" class="form-label">RFC</label>
                                     <input type="text" class="form-control" id="rfc" name="rfc" 
-                                           value="<?= htmlspecialchars($cliente['rfc']) ?>">
+                                           value="<?= htmlspecialchars($cliente['rfc']??'') ?>">
                                     <div class="rfc-example">Ejemplo: XAXX010101000 (Personas físicas) o EKU900317SA7 (Personas morales)</div>
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label for="domicilio_fiscal" class="form-label">Domicilio Fiscal</label>
-                                    <textarea class="form-control" id="domicilio_fiscal" name="domicilio_fiscal" rows="2"><?= htmlspecialchars($cliente['domicilio_fiscal']) ?></textarea>
+                                    <textarea class="form-control" id="domicilio_fiscal" name="domicilio_fiscal" rows="2"><?= htmlspecialchars($cliente['domicilio_fiscal']??'') ?></textarea>
                                 </div>
                             </div>
                         </div>
