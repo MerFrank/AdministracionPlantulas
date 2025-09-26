@@ -34,7 +34,9 @@ $ventas_pendientes = $con->query("
     ORDER BY np.id_notaPedido DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// Procesar formulario de abono
+// Capturar el ID de venta para autoselección
+ $id_venta_auto = isset($_GET['id_venta_auto']) ? (int)$_GET['id_venta_auto'] : null; 
+ // Procesar formulario de abono $error 
 $error = '';
 $success = '';
 
@@ -151,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $titulo = 'Registrar Abono';
 $ruta = "dashboard_ventas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -185,14 +187,14 @@ require __DIR__ . '/../../includes/header.php';
                             <label class="form-label">Venta a crédito <span class="text-danger">*</span></label>
                             <select class="form-select" name="id_notaPedido" id="selectVenta" required>
                                 <option value="">Seleccione una venta...</option>
-                                <?php foreach ($ventas_pendientes as $venta): ?>
-                                    <option value="<?= $venta['id_notaPedido'] ?>" 
-                                        data-saldo="<?= $venta['saldo_pendiente'] ?>">
-                                        #<?= $venta['id_notaPedido'] ?> - <?= htmlspecialchars($venta['nombre_Cliente']) ?> 
-                                        (Saldo: $<?= number_format($venta['saldo_pendiente'], 2) ?>)
-                                        - <?= $venta['tipo_pago'] ?> (<?= $venta['estado'] ?>)
-                                    </option>
-                                <?php endforeach; ?>
+                                <?php foreach ($ventas_pendientes as $venta): ?> <?php
+                                 // Lógica de preselección
+                                  $selected = ''; if ($id_venta_auto === $venta['id_notaPedido'])
+                                   { $selected = 'selected'; } ?> <option value="<?= $venta['id_notaPedido'] ?>" data-saldo="<?= $venta['saldo_pendiente'] ?>"
+                                    <?= $selected ?>> #<?= $venta['id_notaPedido'] ?> 
+                                  <?= htmlspecialchars($venta['nombre_Cliente']) ?> 
+                                </option>
+                                 <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
