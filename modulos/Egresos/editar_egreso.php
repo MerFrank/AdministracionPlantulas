@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 $ruta = "dashboard_egresos.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 ?>
 
