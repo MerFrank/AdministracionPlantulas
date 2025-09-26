@@ -202,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
 $titulo = 'Venta desde Cotización';
 $subtitulo = "Panel de administración de cotizaciones";
 $ruta = "dashboard_ventas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 ?>
 
