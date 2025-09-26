@@ -33,7 +33,7 @@ $subtitulo = "Lista de todos los puestos de la organización.";
 $active_page = "puestos";
 
 //Botón
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "dashboard_puestos.php";
 require_once __DIR__ . '/../../includes/header.php';
 ?>
