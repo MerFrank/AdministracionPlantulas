@@ -253,9 +253,6 @@ require('../../includes/header.php');
 
 
 <main class="container py-4">
-
-
-
     <div class="toast-container">
         <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
@@ -331,7 +328,7 @@ require('../../includes/header.php');
         </form>
     </div>
 
-    <div class="table-container">
+    
         <?php if ($especieSeleccionada): ?>
             <?php
             $nombreEspecie = '';
@@ -349,57 +346,60 @@ require('../../includes/header.php');
                 </a>
             </div>
         <?php endif; ?>
-        <div class="card shadow">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Especie</th>
-                                <th>Color</th>
-                                <th>Variedad</th>
-                                <th>Código</th>
-                                <th style="width: 20%;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listaVariedades">
-                            <?php if (!empty($variedades)): ?>
-                                <?php foreach ($variedades as $variedad): ?>
-                                    <tr data-id="<?= $variedad['id_variedad'] ?>">
-                                        <td><?= htmlspecialchars($variedad['especie']) ?></td>
-                                        <td><?= htmlspecialchars($variedad['color']) ?></td>
-                                        <td><?= htmlspecialchars($variedad['nombre_variedad']) ?></td>
-                                        <td><?= htmlspecialchars($variedad['codigo']) ?></td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a href="Registro_variedades.php?editar=<?= $variedad['id_variedad'] ?>"
-                                                    style="background-color: var(--color-accent); border-color: var(--color-accent);"
-                                                    class="btn btn-sm btn-primary" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <button onclick="confirmarEliminacion(<?= $variedad['id_variedad'] ?>)"
-                                                    style="background-color: var(--color-danger); border-color: var(--color-danger);"
-                                                    class="btn btn-sm btn-primary" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
+        <div class="mt-5">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3>Variedades Registradas</h3>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Especie</th>
+                                    <th>Color</th>
+                                    <th>Variedad</th>
+                                    <th>Código</th>
+                                    <th style="width: 20%;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaVariedades">
+                                <?php if (!empty($variedades)): ?>
+                                    <?php foreach ($variedades as $variedad): ?>
+                                        <tr data-id="<?= $variedad['id_variedad'] ?>">
+                                            <td><?= htmlspecialchars($variedad['especie']) ?></td>
+                                            <td><?= htmlspecialchars($variedad['color']) ?></td>
+                                            <td><?= htmlspecialchars($variedad['nombre_variedad']) ?></td>
+                                            <td><?= htmlspecialchars($variedad['codigo']) ?></td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="Registro_variedades.php?editar=<?= $variedad['id_variedad'] ?>"
+                                                        style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                                        class="btn btn-sm btn-primary" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button onclick="confirmarEliminacion(<?= $variedad['id_variedad'] ?>)"
+                                                        style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                                        class="btn btn-sm btn-primary" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="5" class="empty-message">
+                                            <?= isset($errorVariedades) ? $errorVariedades : 'No hay variedades registradas' ?>
+                                            <?= $especieSeleccionada ? ' para la especie seleccionada' : '' ?>
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="5" class="empty-message">
-                                        <?= isset($errorVariedades) ? $errorVariedades : 'No hay variedades registradas' ?>
-                                        <?= $especieSeleccionada ? ' para la especie seleccionada' : '' ?>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    
 </main>
 
 <?php require('../../includes/footer.php'); ?>
