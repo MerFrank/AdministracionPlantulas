@@ -56,7 +56,7 @@ $titulo = "Actividades Extras";
 $encabezado = "Registrar Nueva Actividad Extra";
 $subtitulo = "Complete el formulario para registrar una nueva actividad";
 $active_page = "actividades";
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "actividades_extras.php"; 
 
 require_once __DIR__ . '/../../includes/header.php';
