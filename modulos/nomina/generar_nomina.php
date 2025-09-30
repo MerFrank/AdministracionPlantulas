@@ -17,6 +17,53 @@ $asistenciaData = [];
 $horasPorEmpleado = [];
 $empleados = [];
 
+function calcularHorasTrabajadas($cadenaHoras) {
+    if (empty($cadenaHoras)) {
+        return 0;
+    }
+
+    // Asegurar que la cadena solo tenga dígitos, :, y nada raro
+    $cadenaHoras = preg_replace('/[^0-9:]/', '', $cadenaHoras);
+
+    $horas = [];
+    for ($i = 0; $i + 4 < strlen($cadenaHoras); $i += 5) {
+        $bloque = substr($cadenaHoras, $i, 5);
+        if (preg_match('/^\d{2}:\d{2}$/', $bloque)) {
+            $horas[] = $bloque;
+        }
+    }
+
+    if (count($horas) < 2) {
+        return 0; // no se puede calcular
+    }
+
+    try {
+        $entrada = new DateTime($horas[0]);
+        $salida  = new DateTime(end($horas));
+    } catch (Exception $e) {
+        return 0; // por si hay hora mal formada
+    }
+
+    $total = $entrada->diff($salida);
+    $horasTrabajadas = $total->h + ($total->i / 60);
+
+    // Si hay 4 registros → descontar receso
+    if (count($horas) >= 4) {
+        try {
+            $salidaReceso = new DateTime($horas[1]);
+            $entradaReceso = new DateTime($horas[2]);
+            $receso = $salidaReceso->diff($entradaReceso);
+            $horasReceso = $receso->h + ($receso->i / 60);
+            $horasTrabajadas -= $horasReceso;
+        } catch (Exception $e) {
+            // si falla, ignoramos el receso
+        }
+    }
+
+    return max($horasTrabajadas, 0); // nunca negativo
+}
+
+
 // Lógica de procesamiento de datos
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_FILES['asistencia_file']) || $_FILES['asistencia_file']['error'] !== UPLOAD_ERR_OK) {
@@ -37,34 +84,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $isHeader = true;
             foreach ($data as $row) {
-                if ($isHeader) {
-                    $isHeader = false;
-                    continue;
+                if ($isHeader) { 
+                    $isHeader = false; 
+                    continue; 
                 }
-                
-                // Asume la estructura de las columnas: A, B, C, D, E
+
                 $id = $row['A'];
                 $nombre = $row['B'];
                 $fecha = $row['C'];
-                $hora = $row['D'];
-                $tipoRegistro = strtolower($row['E']);
+                $cadenaHoras = trim($row['D']); // aquí vienen las horas concatenadas
 
                 if (empty($id)) continue;
 
-                if (!isset($asistenciaData[$id])) {
-                    $asistenciaData[$id] = [];
+                if (!isset($horasPorEmpleado[$id])) {
+                    $horasPorEmpleado[$id] = 0;
                     $empleados[$id] = $nombre;
                 }
-                if (!isset($asistenciaData[$id][$fecha])) {
-                    $asistenciaData[$id][$fecha] = ['entradas' => [], 'salidas' => []];
-                }
 
-                if (strpos($tipoRegistro, 'entrada') !== false) {
-                    $asistenciaData[$id][$fecha]['entradas'][] = $hora;
-                } elseif (strpos($tipoRegistro, 'salida') !== false) {
-                    $asistenciaData[$id][$fecha]['salidas'][] = $hora;
-                }
+                // Calcular horas trabajadas
+                $horasPorEmpleado[$id] += calcularHorasTrabajadas($cadenaHoras);
             }
+
         } elseif ($fileType === 'csv') {
             if (($handle = fopen($fileTmpPath, "r")) !== FALSE) {
                 fgetcsv($handle);
