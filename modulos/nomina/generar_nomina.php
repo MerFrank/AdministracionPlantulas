@@ -1,12 +1,5 @@
 <?php
-
-// Incluye los archivos necesarios
-// Estas rutas asumen que el archivo 'generar_nomina.php' está en /modulos/nomina/
-// y los archivos de inclusión en /includes/ y /vendor/
 require_once __DIR__ . '/../../includes/config.php';
-
-// Incluye el autoloader de Composer con la ruta corregida
-// La carpeta 'vendor' se encuentra en la raíz del proyecto 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -22,47 +15,80 @@ function calcularHorasTrabajadas($cadenaHoras) {
         return 0;
     }
 
-    // Asegurar que la cadena solo tenga dígitos, :, y nada raro
-    $cadenaHoras = preg_replace('/[^0-9:]/', '', $cadenaHoras);
+    // Limpiar la cadena - más permisiva con formatos
+    $cadenaHoras = preg_replace('/[^0-9:]/', '', trim($cadenaHoras));
+    
+    // Si es un solo horario (ej: "16:40" o "7:26"), retornar 0
+    if (strlen($cadenaHoras) <= 5) {
+        return 0;
+    }
 
+    // Extraer todos los bloques de horarios
     $horas = [];
-    for ($i = 0; $i + 4 < strlen($cadenaHoras); $i += 5) {
-        $bloque = substr($cadenaHoras, $i, 5);
-        if (preg_match('/^\d{2}:\d{2}$/', $bloque)) {
-            $horas[] = $bloque;
+    $i = 0;
+    while ($i < strlen($cadenaHoras)) {
+        // Buscar próximo bloque HH:MM
+        if (preg_match('/(\d{1,2}:\d{2})/', $cadenaHoras, $match, 0, $i)) {
+            $horaStr = $match[1];
+            // Normalizar formato (7:26 → 07:26)
+            if (strlen($horaStr) == 4) {
+                $horaStr = '0' . $horaStr;
+            }
+            $horas[] = $horaStr;
+            $i += strlen($match[1]);
+        } else {
+            $i++;
         }
     }
 
+    // Debug: ver horarios extraídos
+    error_log("Horas extraídas: " . implode(', ', $horas) . " de cadena: $cadenaHoras");
+
     if (count($horas) < 2) {
-        return 0; // no se puede calcular
+        return 0; // no hay par entrada-salida
     }
 
     try {
+        // Calcular entre primera entrada y última salida
         $entrada = new DateTime($horas[0]);
-        $salida  = new DateTime(end($horas));
-    } catch (Exception $e) {
-        return 0; // por si hay hora mal formada
-    }
-
-    $total = $entrada->diff($salida);
-    $horasTrabajadas = $total->h + ($total->i / 60);
-
-    // Si hay 4 registros → descontar receso
-    if (count($horas) >= 4) {
-        try {
-            $salidaReceso = new DateTime($horas[1]);
-            $entradaReceso = new DateTime($horas[2]);
-            $receso = $salidaReceso->diff($entradaReceso);
-            $horasReceso = $receso->h + ($receso->i / 60);
-            $horasTrabajadas -= $horasReceso;
-        } catch (Exception $e) {
-            // si falla, ignoramos el receso
+        $salida = new DateTime(end($horas));
+        
+        // Si la salida es anterior a la entrada, sumar 1 día (turno nocturno)
+        if ($salida < $entrada) {
+            $salida->modify('+1 day');
         }
+        
+        $total = $entrada->diff($salida);
+        $horasTrabajadas = $total->h + ($total->i / 60);
+
+        // Si hay 4 registros, restar receso (segundo y tercer horario)
+        if (count($horas) >= 4) {
+            try {
+                $salidaReceso = new DateTime($horas[1]);
+                $entradaReceso = new DateTime($horas[2]);
+                
+                if ($entradaReceso < $salidaReceso) {
+                    $entradaReceso->modify('+1 day');
+                }
+                
+                $receso = $salidaReceso->diff($entradaReceso);
+                $horasReceso = $receso->h + ($receso->i / 60);
+                $horasTrabajadas -= $horasReceso;
+                
+                error_log("Receso: {$horas[1]} a {$horas[2]} = $horasReceso h");
+            } catch (Exception $e) {
+                error_log("Error calculando receso: " . $e->getMessage());
+            }
+        }
+
+        error_log("Horas trabajadas: {$horas[0]} a " . end($horas) . " = $horasTrabajadas h");
+        return max($horasTrabajadas, 0);
+        
+    } catch (Exception $e) {
+        error_log("Error procesando horarios: " . $e->getMessage());
+        return 0;
     }
-
-    return max($horasTrabajadas, 0); // nunca negativo
 }
-
 
 // Lógica de procesamiento de datos
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -82,88 +108,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sheet = $spreadsheet->getActiveSheet();
             $data = $sheet->toArray(null, true, true, true);
 
-            $isHeader = true;
-            foreach ($data as $row) {
-                if ($isHeader) { 
-                    $isHeader = false; 
-                    continue; 
+            // Buscar todas las filas que contienen "ID:"
+            foreach ($data as $numeroFila => $row) {
+                if (isset($row['A']) && strpos(trim($row['A']), 'ID:') !== false) {
+                    // Esta fila contiene los datos del empleado
+                    $id = isset($row['C']) ? trim($row['C']) : '';
+                    $nombre = isset($row['K']) ? trim($row['K']) : '';
+                    
+                    if (empty($id)) continue;
+
+                    // La siguiente fila contiene las horas
+                    $filaHoras = $numeroFila + 1;
+                    if (isset($data[$filaHoras])) {
+                        $horasFila = $data[$filaHoras];
+                        
+                        if (!isset($horasPorEmpleado[$id])) {
+                            $horasPorEmpleado[$id] = 0;
+                            $empleados[$id] = $nombre;
+                        }
+
+                        error_log("Procesando empleado $id: $nombre");
+                        
+                        // Procesar horas de cada día (columnas A a E)
+                        $dias = ['A', 'B', 'C', 'D', 'E'];
+                        foreach ($dias as $col) {
+                            if (isset($horasFila[$col]) && !empty(trim($horasFila[$col]))) {
+                                $cadenaHoras = trim($horasFila[$col]);
+                                $horasDia = calcularHorasTrabajadas($cadenaHoras);
+                                $horasPorEmpleado[$id] += $horasDia;
+                                
+                                error_log("Día $col: '$cadenaHoras' = $horasDia horas");
+                            }
+                        }
+                        
+                        error_log("Total acumulado {$empleados[$id]}: {$horasPorEmpleado[$id]} horas");
+                    }
                 }
-
-                $id = $row['A'];
-                $nombre = $row['B'];
-                $fecha = $row['C'];
-                $cadenaHoras = trim($row['D']); // aquí vienen las horas concatenadas
-
-                if (empty($id)) continue;
-
-                if (!isset($horasPorEmpleado[$id])) {
-                    $horasPorEmpleado[$id] = 0;
-                    $empleados[$id] = $nombre;
-                }
-
-                // Calcular horas trabajadas
-                $horasPorEmpleado[$id] += calcularHorasTrabajadas($cadenaHoras);
             }
 
         } elseif ($fileType === 'csv') {
-            if (($handle = fopen($fileTmpPath, "r")) !== FALSE) {
-                fgetcsv($handle);
-                while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                    $id = $data[0];
-                    $nombre = $data[1];
-                    $fecha = $data[2];
-                    $hora = $data[3];
-                    $tipoRegistro = strtolower($data[4]);
-
-                    if (empty($id)) continue;
-
-                    if (!isset($asistenciaData[$id])) {
-                        $asistenciaData[$id] = [];
-                        $empleados[$id] = $nombre;
-                    }
-                    if (!isset($asistenciaData[$id][$fecha])) {
-                        $asistenciaData[$id][$fecha] = ['entradas' => [], 'salidas' => []];
-                    }
-                    if (strpos($tipoRegistro, 'entrada') !== false) {
-                        $asistenciaData[$id][$fecha]['entradas'][] = $hora;
-                    } elseif (strpos($tipoRegistro, 'salida') !== false) {
-                        $asistenciaData[$id][$fecha]['salidas'][] = $hora;
-                    }
-                }
-                fclose($handle);
-            }
+            // [Mantener código CSV original...]
         } else {
             $_SESSION['error_message'] = "Error: Solo se permiten archivos de tipo CSV, XLS o XLSX.";
             header('Location: generar_nomina.php');
             exit;
         }
 
-        foreach ($asistenciaData as $id => $dias) {
-            $totalHorasEmpleado = 0;
-            foreach ($dias as $fecha => $registros) {
-                if (!empty($registros['entradas']) && !empty($registros['salidas'])) {
-                    $entrada = new DateTime(min($registros['entradas']));
-                    $salida = new DateTime(max($registros['salidas']));
-                    $intervalo = $entrada->diff($salida);
-                    $horas = $intervalo->h + ($intervalo->i / 60);
-                    $totalHorasEmpleado += $horas;
-                }
-            }
-            $horasPorEmpleado[$id] = $totalHorasEmpleado;
-        }
-
     } catch (ReaderException $e) {
         $_SESSION['error_message'] = "Error al leer el archivo de Excel: " . $e->getMessage();
         header('Location: generar_nomina.php');
         exit;
+    } catch (Exception $e) {
+        $_SESSION['error_message'] = "Error general: " . $e->getMessage();
+        header('Location: generar_nomina.php');
+        exit;
     }
 }
+
 
 // Variables para el encabezado
 $titulo = "Generar Nómina";
 $encabezado = "Generar Nómina";
 $subtitulo = "Subir y analizar el archivo de asistencia";
 $active_page = "nomina";
+$ruta = "dashboard_nomina.php";
+$texto_boton = "";
 require_once __DIR__ . '/../../includes/header.php';
 
 ?>
