@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             'alias' => isset($_POST['alias']) ? htmlspecialchars(trim($_POST['alias']), ENT_QUOTES, 'UTF-8') : null,
             'nombre_Cliente' => isset($_POST['nombre_Cliente']) ? htmlspecialchars(trim($_POST['nombre_Cliente']), ENT_QUOTES, 'UTF-8') : '',
             'nombre_Empresa' => isset($_POST['nombre_Empresa']) ? htmlspecialchars(trim($_POST['nombre_Empresa']), ENT_QUOTES, 'UTF-8') : null,
-            'nombre_contacto' => isset($_POST['nombre_contacto']) ? htmlspecialchars(trim($_POST['nombre_contacto']), ENT_QUOTES, 'UTF-8') : '',
+            'nombre_contacto' => isset($_POST['nombre_contacto']) ? htmlspecialchars(trim($_POST['nombre_contacto']), ENT_QUOTES, 'UTF-8') : null,
             'telefono' => isset($_POST['telefono']) ? preg_replace('/[^0-9]/', '', $_POST['telefono']) : '',
             'email' => filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL),
             'rfc' => ($_POST['opcion'] === 'si' && isset($_POST['rfc'])) ? 
@@ -53,9 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             throw new Exception("El nombre del cliente es requerido");
         }
 
-        if (empty($datos['nombre_contacto'])) {
-            throw new Exception("El nombre de contacto es requerido");
-        }
 
         if (!preg_match('/^[0-9]{10,15}$/', $datos['telefono'])) {
             throw new Exception("Teléfono no válido. Debe contener entre 10 y 15 dígitos");
@@ -175,8 +172,8 @@ require('../../includes/header.php');
                         <h5><i class="bi bi-person-lines-fill"></i> Datos de Contacto</h5>
                         
                         <div class="mb-3">
-                            <label for="nombre_contacto" class="form-label required-field">Persona de Contacto</label>
-                            <input type="text" class="form-control" id="nombre_contacto" name="nombre_contacto" required maxlength="255"
+                            <label for="nombre_contacto" class="form-label">Persona de Contacto</label>
+                            <input type="text" class="form-control" id="nombre_contacto" name="nombre_contacto" maxlength="255"
                                     placeholder="Nombre de la persona principal de contacto"
                                     value="<?= htmlspecialchars($_POST['nombre_contacto'] ?? '') ?>">
                             <div class="invalid-feedback">Por favor ingrese el nombre de contacto</div>
