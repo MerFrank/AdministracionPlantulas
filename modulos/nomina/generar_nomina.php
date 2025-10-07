@@ -9,28 +9,33 @@ use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 $asistenciaData = [];
 $horasPorEmpleado = [];
 $empleados = [];
+$clasificacionEmpleados = []; // Nueva: para clasificar tipos de registro
+$detalleDias = []; // Nueva: para detalle por día
 
-function calcularHorasTrabajadas($cadenaHoras) {
+// Lista de empleados a excluir del reporte (por ID o nombre)
+$empleadosExcluir = [
+    '16', // Alicia.Marin
+    '17' // Silvestre.Perez  
+];
+
+function clasificarRegistros($cadenaHoras) {
     if (empty($cadenaHoras)) {
-        return 0;
+        return 'sin_registros';
     }
 
-    // Limpiar la cadena - más permisiva con formatos
+    // Limpiar la cadena
     $cadenaHoras = preg_replace('/[^0-9:]/', '', trim($cadenaHoras));
     
-    // Si es un solo horario (ej: "16:40" o "7:26"), retornar 0
     if (strlen($cadenaHoras) <= 5) {
-        return 0;
+        return 'registro_incompleto'; // Solo una hora
     }
 
     // Extraer todos los bloques de horarios
     $horas = [];
     $i = 0;
     while ($i < strlen($cadenaHoras)) {
-        // Buscar próximo bloque HH:MM
         if (preg_match('/(\d{1,2}:\d{2})/', $cadenaHoras, $match, 0, $i)) {
             $horaStr = $match[1];
-            // Normalizar formato (7:26 → 07:26)
             if (strlen($horaStr) == 4) {
                 $horaStr = '0' . $horaStr;
             }
@@ -41,19 +46,56 @@ function calcularHorasTrabajadas($cadenaHoras) {
         }
     }
 
-    // Debug: ver horarios extraídos
-    error_log("Horas extraídas: " . implode(', ', $horas) . " de cadena: $cadenaHoras");
+    // Clasificar según cantidad de registros
+    switch (count($horas)) {
+        case 2:
+            return 'turno_simple';
+        case 4:
+            return 'turno_completo';
+        case 3:
+        case 5:
+        case 6:
+            return 'registros_extra';
+        default:
+            return 'formato_desconocido';
+    }
+}
+
+function calcularHorasTrabajadas($cadenaHoras) {
+    if (empty($cadenaHoras)) {
+        return ['horas' => 0, 'tipo' => 'sin_registros'];
+    }
+
+    $cadenaHoras = preg_replace('/[^0-9:]/', '', trim($cadenaHoras));
+    
+    if (strlen($cadenaHoras) <= 5) {
+        return ['horas' => 0, 'tipo' => 'registro_incompleto'];
+    }
+
+    // Extraer horarios (mismo código anterior)
+    $horas = [];
+    $i = 0;
+    while ($i < strlen($cadenaHoras)) {
+        if (preg_match('/(\d{1,2}:\d{2})/', $cadenaHoras, $match, 0, $i)) {
+            $horaStr = $match[1];
+            if (strlen($horaStr) == 4) {
+                $horaStr = '0' . $horaStr;
+            }
+            $horas[] = $horaStr;
+            $i += strlen($match[1]);
+        } else {
+            $i++;
+        }
+    }
 
     if (count($horas) < 2) {
-        return 0; // no hay par entrada-salida
+        return ['horas' => 0, 'tipo' => 'registro_incompleto'];
     }
 
     try {
-        // Calcular entre primera entrada y última salida
         $entrada = new DateTime($horas[0]);
         $salida = new DateTime(end($horas));
         
-        // Si la salida es anterior a la entrada, sumar 1 día (turno nocturno)
         if ($salida < $entrada) {
             $salida->modify('+1 day');
         }
@@ -61,8 +103,8 @@ function calcularHorasTrabajadas($cadenaHoras) {
         $total = $entrada->diff($salida);
         $horasTrabajadas = $total->h + ($total->i / 60);
 
-        // Si hay 4 registros, restar receso (segundo y tercer horario)
-        if (count($horas) >= 4) {
+        // Descontar receso solo si hay 4 registros exactos
+        if (count($horas) == 4) {
             try {
                 $salidaReceso = new DateTime($horas[1]);
                 $entradaReceso = new DateTime($horas[2]);
@@ -75,18 +117,27 @@ function calcularHorasTrabajadas($cadenaHoras) {
                 $horasReceso = $receso->h + ($receso->i / 60);
                 $horasTrabajadas -= $horasReceso;
                 
-                error_log("Receso: {$horas[1]} a {$horas[2]} = $horasReceso h");
             } catch (Exception $e) {
-                error_log("Error calculando receso: " . $e->getMessage());
+                // Error en cálculo de receso
             }
         }
 
-        error_log("Horas trabajadas: {$horas[0]} a " . end($horas) . " = $horasTrabajadas h");
-        return max($horasTrabajadas, 0);
+        // Determinar tipo basado en cantidad de registros
+        $tipo = 'otros';
+        if (count($horas) == 2) {
+            $tipo = 'turno_simple';
+        } elseif (count($horas) == 4) {
+            $tipo = 'turno_completo';
+        } elseif (count($horas) == 1) {
+            $tipo = 'registro_incompleto';
+        } else {
+            $tipo = 'registros_extra';
+        }
+
+        return ['horas' => max($horasTrabajadas, 0), 'tipo' => $tipo];
         
     } catch (Exception $e) {
-        error_log("Error procesando horarios: " . $e->getMessage());
-        return 0;
+        return ['horas' => 0, 'tipo' => 'error_calculo'];
     }
 }
 
@@ -108,16 +159,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sheet = $spreadsheet->getActiveSheet();
             $data = $sheet->toArray(null, true, true, true);
 
-            // Buscar todas las filas que contienen "ID:"
             foreach ($data as $numeroFila => $row) {
                 if (isset($row['A']) && strpos(trim($row['A']), 'ID:') !== false) {
-                    // Esta fila contiene los datos del empleado
                     $id = isset($row['C']) ? trim($row['C']) : '';
                     $nombre = isset($row['K']) ? trim($row['K']) : '';
                     
                     if (empty($id)) continue;
 
-                    // La siguiente fila contiene las horas
+                    // Verificar si el empleado debe ser excluido
+                    if (in_array($id, $empleadosExcluir) || in_array($nombre, $empleadosExcluir)) {
+                        continue; // Saltar este empleado
+                    }
+
                     $filaHoras = $numeroFila + 1;
                     if (isset($data[$filaHoras])) {
                         $horasFila = $data[$filaHoras];
@@ -125,41 +178,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (!isset($horasPorEmpleado[$id])) {
                             $horasPorEmpleado[$id] = 0;
                             $empleados[$id] = $nombre;
+                            $clasificacionEmpleados[$id] = [
+                                'turnos_completos' => 0,
+                                'turnos_simples' => 0,
+                                'registros_incompletos' => 0,
+                                'otros_registros' => 0,
+                                'dias_sin_registro' => 0
+                            ];
+                            $detalleDias[$id] = [];
                         }
 
-                        error_log("Procesando empleado $id: $nombre");
-                        
-                        // Procesar horas de cada día (columnas A a E)
-                        $dias = ['A', 'B', 'C', 'D', 'E'];
-                        foreach ($dias as $col) {
+                        // Procesar cada día
+                        $dias = ['A' => 'Lunes', 'B' => 'Martes', 'C' => 'Miércoles', 'D' => 'Jueves', 'E' => 'Viernes'];
+                        foreach ($dias as $col => $nombreDia) {
                             if (isset($horasFila[$col]) && !empty(trim($horasFila[$col]))) {
                                 $cadenaHoras = trim($horasFila[$col]);
-                                $horasDia = calcularHorasTrabajadas($cadenaHoras);
-                                $horasPorEmpleado[$id] += $horasDia;
+                                $resultado = calcularHorasTrabajadas($cadenaHoras);
                                 
-                                error_log("Día $col: '$cadenaHoras' = $horasDia horas");
+                                $horasPorEmpleado[$id] += $resultado['horas'];
+                                
+                                // Clasificar el tipo de registro
+                                switch ($resultado['tipo']) {
+                                    case 'turno_completo':
+                                        $clasificacionEmpleados[$id]['turnos_completos']++;
+                                        break;
+                                    case 'turno_simple':
+                                        $clasificacionEmpleados[$id]['turnos_simples']++;
+                                        break;
+                                    case 'registro_incompleto':
+                                        $clasificacionEmpleados[$id]['registros_incompletos']++;
+                                        break;
+                                    default:
+                                        $clasificacionEmpleados[$id]['otros_registros']++;
+                                }
+                                
+                                // Guardar detalle por día
+                                $detalleDias[$id][$nombreDia] = [
+                                    'horas' => $resultado['horas'],
+                                    'tipo' => $resultado['tipo'],
+                                    'registros' => $cadenaHoras
+                                ];
+                            } else {
+                                $clasificacionEmpleados[$id]['dias_sin_registro']++;
+                                $detalleDias[$id][$nombreDia] = [
+                                    'horas' => 0,
+                                    'tipo' => 'sin_registro',
+                                    'registros' => ''
+                                ];
                             }
                         }
-                        
-                        error_log("Total acumulado {$empleados[$id]}: {$horasPorEmpleado[$id]} horas");
                     }
                 }
             }
 
         } elseif ($fileType === 'csv') {
             // [Mantener código CSV original...]
-        } else {
-            $_SESSION['error_message'] = "Error: Solo se permiten archivos de tipo CSV, XLS o XLSX.";
-            header('Location: generar_nomina.php');
-            exit;
         }
 
-    } catch (ReaderException $e) {
-        $_SESSION['error_message'] = "Error al leer el archivo de Excel: " . $e->getMessage();
-        header('Location: generar_nomina.php');
-        exit;
     } catch (Exception $e) {
-        $_SESSION['error_message'] = "Error general: " . $e->getMessage();
+        $_SESSION['error_message'] = "Error: " . $e->getMessage();
         header('Location: generar_nomina.php');
         exit;
     }
@@ -181,42 +258,113 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="container">
         <h1>Generar Nómina</h1>
 
-        <?php
-        if (isset($_SESSION['error_message'])) {
-            echo '<p style="color:red;">' . $_SESSION['error_message'] . '</p>';
-            unset($_SESSION['error_message']);
-        }
-        ?>
-
         <form action="generar_nomina.php" method="post" enctype="multipart/form-data">
             <label for="asistencia_file">Selecciona el archivo de asistencia (CSV, XLS o XLSX):</label>
             <input type="file" name="asistencia_file" id="asistencia_file" required>
             <button type="submit">Analizar y Generar Nómina</button>
         </form>
 
-        <?php
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($horasPorEmpleado)):
-        ?>
+        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($horasPorEmpleado)): ?>
+        
         <hr>
         <h2>Resumen de la Nómina</h2>
-        <table>
+        
+        <!-- Tabla Principal -->
+        <table border="1" style="width:100%; border-collapse: collapse;">
             <thead>
-                <tr>
+                <tr style="background-color: #f2f2f2;">
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Total de Horas Trabajadas</th>
+                    <th>Total Horas</th>
+                    <th>Turnos Completos</th>
+                    <th>Turnos Simples</th>
+                    <th>Registros Incompletos</th>
+                    <th>Días Sin Registro</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($horasPorEmpleado as $id => $horas): ?>
+                <?php foreach ($horasPorEmpleado as $id => $horas): 
+                    $clasif = $clasificacionEmpleados[$id];
+                    $totalDias = 5; // Lunes a Viernes
+                    $diasTrabajados = $totalDias - $clasif['dias_sin_registro'];
+                    
+                    // Determinar estado
+                    if ($diasTrabajados == 0) {
+                        $estado = "❌ Sin registros";
+                        $color = "red";
+                    } elseif ($clasif['registros_incompletos'] > 2) {
+                        $estado = "⚠️ Registros incompletos";
+                        $color = "orange";
+                    } elseif ($clasif['turnos_completos'] >= 3) {
+                        $estado = "✅ Turnos completos";
+                        $color = "green";
+                    } else {
+                        $estado = "ℹ️ Patrón mixto";
+                        $color = "blue";
+                    }
+                ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($id); ?></td>
-                    <td><?php echo htmlspecialchars($empleados[$id]); ?></td>
-                    <td><?php echo number_format($horas, 2); ?></td>
+                    <td><?= htmlspecialchars($id) ?></td>
+                    <td><?= htmlspecialchars($empleados[$id]) ?></td>
+                    <td><strong><?= number_format($horas, 2) ?></strong></td>
+                    <td style="color: green;"><?= $clasif['turnos_completos'] ?></td>
+                    <td style="color: blue;"><?= $clasif['turnos_simples'] ?></td>
+                    <td style="color: orange;"><?= $clasif['registros_incompletos'] ?></td>
+                    <td style="color: red;"><?= $clasif['dias_sin_registro'] ?></td>
+                    <td style="color: <?= $color ?>;"><strong><?= $estado ?></strong></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
+
+        <!-- Detalle por Empleado -->
+        <hr>
+        <h2>Detalle por Empleado</h2>
+        <?php foreach ($detalleDias as $id => $dias): ?>
+        <div style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+            <h3><?= htmlspecialchars($empleados[$id]) ?> (ID: <?= $id ?>)</h3>
+            <table border="1" style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f0f0f0;">
+                        <th>Día</th>
+                        <th>Registros</th>
+                        <th>Horas</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($dias as $dia => $info): 
+                        $colorTipo = match($info['tipo']) {
+                            'turno_completo' => 'green',
+                            'turno_simple' => 'blue', 
+                            'registro_incompleto' => 'orange',
+                            'sin_registro' => 'red',
+                            default => 'black'
+                        };
+                    ?>
+                    <tr>
+                        <td><strong><?= $dia ?></strong></td>
+                        <td><?= htmlspecialchars($info['registros']) ?></td>
+                        <td><?= number_format($info['horas'], 2) ?></td>
+                        <td style="color: <?= $colorTipo ?>;">
+                            <strong>
+                                <?= match($info['tipo']) {
+                                    'turno_completo' => '✅ Completo (4 reg)',
+                                    'turno_simple' => '🔵 Simple (2 reg)',
+                                    'registro_incompleto' => '⚠️ Incompleto',
+                                    'sin_registro' => '❌ Sin registro',
+                                    default => $info['tipo']
+                                } ?>
+                            </strong>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endforeach; ?>
+
         <?php endif; ?>
     </div>
 </main>

@@ -66,10 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             'nombre' => isset($_POST['nombre']) ? htmlspecialchars(trim($_POST['nombre']), ENT_QUOTES, 'UTF-8') : '',
             'apellido_paterno' => isset($_POST['apellido_paterno']) ? htmlspecialchars(trim($_POST['apellido_paterno']), ENT_QUOTES, 'UTF-8') : '',
             'apellido_materno' => isset($_POST['apellido_materno']) ? htmlspecialchars(trim($_POST['apellido_materno']), ENT_QUOTES, 'UTF-8') : '',
-            'fecha_nacimiento' => isset($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null,
-            'fecha_contratacion' => isset($_POST['fecha_contratacion']) ? $_POST['fecha_contratacion'] : date('Y-m-d'), // Valor por defecto: fecha actual
+            // Convertir cadenas vacías a NULL para fechas
+            'fecha_nacimiento' => isset($_POST['fecha_nacimiento']) && !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null,
+            'fecha_contratacion' => isset($_POST['fecha_contratacion']) && !empty($_POST['fecha_contratacion']) ? $_POST['fecha_contratacion'] : date('Y-m-d'),
             'nivel_estudios' => isset($_POST['nivel_estudios']) ? htmlspecialchars(trim($_POST['nivel_estudios']), ENT_QUOTES, 'UTF-8') : '',
             'telefono' => isset($_POST['telefono']) ? preg_replace('/[^0-9]/', '', $_POST['telefono']) : '',
+            // Convertir cadena vacía a NULL para email
             'email' => isset($_POST['email']) && !empty($_POST['email']) ? filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) : null,
             'direccion' => isset($_POST['direccion']) ? htmlspecialchars(trim($_POST['direccion']), ENT_QUOTES, 'UTF-8') : '',
             'contacto_emergencia_nombre' => isset($_POST['contacto_emergencia_nombre']) ? htmlspecialchars(trim($_POST['contacto_emergencia_nombre']), ENT_QUOTES, 'UTF-8') : '',
@@ -82,7 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             'curp' => isset($_POST['curp']) ? strtoupper(htmlspecialchars(trim($_POST['curp']), ENT_QUOTES, 'UTF-8')) : '',
             'rfc' => isset($_POST['rfc']) ? strtoupper(htmlspecialchars(trim($_POST['rfc']), ENT_QUOTES, 'UTF-8')) : '',
             'nss' => isset($_POST['nss']) ? preg_replace('/[^0-9]/', '', $_POST['nss']) : '',
-            'activo' => isset($_POST['activo']) ? 1 : 0
+            'activo' => isset($_POST['activo']) ? 1 : 0,
+            'id_checador' => isset($_POST['id_checador']) ? preg_replace('/[^0-9]/', '', $_POST['id_checador']) : ''
         ];
 
         // Validaciones
@@ -96,6 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 
         if (!preg_match('/^[0-9]{10,15}$/', $datos['telefono'])) {
             throw new Exception("Teléfono no válido. Debe contener entre 10 y 15 dígitos");
+        }
+
+        if (empty($datos['id_checador'])) {
+            throw new Exception("ID checador no válido.");
         }
 
         // Validar email solo si se proporcionó
@@ -136,12 +143,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                   nombre, apellido_paterno, apellido_materno, fecha_nacimiento, fecha_contratacion, nivel_estudios,
                   telefono, email, direccion, contacto_emergencia_nombre, 
                   contacto_emergencia_parentesco, contacto_emergencia_telefono, hobbies,
-                  red_social, red_social_usuario, tipo_sangre, curp, rfc, nss, activo
+                  red_social, red_social_usuario, tipo_sangre, curp, rfc, nss, activo, id_checador
                 ) VALUES (
                   :nombre, :apellido_paterno, :apellido_materno, :fecha_nacimiento, :fecha_contratacion, :nivel_estudios,
                   :telefono, :email, :direccion, :contacto_emergencia_nombre,
                   :contacto_emergencia_parentesco, :contacto_emergencia_telefono, :hobbies,
-                  :red_social, :red_social_usuario, :tipo_sangre, :curp, :rfc, :nss, :activo
+                  :red_social, :red_social_usuario, :tipo_sangre, :curp, :rfc, :nss, :activo, :id_checador
                 )";
 
         $db = new Database();
@@ -230,6 +237,14 @@ require('../../includes/header.php');
                                         placeholder="Apellido materno"
                                         value="<?= htmlspecialchars($_POST['apellido_materno'] ?? '') ?>">
                             </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="id_checador" class="form-label">ID checador</label>
+                                <input type="text" class="form-control" id="id_checador" name="id_checador" maxlength="11"
+                                        value="<?= htmlspecialchars($_POST['id_checador'] ?? '') ?>">
+                            </div>
+
+
                         </div>
                         
                         <div class="mb-3">
