@@ -594,10 +594,29 @@ require __DIR__ . '/../../includes/header.php';
 
     // Estado inicial
     document.addEventListener('DOMContentLoaded', function() {
-        const datosGarantia = document.getElementById('datos-garantia');
-        if (!document.getElementById('opcion-si').checked) {
-            datosGarantia.classList.add('d-none');
+        
+        const opcionSi = document.getElementById('opcion-si');
+        const opcionNo = document.getElementById('opcion-no');
+        const datosGarantiaDiv = document.getElementById('datos-garantia');
+
+        // Función que maneja la visibilidad
+        function toggleGarantia() {
+            // Si el radio button 'Sí' está marcado, mostramos la sección de garantía
+            if (opcionSi.checked) {
+                datosGarantiaDiv.classList.remove('d-none'); // Muestra
+            } else {
+                // Si 'No' está marcado, ocultamos la sección
+                datosGarantiaDiv.classList.add('d-none'); // Oculta
+            }
         }
+
+        // 1. Ejecutar la función para establecer el estado inicial al cargar la página
+        // Esto es vital por si recargas la página y 'Sí' ya estaba seleccionado.
+        toggleGarantia();
+
+        // 2. Asignar los escuchadores de eventos para que reaccione al clic del usuario
+        opcionSi.addEventListener('change', toggleGarantia);
+        opcionNo.addEventListener('change', toggleGarantia);
     });
     // Se usa para comprobar si el usuario sigue trabajando con la misma especie.
     let lastSelectedEspecieId = null;
@@ -905,7 +924,7 @@ require __DIR__ . '/../../includes/header.php';
             });
 
 
-        $tfoot.append(`
+            $tfoot.append(`
             <tr>
             <td colspan="3" class="text-end fw-bold">TOTAL UNIDADES:</td> 
             
