@@ -87,37 +87,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 
 
         // 3. Insertar las actividades extras si existen - CAMBIO AQUÍ
-        if (isset($_POST['actividades']) && !empty($_POST['actividades'])) {
-            $sql_actividades = "INSERT INTO empleado_actividades (id_asignacion, id_actividad, fecha, horas_trabajadas, pago_calculado, observaciones) 
-                                VALUES (?, ?, CURDATE(), ?, ?, ?)";
-            $stmt_actividades = $con->prepare($sql_actividades);
+        // if (isset($_POST['actividades']) && !empty($_POST['actividades'])) {
+        //     $sql_actividades = "INSERT INTO empleado_actividades (id_asignacion, id_actividad, fecha, horas_trabajadas, pago_calculado, observaciones) 
+        //                         VALUES (?, ?, CURDATE(), ?, ?, ?)";
+        //     $stmt_actividades = $con->prepare($sql_actividades);
             
-            foreach ($_POST['actividades'] as $id_actividad => $actividad_data) {
-                if (isset($actividad_data['dias']) && !empty($actividad_data['dias'])) {
-                    // Obtener información de la actividad para calcular el pago
-                    $stmt_info_actividad = $con->prepare("SELECT pago_extra FROM actividades_extras WHERE id_actividad = ?");
-                    $stmt_info_actividad->execute([$id_actividad]);
-                    $info_actividad = $stmt_info_actividad->fetch(PDO::FETCH_ASSOC);
+        //     foreach ($_POST['actividades'] as $id_actividad => $actividad_data) {
+        //         if (isset($actividad_data['dias']) && !empty($actividad_data['dias'])) {
+        //             // Obtener información de la actividad para calcular el pago
+        //             $stmt_info_actividad = $con->prepare("SELECT pago_extra FROM actividades_extras WHERE id_actividad = ?");
+        //             $stmt_info_actividad->execute([$id_actividad]);
+        //             $info_actividad = $stmt_info_actividad->fetch(PDO::FETCH_ASSOC);
                     
-                    if ($info_actividad) {
-                        $pago_extra = $info_actividad['pago_extra'];
-                        $dias_seleccionados = $actividad_data['dias'];
-                        $horas_trabajadas = count($dias_seleccionados) * 8; // Suponiendo 8 horas por día
-                        $pago_calculado = $pago_extra * $horas_trabajadas;
-                        $observaciones = "Asignación automática. Días: " . implode(', ', $dias_seleccionados);
+        //             if ($info_actividad) {
+        //                 $pago_extra = $info_actividad['pago_extra'];
+        //                 $dias_seleccionados = $actividad_data['dias'];
+        //                 $horas_trabajadas = count($dias_seleccionados) ; // Suponiendo 8 horas por día  * 8
+        //                 $pago_calculado = $pago_extra * $horas_trabajadas;
+        //                 $observaciones = "Asignación automática. Días: " . implode(', ', $dias_seleccionados);
                         
-                        $stmt_actividades->execute([
-                            $id_asignacion, 
-                            $id_actividad, 
-                            $horas_trabajadas, 
-                            $pago_calculado, 
-                            $observaciones
-                        ]);
-                    }
+        //                 $stmt_actividades->execute([
+        //                     $id_asignacion, 
+        //                     $id_actividad, 
+        //                     $horas_trabajadas, 
+        //                     $pago_calculado, 
+        //                     $observaciones
+        //                 ]);
+        //             }
 
-                }
-            }
-        }
+        //         }
+        //     }
+        // }
 
         // Commit la transacción
         $con->commit();
@@ -257,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                             </div>
                         </div>
 
-                        <h3 class="h6 mb-3 mt-4 text-primary"><i class="bi bi-star-fill me-2"></i>Actividades Extras</h3>
+                        <!-- <h3 class="h6 mb-3 mt-4 text-primary"><i class="bi bi-star-fill me-2"></i>Actividades Extras</h3>
                         <div class="row g-2">
                             <?php if (!empty($actividades)): ?>
                                 <?php foreach ($actividades as $actividad): ?>
@@ -311,7 +311,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                             <?php else: ?>
                                 <p class="text-muted">No hay actividades extra activas para asignar.</p>
                             <?php endif; ?>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
 
