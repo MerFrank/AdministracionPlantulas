@@ -10,9 +10,9 @@
   --color-dark: #212529;
   --border-radius: 0.375rem;
   --transition: all 0.2s ease;
-  --color-eye:#af12dfff;
-  --color-receipt:#057988ff;
-  --color-receipt2:#08b4b4ff;
+  --color-eye: #af12dfff;
+  --color-receipt: #057988ff;
+  --color-receipt2: #08b4b4ff;
 }
 
 * {
@@ -21,7 +21,8 @@
   padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   font-family: Arial, sans-serif;
   background: transparent;
@@ -35,7 +36,8 @@ body {
   overflow-y: auto;
   color: var(--color-dark);
   background-color: #f8f9fa;
-  text-transform: uppercase; /* Aplicar mayúsculas a todo el texto del body */
+  text-transform: uppercase;
+  /* Aplicar mayúsculas a todo el texto del body */
 }
 
 /* Excepciones para correos electrónicos */
@@ -62,7 +64,8 @@ input[type="email"]::placeholder {
   text-transform: lowercase !important;
 }
 
-img, video {
+img,
+video {
   max-width: 100%;
   height: auto;
 }
@@ -105,19 +108,22 @@ main {
   transition: var(--transition);
   margin-top: auto;
   flex-direction: column;
-  justify-content: space-between; /* Esto distribuye el espacio */
+  justify-content: space-between;
 
-  
+
+
 }
 
 .btn-group {
-    flex-wrap: wrap; /* Esto permite que los botones se envuelvan si no caben */
-    justify-content: center; /* Centra los botones cuando se envuelven */
-     gap: 0.3rem;
-     
-  }
+  flex-wrap: wrap;
+  /* Esto permite que los botones se envuelvan si no caben */
+  justify-content: center;
+  /* Centra los botones cuando se envuelven */
+  gap: 0.3rem;
 
-  
+}
+
+
 
 .btn i {
   font-size: 1rem;
@@ -126,12 +132,12 @@ main {
 .btn-primary {
   background-color: var(--color-primary);
   color: var(--color-light);
- 
+
 }
 
 .btn-primary:hover {
   background-color: #3a6d42;
-  
+
 }
 
 .btn-secondary {
@@ -178,15 +184,18 @@ main {
 
 /* Estilo del menú desplegable */
 .dropdown-menu {
-  background-color:#f7dfef; /* Color de fondo */
-  border-radius: var(--border-radius); /* Esquinas redondeadas */
+  background-color: #f7dfef;
+  /* Color de fondo */
+  border-radius: var(--border-radius);
+  /* Esquinas redondeadas */
   padding: 0.5rem 0;
   box-shadow: 0 4px 8px rgba(5, 124, 204, 0.897);
 }
 
 /* Estilo de las opciones del menú */
 .dropdown-item {
-  color:#000000b9; /* Texto en  */
+  color: #000000b9;
+  /* Texto en  */
   font-weight: bold;
   transition: background-color 0.2s ease-in-out;
 }
@@ -194,7 +203,8 @@ main {
 /* Estilo de las opciones del menú al pasar el cursor */
 .dropdown-item:hover {
   background-color: #27a3d4;
-  color: var(--color-dark); /* Texto oscuro para el fondo */
+  color: var(--color-dark);
+  /* Texto oscuro para el fondo */
 }
 
 .save-button:hover {
@@ -325,8 +335,15 @@ main {
   margin-bottom: 15px;
 }
 
-.fila-flex > * {
+.fila-flex>* {
   flex: 1;
+}
+
+.ajuste-alineacion {
+    
+    transform: translateY(-5px); 
+    display: inline-flex; 
+    align-items: center;
 }
 
 form:not(.form-doble-columna):not(.form-boton):not(.form-inline) {
@@ -374,7 +391,7 @@ form button {
   padding: 8px 12px;
   background: white;
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .form_caja p {
@@ -441,11 +458,11 @@ form button {
 }
 
 .table thead th {
-    background-color: #45814d;
-    color: white;
-    text-transform: uppercase;
-    font-weight: 500;
-    padding: 1rem;
+  background-color: #45814d;
+  color: white;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 1rem;
 }
 
 /* =========================
@@ -574,9 +591,9 @@ form button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  
-  
-  
+
+
+
 }
 
 
@@ -587,8 +604,10 @@ form button {
 /* ESTILO PARA EL TEXTO DENTRO DE LAS TARJETAS */
 .card-body {
   /* Asegura que el texto no se salga del contenedor */
-  white-space: normal; /* Asegura que el texto fluya y se ajuste */
-  word-wrap: break-word; /* Rompe palabras largas */
+  white-space: normal;
+  /* Asegura que el texto fluya y se ajuste */
+  word-wrap: break-word;
+  /* Rompe palabras largas */
 }
 
 
@@ -597,7 +616,8 @@ form button {
    TARJETAS
    ========================= */
 .card-header {
-  background-color: var(--color-primary) !important; /* Verde como el encabezado */
+  background-color: var(--color-primary) !important;
+  /* Verde como el encabezado */
   color: white !important;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -663,7 +683,7 @@ footer {
   font-size: 0.875em;
 }
 
-.was-validated .form-control:invalid ~ .invalid-feedback {
+.was-validated .form-control:invalid~.invalid-feedback {
   display: block;
 }
 
@@ -693,15 +713,16 @@ footer {
 
 /*configuracion del bloque donde esla el signo $ para que no se desvorde*/
 .input-group-text {
-    padding: 0.375rem 0.75rem; 
-    border-right: none; 
-    border-radius: 0.375rem 0 0 0.375rem;
-    display: flex;
-    align-items: center;
-    height: 100%; 
-    box-sizing: border-box;
-     transform: translateY(5.4px); /* Mueve el elemento  hacia abajo */
-    
+  padding: 0.375rem 0.75rem;
+  border-right: none;
+  border-radius: 0.375rem 0 0 0.375rem;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  box-sizing: border-box;
+  transform: translateY(5.4px);
+  /* Mueve el elemento  hacia abajo */
+
 }
 
 
@@ -711,29 +732,30 @@ footer {
    MEDIA QUERIES
    ========================= */
 
-   /* configuracion de botones para la taba de clientes en movil*/
-   
+/* configuracion de botones para la taba de clientes en movil*/
+
 @media (max-width: 768px) {
   .d-flex.gap-2 {
     flex-direction: column;
   }
-  
+
   .d-flex.gap-2 .btn {
     max-width: 100%;
     width: 100%;
   }
+
   /*configuracion de los botones de editar clietes*/
   .d-flex.justify-content-between {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .d-flex.justify-content-between .btn {
-        width: 100%;
-        max-width: 100%;
-    }
+    flex-direction: column;
+    gap: 1rem;
+  }
 
-  
+  .d-flex.justify-content-between .btn {
+    width: 100%;
+    max-width: 100%;
+  }
+
+
   /*.table-responsive table {
     border: 0;
   }
@@ -775,7 +797,7 @@ footer {
   .table-clientes {
     min-width: 0;
   }
-  
+
   .table-container {
     border-radius: 0;
     box-shadow: none;
@@ -785,52 +807,56 @@ footer {
 }
 
 @media (max-width: 576px) {
-  body, .contenedor-pagina, main {
+
+  body,
+  .contenedor-pagina,
+  main {
     margin: 0;
     padding: 0;
   }
-  
+
   .btn {
     padding: 0.75rem;
     font-size: 0.9rem;
     min-width: 100%;
   }
-  
-  .encabezado, footer {
+
+  .encabezado,
+  footer {
     width: 100%;
     padding: 10px;
   }
-  
+
   .encabezado {
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-  
+
   .form-inline {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
     padding: 0 10px;
   }
-  
+
   /* Ajustes para tabla de clientes en móviles */
-  
-  .table-clientes th, 
+
+  .table-clientes th,
   .table-clientes td {
     padding: 0.5rem;
   }
-  
+
   .table-clientes .btn-action {
     width: 28px;
     height: 28px;
     padding: 0.25rem;
   }
 
-   .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; 
-    }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @media (min-width: 992px) {
@@ -838,17 +864,17 @@ footer {
     padding: 12px 20px;
     font-size: 1.1rem;
   }
-  
+
   .encabezado h2 {
     font-size: 1.4rem;
   }
-  
+
   /* Mejoras para tabla de clientes en pantallas grandes */
   .table-clientes th {
     font-size: 0.85rem;
     padding: 1.1rem;
   }
-  
+
   .table-clientes td {
     padding: 0.9rem 1.1rem;
   }
