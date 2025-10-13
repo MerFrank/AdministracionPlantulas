@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'rfc' => isset($_POST['rfc']) ? strtoupper(sanitizar($_POST['rfc'])) : '',
         'nss' => isset($_POST['nss']) ? preg_replace('/[^0-9]/', '', $_POST['nss']) : '',
         'activo' => isset($_POST['activo']) ? 1 : 0,
+        'id_checador' => isset($_POST['id_checador']) ? preg_replace('/[^0-9]/', '', $_POST['id_checador']) : '',
         'fecha_actualizacion' => date('Y-m-d H:i:s')
     ];
 
@@ -90,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 rfc = :rfc,
                 nss = :nss,
                 activo = :activo,
+                id_checador = :id_checador,
                 fecha_actualizacion = :fecha_actualizacion
                 WHERE id_empleado = :id_empleado";
 
@@ -192,6 +194,13 @@ $redesSociales = [
                                     <input type="text" class="form-control" id="apellido_materno" name="apellido_materno"
                                            value="<?= htmlspecialchars($empleado['apellido_materno']) ?>">
                                 </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_checador" class="form-label">ID checador</label>
+                                    <input type="text" class="form-control" id="id_checador" name="id_checador" maxlength="11"
+                                            value="<?= htmlspecialchars($empleado['id_checador']) ?>">
+                                </div>
+
                             </div>
                             
                             <div class="mb-3">
