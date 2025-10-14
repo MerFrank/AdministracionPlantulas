@@ -37,7 +37,6 @@ body {
   color: var(--color-dark);
   background-color: #f8f9fa;
   text-transform: uppercase;
-  /* Aplicar mayúsculas a todo el texto del body */
 }
 
 /* Excepciones para correos electrónicos */
@@ -109,21 +108,13 @@ main {
   margin-top: auto;
   flex-direction: column;
   justify-content: space-between;
-
-
-
 }
 
 .btn-group {
   flex-wrap: wrap;
-  /* Esto permite que los botones se envuelvan si no caben */
   justify-content: center;
-  /* Centra los botones cuando se envuelven */
   gap: 0.3rem;
-
 }
-
-
 
 .btn i {
   font-size: 1rem;
@@ -132,12 +123,10 @@ main {
 .btn-primary {
   background-color: var(--color-primary);
   color: var(--color-light);
-
 }
 
 .btn-primary:hover {
   background-color: #3a6d42;
-
 }
 
 .btn-secondary {
@@ -163,8 +152,6 @@ main {
   max-width: 200px;
 }
 
-
-
 /* Manteniendo tus estilos existentes de botones */
 .save-button {
   background-color: var(--color-accent);
@@ -185,9 +172,7 @@ main {
 /* Estilo del menú desplegable */
 .dropdown-menu {
   background-color: #f7dfef;
-  /* Color de fondo */
   border-radius: var(--border-radius);
-  /* Esquinas redondeadas */
   padding: 0.5rem 0;
   box-shadow: 0 4px 8px rgba(5, 124, 204, 0.897);
 }
@@ -195,7 +180,6 @@ main {
 /* Estilo de las opciones del menú */
 .dropdown-item {
   color: #000000b9;
-  /* Texto en  */
   font-weight: bold;
   transition: background-color 0.2s ease-in-out;
 }
@@ -204,7 +188,6 @@ main {
 .dropdown-item:hover {
   background-color: #27a3d4;
   color: var(--color-dark);
-  /* Texto oscuro para el fondo */
 }
 
 .save-button:hover {
@@ -318,7 +301,7 @@ main {
 }
 
 /* =========================
-   FORMULARIOS Y COLUMNAS
+   FORMULARIOS Y COLUMNAS - CORREGIDO
    ========================= */
 .form-inline {
   display: flex;
@@ -340,12 +323,24 @@ main {
 }
 
 .ajuste-alineacion {
-    
-    transform: translateY(-5px); 
-    display: inline-flex; 
-    align-items: center;
+  transform: translateY(-5px); 
+  display: inline-flex; 
+  align-items: center;
 }
 
+/* EXCEPCIÓN PARA FORMULARIOS DE NÓMINA - ANCHO COMPLETO */
+.form-nomina,
+form.asd,
+.form-container form {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 20px 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Estilos generales para otros formularios */
 form:not(.form-doble-columna):not(.form-boton):not(.form-inline) {
   max-width: 600px;
   margin: 40px auto;
@@ -430,26 +425,30 @@ form button {
 }
 
 /* =========================
-   TABLAS GENERALES
+   TABLAS GENERALES - MEJORADAS
    ========================= */
 .table-responsive {
   overflow-x: auto;
   width: 100%;
   margin-top: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
 }
 
 .table {
   width: 100%;
-  min-width: 600px;
+  min-width: 1200px; /* Asegurar que la tabla sea suficientemente ancha */
   border-collapse: collapse;
   background-color: white;
+  margin-bottom: 0;
 }
 
 .table th,
 .table td {
-  border: 1px solid #ccc;
-  padding: 10px;
+  border: 1px solid #dee2e6;
+  padding: 12px;
   text-align: center;
+  vertical-align: middle;
 }
 
 .table thead {
@@ -463,6 +462,7 @@ form button {
   text-transform: uppercase;
   font-weight: 500;
   padding: 1rem;
+  border: none;
 }
 
 /* =========================
@@ -576,8 +576,6 @@ form button {
   color: var(--color-secondary);
 }
 
-
-
 /* =========================
    TARJETAS
    ========================= */
@@ -591,33 +589,19 @@ form button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-
-
-
 }
-
-
-
-
-
 
 /* ESTILO PARA EL TEXTO DENTRO DE LAS TARJETAS */
 .card-body {
-  /* Asegura que el texto no se salga del contenedor */
   white-space: normal;
-  /* Asegura que el texto fluya y se ajuste */
   word-wrap: break-word;
-  /* Rompe palabras largas */
 }
-
-
 
 /* =========================
    TARJETAS
    ========================= */
 .card-header {
   background-color: var(--color-primary) !important;
-  /* Verde como el encabezado */
   color: white !important;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -630,7 +614,6 @@ form button {
   align-items: center;
   gap: 0.5rem;
 }
-
 
 .card:hover {
   transform: scale(1.02);
@@ -710,7 +693,6 @@ footer {
   overflow: visible;
 }
 
-
 /*configuracion del bloque donde esla el signo $ para que no se desvorde*/
 .input-group-text {
   padding: 0.375rem 0.75rem;
@@ -721,19 +703,129 @@ footer {
   height: 100%;
   box-sizing: border-box;
   transform: translateY(5.4px);
-  /* Mueve el elemento  hacia abajo */
-
 }
 
+/* =========================
+   ESTILOS ESPECÍFICOS PARA NÓMINA
+   ========================= */
+.form-container {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 25px;
+  width: 100%;
+}
 
+.form-group {
+  margin-bottom: 20px;
+}
 
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #ced4da;
+  border-radius: 5px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.form-group input[type="file"]:hover {
+  border-color: #007bff;
+}
+
+.btn-submit {
+  background: #007bff;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  width: auto;
+}
+
+.btn-submit:hover {
+  background: #0056b3;
+}
+
+.total-row {
+  background: #e3f2fd !important;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.total-row td {
+  padding: 15px 12px;
+  border-top: 2px solid #007bff;
+}
+
+.actividades-container {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  padding: 10px;
+  background: white;
+}
+
+.actividades-item {
+  margin-bottom: 8px;
+  padding: 5px;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.actividades-item:hover {
+  background: #f8f9fa;
+}
+
+.actividades-item label {
+  font-weight: normal;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.positive-amount {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.negative-amount {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.section-title {
+  color: #495057;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.employee-detail-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: 100%;
+}
 
 /* =========================
    MEDIA QUERIES
    ========================= */
 
 /* configuracion de botones para la taba de clientes en movil*/
-
 @media (max-width: 768px) {
   .d-flex.gap-2 {
     flex-direction: column;
@@ -755,45 +847,6 @@ footer {
     max-width: 100%;
   }
 
-
-  /*.table-responsive table {
-    border: 0;
-  }
-  
-  .table thead {
-    display: none;
-  }
-  
-  .table tr {
-    display: block;
-    margin-bottom: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 0.5rem;
-    background: white;
-  }
-  
-  .table td {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border: none;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .table td:last-child {
-    border-bottom: 0;
-  }
-  
-  .table td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    flex: 1;
-    text-align: left;
-  }/*
-  
-  /* Estilos responsive específicos para tabla de clientes */
-
   .table-clientes {
     min-width: 0;
   }
@@ -803,11 +856,18 @@ footer {
     box-shadow: none;
   }
 
-
+  /* Ajustes para formularios de nómina en móviles */
+  .form-container {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .table {
+    min-width: 1000px; /* Reducir un poco el ancho mínimo en móviles */
+  }
 }
 
 @media (max-width: 576px) {
-
   body,
   .contenedor-pagina,
   main {
@@ -841,7 +901,6 @@ footer {
   }
 
   /* Ajustes para tabla de clientes en móviles */
-
   .table-clientes th,
   .table-clientes td {
     padding: 0.5rem;
@@ -856,6 +915,16 @@ footer {
   .table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ajustes adicionales para nómina en móviles */
+  .form-container {
+    padding: 10px;
+  }
+  
+  .btn-submit {
+    width: 100%;
+    padding: 15px;
   }
 }
 
@@ -878,4 +947,21 @@ footer {
   .table-clientes td {
     padding: 0.9rem 1.1rem;
   }
+
+  /* Asegurar que los formularios de nómina ocupen todo el ancho */
+  .form-nomina,
+  form.asd {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* Asegurar que el contenedor principal ocupe todo el ancho */
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
 }
