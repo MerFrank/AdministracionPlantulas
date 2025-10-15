@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // ==============================================
 // CONFIGURACIÓN INICIAL
 // ==============================================
@@ -10,9 +11,7 @@ $active_page = "ventas";
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -163,9 +162,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (empty($num_regis)) {
                 throw new Exception("El campo 'Número de registro' es requerido para garantía.");
             }
-            if (empty($nom_aval)) {
+           /* if (empty($nom_aval)) {
                 throw new Exception("El campo 'Nombre del aval' es requerido para garantía.");
-            }
+            }*/
             if (empty($monto_garantia) || $monto_garantia <= 0) {
                 throw new Exception("El monto de la garantía debe ser mayor a cero.");
             }
