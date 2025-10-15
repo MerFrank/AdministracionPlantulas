@@ -416,10 +416,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
-?>
 
-<!-- HTML -->
-<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['condonaciones'])) {
+    $_SESSION['condonaciones'] = $_POST['condonaciones'];
+}
+
+// Al calcular la nómina, verificar si hay condonaciones guardadas
+$condonaciones = $_SESSION['condonaciones'] ?? [];
+
 $titulo = "Generar Nómina";
 $encabezado = "Generar Nómina";
 $subtitulo = "Subir y analizar el archivo de asistencia";
@@ -610,6 +614,28 @@ require_once __DIR__ . '/../../includes/header.php';
     }
 }
 
+/* Agregar en la sección de estilos */
+.condonar-checkbox {
+    transform: scale(1.2);
+    margin: 0 8px;
+}
+
+.condonar-label {
+    font-weight: normal;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.descuento-condonado {
+    text-decoration: line-through;
+    color: #6c757d !important;
+}
+
+.sin-descuento {
+    color: #28a745 !important;
+    font-weight: bold;
+}
+
 @media (max-width: 576px) {
     .container-nomina-full {
         padding: 0 5px;
@@ -655,200 +681,271 @@ require_once __DIR__ . '/../../includes/header.php';
             
             <div class="table-responsive-nomina">
                 <table class="table-nomina">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Puesto</th>
-                            <th>Sueldo Diario</th>
-                            <th>Días Trab.</th>
-                            <th>Sueldo Base</th>
-                            <th style="min-width: 250px;">Actividades Extras</th>
-                            <th>Descuento Registros*</th>
-                            <th>Días sin 4 reg.</th>
-                            <th>Total a Pagar</th>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Puesto</th>
+                        <th>Sueldo Diario</th>
+                        <th>Días Trab.</th>
+                        <th>Sueldo Base</th>
+                        <th style="min-width: 250px;">Actividades Extras</th>
+                        <th>Días sin 4 reg.</th>
+                        <th>Días a Condonar</th>
+                        <th>Descuento Aplicado</th>
+                        <th>Total a Pagar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $totalGeneralSueldoBase = 0;
+                    $totalGeneralActividadesSeleccionadas = 0;
+                    $totalGeneralDescuentos = 0;
+                    $totalGeneralPagar = 0;
+                    
+                    foreach ($nominaCompleta as $id_checador => $nomina): 
+                        if (isset($nomina['error'])): 
+                    ?>
+                        <tr style="background-color: #ffe6e6;">
+                            <td><?= $id_checador ?></td>
+                            <td colspan="10" style="color: red;">
+                                <?= $nomina['nombre'] ?> - <?= $nomina['error'] ?>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $totalGeneralSueldoBase = 0;
-                        $totalGeneralActividadesSeleccionadas = 0;
-                        $totalGeneralDescuentos = 0;
-                        $totalGeneralPagar = 0;
+                    <?php else: 
+                        // Obtener IDs de actividades seleccionadas
+                        $actividadesSeleccionadasIds = $_SESSION['actividades_empleado'][$id_checador]['actividades_ids'] ?? [];
                         
-                        foreach ($nominaCompleta as $id_checador => $nomina): 
-                            if (isset($nomina['error'])): 
-                        ?>
-                            <tr style="background-color: #ffe6e6;">
-                                <td><?= $id_checador ?></td>
-                                <td colspan="9" style="color: red;">
-                                    <?= $nomina['nombre'] ?> - <?= $nomina['error'] ?>
-                                </td>
-                            </tr>
-                            <?php else: 
-                                // Obtener los IDs de actividades seleccionadas correctamente
-                                $actividadesSeleccionadasIds = $_SESSION['actividades_empleado'][$id_checador]['actividades_ids'] ?? [];
-                                
-                                // Calcular totales para este empleado
-                                $sueldoBase = $nomina['sueldo_base'];
-                                $descuentoRegistros = $nomina['descuento_registros'];
-                                $pagoActividadesSeleccionadas = $nomina['pago_actividades_seleccionadas'];
-                                $totalPagar = $sueldoBase + $pagoActividadesSeleccionadas - $descuentoRegistros;
-                                
-                                // Acumular totales generales
-                                $totalGeneralSueldoBase += $sueldoBase;
-                                $totalGeneralActividadesSeleccionadas += $pagoActividadesSeleccionadas;
-                                $totalGeneralDescuentos += $descuentoRegistros;
-                                $totalGeneralPagar += $totalPagar;
-                            ?>
-                            <tr id="fila-<?= $id_checador ?>" 
-                                data-sueldo-base="<?= $sueldoBase ?>" 
-                                data-descuento-registros="<?= $descuentoRegistros ?>">
-                                <td><?= $id_checador ?></td>
-                                <td><?= htmlspecialchars($nomina['nombre_completo']) ?></td>
-                                <td><?= htmlspecialchars($nomina['puesto']) ?></td>
-                                <td>$<?= number_format($nomina['sueldo_diario'], 2) ?></td>
-                                <td><?= $nomina['dias_trabajados'] ?></td>
-                                <td>$<?= number_format($sueldoBase, 2) ?></td>
-                                <td>
-                                    <div class="actividades-container">
-                                        <?php foreach ($actividadesExtras as $actividad): 
-                                            // Verificar si la actividad está seleccionada
-                                            $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadasIds) ? 'checked' : '';
-                                        ?>
-                                            <div class="actividades-item">
-                                                <input type="checkbox" 
-                                                       class="actividad-checkbox"
-                                                       data-empleado="<?= $id_checador ?>"
-                                                       data-valor="<?= $actividad['pago_extra'] ?>"
-                                                       id="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>"
-                                                       <?= $checked ?>>
-                                                <label for="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>" style="font-size: 12px;">
-                                                    <?= htmlspecialchars($actividad['nombre']) ?> - $<?= number_format($actividad['pago_extra'], 2) ?>
-                                                </label>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <div style="margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center;">
-                                        Total actividades: $<span id="total-actividades-<?= $id_checador ?>"><?= number_format($pagoActividadesSeleccionadas, 2) ?></span>
-                                    </div>
-                                </td>
-                                <td class="negative-amount">-$<?= number_format($descuentoRegistros, 2) ?></td>
-                                <td style="color: orange; font-weight: bold;"><?= $nomina['dias_sin_4_registros'] ?> días</td>
-                                <td style="background-color: #e6ffe6; font-weight: bold;" class="positive-amount">
-                                    $<span id="total-pagar-<?= $id_checador ?>"><?= number_format($totalPagar, 2) ?></span>
-                                </td>
-                            </tr>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                        
-                        <!-- Fila de totales generales -->
-                        <tr class="total-row">
-                            <td colspan="5" style="text-align: right; font-weight: bold;">TOTALES GENERALES:</td>
-                            <td style="font-weight: bold;">$<span id="total-sueldo-base"><?= number_format($totalGeneralSueldoBase, 2) ?></span></td>
-                            <td style="font-weight: bold;">$<span id="total-actividades"><?= number_format($totalGeneralActividadesSeleccionadas, 2) ?></span></td>
-                            <td style="font-weight: bold;">-$<span id="total-descuentos"><?= number_format($totalGeneralDescuentos, 2) ?></span></td>
-                            <td></td>
-                            <td style="font-weight: bold; background-color: #d4edda;">$<span id="total-general"><?= number_format($totalGeneralPagar, 2) ?></span></td>
+                        // Calcular totales para este empleado
+                        $sueldoBase = $nomina['sueldo_base'];
+                        $descuentoRegistros = $nomina['descuento_registros'];
+                        $pagoActividadesSeleccionadas = $nomina['pago_actividades_seleccionadas'];
+                        $totalPagar = $sueldoBase + $pagoActividadesSeleccionadas - $descuentoRegistros;
+
+                        // Acumular totales generales
+                        $totalGeneralSueldoBase += $sueldoBase;
+                        $totalGeneralActividadesSeleccionadas += $pagoActividadesSeleccionadas;
+                        $totalGeneralDescuentos += $descuentoRegistros;
+                        $totalGeneralPagar += $totalPagar;
+                    ?>
+                        <tr id="fila-<?= $id_checador ?>" 
+                            data-sueldo-base="<?= $sueldoBase ?>" 
+                            data-descuento-registros="<?= $descuentoRegistros ?>">
+                            <td><?= $id_checador ?></td>
+                            <td><?= htmlspecialchars($nomina['nombre_completo']) ?></td>
+                            <td><?= htmlspecialchars($nomina['puesto']) ?></td>
+                            <td>$<?= number_format($nomina['sueldo_diario'], 2) ?></td>
+                            <td><?= $nomina['dias_trabajados'] ?></td>
+                            <td>$<?= number_format($sueldoBase, 2) ?></td>
+
+                            <!-- Actividades -->
+                            <td>
+                                <div class="actividades-container">
+                                    <?php foreach ($actividadesExtras as $actividad): 
+                                        $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadasIds) ? 'checked' : '';
+                                    ?>
+                                        <div class="actividades-item">
+                                            <input type="checkbox" 
+                                                class="actividad-checkbox"
+                                                data-empleado="<?= $id_checador ?>"
+                                                data-valor="<?= $actividad['pago_extra'] ?>"
+                                                id="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>"
+                                                <?= $checked ?>>
+                                            <label for="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>" style="font-size: 12px;">
+                                                <?= htmlspecialchars($actividad['nombre']) ?> - $<?= number_format($actividad['pago_extra'], 2) ?>
+                                            </label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div style="margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center;">
+                                    Total actividades: $<span id="total-actividades-<?= $id_checador ?>"><?= number_format($pagoActividadesSeleccionadas, 2) ?></span>
+                                </div>
+                            </td>
+
+                            <!-- Días sin registro -->
+                            <td style="color: orange; font-weight: bold;"><?= $nomina['dias_sin_4_registros'] ?> días</td>
+
+                            <!-- Días a condonar -->
+                            <td>
+                                <select class="dias-condonar" 
+                                        id="condonar-<?= $id_checador ?>" 
+                                        data-empleado="<?= $id_checador ?>"
+                                        data-descuento-por-dia="<?= $descuentoRegistrosIncompletos ?? 0 ?>"
+                                        data-dias-sin-registros="<?= $nomina['dias_sin_4_registros'] ?>">
+                                    <?php for ($i = 0; $i <= $nomina['dias_sin_4_registros']; $i++): ?>
+                                        <option value="<?= $i ?>"><?= $i ?> días</option>
+                                    <?php endfor; ?>
+                                </select>
+                            </td>
+
+                            <!-- Descuento aplicado -->
+                            <td class="negative-amount" id="descuento-<?= $id_checador ?>">
+                                -$<span id="monto-descuento-<?= $id_checador ?>"><?= number_format($descuentoRegistros, 2) ?></span>
+                            </td>
+
+                            <!-- Total a pagar -->
+                            <td style="background-color: #e6ffe6; font-weight: bold;" class="positive-amount">
+                                $<span id="total-pagar-<?= $id_checador ?>"><?= number_format($totalPagar, 2) ?></span>
+                            </td>
                         </tr>
-                    </tbody>
-                </table>
+                    <?php endif; endforeach; ?>
+                    
+                    <!-- Totales generales -->
+                    <tr class="total-row">
+                        <td colspan="5" style="text-align: right; font-weight: bold;">TOTALES GENERALES:</td>
+                        <td style="font-weight: bold;">$<span id="total-sueldo-base"><?= number_format($totalGeneralSueldoBase, 2) ?></span></td>
+                        <td style="font-weight: bold;">$<span id="total-actividades"><?= number_format($totalGeneralActividadesSeleccionadas, 2) ?></span></td>
+                        <td colspan="2"></td>
+                        <td style="font-weight: bold;">-$<span id="total-descuentos"><?= number_format($totalGeneralDescuentos, 2) ?></span></td>
+                        <td style="font-weight: bold; background-color: #d4edda;">$<span id="total-general"><?= number_format($totalGeneralPagar, 2) ?></span></td>
+                    </tr>
+                </tbody>
+            </table>
+
             </div>
             <p><small>* Descuento de $25 por cada día sin 4 registros completos</small></p>
         </div>
 
         <!-- JavaScript para calcular totales en tiempo real -->
         <script>
-        // JavaScript para calcular totales en tiempo real
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar totales desde PHP
-            window.totalesGenerales = {
-                sueldoBase: <?= $totalGeneralSueldoBase ?? 0 ?>,
-                actividades: <?= $totalGeneralActividadesSeleccionadas ?? 0 ?>,
-                descuentos: <?= $totalGeneralDescuentos ?? 0 ?>,
-                general: <?= $totalGeneralPagar ?? 0 ?>
-            };
-            
-            // Agregar event listeners a todos los checkboxes
-            document.querySelectorAll('.actividad-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    calcularTotal(this);
-                });
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar totales desde PHP
+    window.totalesGenerales = {
+        sueldoBase: <?= $totalGeneralSueldoBase ?? 0 ?>,
+        actividades: <?= $totalGeneralActividadesSeleccionadas ?? 0 ?>,
+        descuentos: <?= $totalGeneralDescuentos ?? 0 ?>,
+        general: <?= $totalGeneralPagar ?? 0 ?>
+    };
+    
+    // Agregar event listeners a todos los checkboxes de actividades
+    document.querySelectorAll('.actividad-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            calcularTotal(this);
         });
+    });
+    
+    // Agregar event listeners a todos los selects de días a condonar
+    document.querySelectorAll('.dias-condonar').forEach(select => {
+        select.addEventListener('change', function() {
+            calcularDescuento(this);
+        });
+    });
+});
 
-        function calcularTotal(checkbox) {
-            const empleadoId = checkbox.dataset.empleado;
-            const valorActividad = parseFloat(checkbox.dataset.valor);
-            const estaMarcado = checkbox.checked;
-            
-            // Obtener los elementos relevantes
-            const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
-            const totalPagarElement = document.getElementById('total-pagar-' + empleadoId);
-            const fila = document.getElementById('fila-' + empleadoId);
-            
-            // Obtener valores base
-            let totalActividadesActual = parseFloat(totalActividadesElement.textContent) || 0;
-            const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
-            const descuentoRegistros = parseFloat(fila.dataset.descuentoRegistros) || 0;
-            
-            // Actualizar total de actividades
-            if (estaMarcado) {
-                totalActividadesActual += valorActividad;
-            } else {
-                totalActividadesActual -= valorActividad;
-            }
-            
-            // Asegurarse de que no sea negativo
-            if (totalActividadesActual < 0) {
-                totalActividadesActual = 0;
-            }
-            
-            // Calcular nuevo total a pagar
-            const nuevoTotalPagar = sueldoBase + totalActividadesActual - descuentoRegistros;
-            
-            // Actualizar displays
-            totalActividadesElement.textContent = totalActividadesActual.toFixed(2);
-            totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
-            
-            // Actualizar totales generales
-            actualizarTotalesGenerales();
-        }
+function calcularTotal(checkbox) {
+    const empleadoId = checkbox.dataset.empleado;
+    const valorActividad = parseFloat(checkbox.dataset.valor);
+    const estaMarcado = checkbox.checked;
+    
+    // Obtener los elementos relevantes
+    const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
+    const totalPagarElement = document.getElementById('total-pagar-' + empleadoId);
+    const fila = document.getElementById('fila-' + empleadoId);
+    
+    // Obtener valores base
+    let totalActividadesActual = parseFloat(totalActividadesElement.textContent) || 0;
+    const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+    
+    // Obtener descuento actual (puede haber sido modificado por condonación)
+    const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
+    const descuentoActual = parseFloat(montoDescuentoElement.textContent) || 0;
+    
+    // Actualizar total de actividades
+    if (estaMarcado) {
+        totalActividadesActual += valorActividad;
+    } else {
+        totalActividadesActual -= valorActividad;
+    }
+    
+    // Asegurarse de que no sea negativo
+    if (totalActividadesActual < 0) {
+        totalActividadesActual = 0;
+    }
+    
+    // Calcular nuevo total a pagar
+    const nuevoTotalPagar = sueldoBase + totalActividadesActual - descuentoActual;
+    
+    // Actualizar displays
+    totalActividadesElement.textContent = totalActividadesActual.toFixed(2);
+    totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
+    
+    // Actualizar totales generales
+    actualizarTotalesGenerales();
+}
 
-        function actualizarTotalesGenerales() {
-            let totalSueldoBase = 0;
-            let totalActividades = 0;
-            let totalDescuentos = 0;
-            let totalGeneral = 0;
-            
-            // Recalcular todos los totales desde cero
-            document.querySelectorAll('[id^="fila-"]').forEach(fila => {
-                const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
-                const descuentoRegistros = parseFloat(fila.dataset.descuentoRegistros) || 0;
-                const empleadoId = fila.id.replace('fila-', '');
-                const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
-                const totalActividadesEmpleado = parseFloat(totalActividadesElement.textContent) || 0;
-                
-                totalSueldoBase += sueldoBase;
-                totalActividades += totalActividadesEmpleado;
-                totalDescuentos += descuentoRegistros;
-                totalGeneral += (sueldoBase + totalActividadesEmpleado - descuentoRegistros);
-            });
-            
-            // Actualizar displays de totales generales
-            document.getElementById('total-sueldo-base').textContent = totalSueldoBase.toFixed(2);
-            document.getElementById('total-actividades').textContent = totalActividades.toFixed(2);
-            document.getElementById('total-descuentos').textContent = totalDescuentos.toFixed(2);
-            document.getElementById('total-general').textContent = totalGeneral.toFixed(2);
-            
-            // Actualizar el objeto global
-            window.totalesGenerales = {
-                sueldoBase: totalSueldoBase,
-                actividades: totalActividades,
-                descuentos: totalDescuentos,
-                general: totalGeneral
-            };
-        }
+function calcularDescuento(select) {
+    const empleadoId = select.dataset.empleado;
+    const diasACondonar = parseInt(select.value);
+    const descuentoPorDia = parseFloat(select.dataset.descuentoPorDia);
+    const diasSinRegistros = parseInt(select.dataset.diasSinRegistros);
+    
+    // Calcular nuevo descuento
+    const diasConDescuento = diasSinRegistros - diasACondonar;
+    const nuevoDescuento = diasConDescuento * descuentoPorDia;
+    
+    // Obtener elementos relevantes
+    const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
+    const totalPagarElement = document.getElementById('total-pagar-' + empleadoId);
+    const fila = document.getElementById('fila-' + empleadoId);
+    
+    // Obtener valores base
+    const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+    const totalActividades = parseFloat(document.getElementById('total-actividades-' + empleadoId).textContent) || 0;
+    
+    // Actualizar monto de descuento
+    montoDescuentoElement.textContent = nuevoDescuento.toFixed(2);
+    
+    // Calcular nuevo total a pagar
+    const nuevoTotalPagar = sueldoBase + totalActividades - nuevoDescuento;
+    totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
+    
+    // Cambiar estilo visual si no hay descuento
+    const descuentoElement = document.getElementById('descuento-' + empleadoId);
+    if (nuevoDescuento === 0) {
+        descuentoElement.classList.add('descuento-condonado');
+    } else {
+        descuentoElement.classList.remove('descuento-condonado');
+    }
+    
+    // Actualizar totales generales
+    actualizarTotalesGenerales();
+}
+
+function actualizarTotalesGenerales() {
+    let totalSueldoBase = 0;
+    let totalActividades = 0;
+    let totalDescuentos = 0;
+    let totalGeneral = 0;
+    
+    // Recalcular todos los totales desde cero
+    document.querySelectorAll('[id^="fila-"]').forEach(fila => {
+        const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+        const empleadoId = fila.id.replace('fila-', '');
+        const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
+        const totalActividadesEmpleado = parseFloat(totalActividadesElement.textContent) || 0;
+        const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
+        const descuentoEmpleado = parseFloat(montoDescuentoElement.textContent) || 0;
+        
+        totalSueldoBase += sueldoBase;
+        totalActividades += totalActividadesEmpleado;
+        totalDescuentos += descuentoEmpleado;
+        totalGeneral += (sueldoBase + totalActividadesEmpleado - descuentoEmpleado);
+    });
+    
+    // Actualizar displays de totales generales
+    document.getElementById('total-sueldo-base').textContent = totalSueldoBase.toFixed(2);
+    document.getElementById('total-actividades').textContent = totalActividades.toFixed(2);
+    document.getElementById('total-descuentos').textContent = totalDescuentos.toFixed(2);
+    document.getElementById('total-general').textContent = totalGeneral.toFixed(2);
+    
+    // Actualizar el objeto global
+    window.totalesGenerales = {
+        sueldoBase: totalSueldoBase,
+        actividades: totalActividades,
+        descuentos: totalDescuentos,
+        general: totalGeneral
+    };
+}
         </script>
 
         <!-- El resto del código para las otras tablas permanece igual -->
