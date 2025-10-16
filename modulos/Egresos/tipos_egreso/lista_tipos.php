@@ -1,10 +1,10 @@
 <?php
+
+require_once(__DIR__ . '/../../../includes/validacion_session.php');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../../includes/config.php';
 
@@ -67,12 +67,12 @@ require __DIR__ . '/../../../includes/header.php';
                                     
                                     <div class="btn-group">
                                         <a href="editar_tipo.php?id=<?= $tipo['id_tipo'] ?>"
-                                        style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                        style="background-color: var(--color-accent); border-color: var(--color-accent);"
                                         class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <a href="eliminar_tipo.php?id=<?= $tipo['id_tipo'] ?>"
-                                        style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                        style="background-color: var(--color-danger); border-color: var(--color-danger);"
                                         class="btn btn-sm btn-primary" 
                                            onclick="return confirm('¿Eliminar este tipo?')">
                                             <i class="bi bi-trash"></i>

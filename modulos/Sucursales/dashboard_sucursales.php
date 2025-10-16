@@ -1,5 +1,5 @@
-
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Configuración de la página
 $titulo = "Panel de Sucursales";
 $encabezado = "Gestión de Sucursales";
@@ -56,7 +56,7 @@ $sucursales_recientes = $con->query("
             <div class="col-md-6">
                 <div class="card shadow-sm border-primary h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-primary bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-shop text-primary fs-2"></i>
                             </div>
@@ -72,7 +72,7 @@ $sucursales_recientes = $con->query("
             <div class="col-md-6">
                 <div class="card shadow-sm border-success h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="centercenter text">
                             <div class="bg-success bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-check-circle text-success fs-2"></i>
                             </div>

@@ -1,3 +1,5 @@
+<?php require_once(__DIR__ . '/../../includes/validacion_session.php')?>
+
 <div class="table-responsive">
     <table class="table table-striped table-hover">
         <thead class="table-dark">

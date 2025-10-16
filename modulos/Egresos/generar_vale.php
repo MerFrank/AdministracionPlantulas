@@ -1,8 +1,7 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Iniciar sesión si no está iniciada
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../includes/config.php';
 

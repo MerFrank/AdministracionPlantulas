@@ -1,5 +1,5 @@
 <?php
-
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Configuración de encabezado
 $titulo = "Gestión de Productos";
 $encabezado = "Panel de Control de Productos";

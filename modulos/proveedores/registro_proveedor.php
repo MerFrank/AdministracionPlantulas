@@ -1,5 +1,5 @@
 <?php
-
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Incluir archivo de configuración de la base de datos
 require_once __DIR__ . '/../../includes/config.php';
 

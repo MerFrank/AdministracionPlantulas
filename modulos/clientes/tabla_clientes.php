@@ -1,3 +1,5 @@
+<?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');?>
 
 <div class="table-responsive">
     <!-- Tabla con estilos de rayado y hover -->

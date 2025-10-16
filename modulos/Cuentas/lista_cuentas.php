@@ -1,12 +1,10 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Configuración para mostrar todos los errores (útil durante desarrollo)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Inicia la sesión si no está activa
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 // Incluye el archivo de configuración de la base de datos
 require_once(__DIR__ . '/../../includes/config.php');

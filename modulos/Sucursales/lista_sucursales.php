@@ -1,10 +1,9 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -20,7 +19,7 @@ $sucursales = $con->query("SELECT * FROM sucursales WHERE activo = 1 ORDER BY no
 $titulo = 'Sucursales';
 $encabezado = 'Listado de Sucursales';
 $ruta = "dashboard_sucursales.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require('../../includes/header.php');
 ?>
 
@@ -69,11 +68,13 @@ require('../../includes/header.php');
                                 <td><?= htmlspecialchars($sucursal['responsable']) ?></td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="editar_sucursal.php?id=<?= $sucursal['id_sucursal'] ?>" class="btn btn-sm btn-primary">
+                                        <a href="editar_sucursal.php?id=<?= $sucursal['id_sucursal'] ?>" style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                        class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a href="eliminar_sucursal.php?id=<?= $sucursal['id_sucursal'] ?>" class="btn btn-sm btn-danger" 
-                                           onclick="return confirm('¿Eliminar esta sucursal?')">
+                                        <a href="eliminar_sucursal.php?id=<?= $sucursal['id_sucursal'] ?>"
+                                           onclick="return confirm('¿Eliminar esta sucursal?')"  style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                        class="btn btn-sm btn-primary">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </div>

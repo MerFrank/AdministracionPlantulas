@@ -1,11 +1,8 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 require_once __DIR__ . '/../../includes/config.php';
 
-// Verificar permisos si es necesario
-// if (!isset($_SESSION['usuario_id'])) {
-//     header('Location: /login.php');
-//     exit;
-// }
+
 
 // Obtener ID de la actividad a eliminar
 $id_actividad = isset($_GET['id_actividad']) ? (int)$_GET['id_actividad'] : 0;

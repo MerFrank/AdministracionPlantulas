@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Configuración de la página
 $titulo = "Seleccionar Venta para Nota";
 $active_page = "ventas";

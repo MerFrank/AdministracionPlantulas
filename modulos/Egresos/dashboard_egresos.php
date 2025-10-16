@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Configuración de la página
 $titulo = "Panel de Egresos";
 $encabezado = "Gestión de Egresos";
@@ -55,7 +56,7 @@ $ultimos_egresos = $con->query("
             <div class="col-md-4">
                 <div class="card shadow-sm border-danger h-100">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
+                        <div class="center-text">
                             <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
                                 <i class="bi bi-cash-stack text-danger fs-2"></i>
                             </div>
