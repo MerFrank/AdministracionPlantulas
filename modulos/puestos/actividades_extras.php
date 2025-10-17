@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 require_once __DIR__ . '/../../includes/config.php';
 
 // Verificar permisos
@@ -29,7 +30,7 @@ try {
 
 
 //Botón
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "dashboard_puestos.php";
 
 require_once __DIR__ . '/../../includes/header.php';
@@ -82,12 +83,13 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <td><?= ($actividad['activo'] == 1) ? 'Activa' : 'Inactiva' ?></td>
                                     <td>
                                         <a href="editar_actividad.php?id_actividad=<?= $actividad['id_actividad'] ?>" 
-
-                                            class="btn btn-sm btn-warning" title="Editar">
+                                         style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                            class="btn btn-sm btn-primary" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <a href="eliminar_actividad.php?id_actividad=<?= $actividad['id_actividad'] ?>" 
-                                            class="btn btn-sm btn-danger" title="Eliminar"
+                                         style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                            class="btn btn-sm btn-primary" title="Eliminar"
                                             onclick="return confirm('¿Está seguro de eliminar la actividad: <?= addslashes($actividad['nombre']) ?>?')">
                                                 <i class="bi bi-trash"></i>
 

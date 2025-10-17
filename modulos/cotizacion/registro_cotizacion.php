@@ -2,14 +2,12 @@
 // ==============================================
 // SECCIÓN PHP - Configuración y Lógica Principal
 // ==============================================
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Iniciar sesión
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 // Incluir solo archivo de configuración (sin functions.php)
 require_once __DIR__ . '/../../includes/config.php';
@@ -180,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $titulo = 'Nueva Cotización';
 $encabezado = 'Nueva Cotización';
 $ruta = "dashboard_cotizaciones.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 
 require_once __DIR__ . '/../../includes/header.php';
 ?>

@@ -1,10 +1,9 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -37,9 +36,9 @@ if (!$venta) {
 }
 
 // Obtener pagos de la venta
-$sql_pagos = $con->prepare("SELECT p.*, e.nombre as empleado 
+$sql_pagos = $con->prepare("SELECT p.*, o.nombre as empleado 
                            FROM pagosventas p 
-                           LEFT JOIN empleados e ON p.id_empleado = e.id_empleado 
+                           LEFT JOIN operadores o ON p.ID_Operador = o.ID_Operador 
                            WHERE p.id_notaPedido = ? 
                            ORDER BY p.fecha DESC");
 $sql_pagos->execute([$id_venta]);
@@ -47,9 +46,15 @@ $pagos = $sql_pagos->fetchAll(PDO::FETCH_ASSOC);
 
 $titulo = 'Pagos de la Venta #' . $venta['id_notaPedido'];
 $encabezado = "Gestión de Pagos";
+
 $ruta = "lista_ventas.php";
 $texto_boton = "Volver a Ventas";
-require __DIR__ . '/../../includes/header.php';
+
+$opciones_menu = [
+    'opcion1' => ['ruta' => 'dashboard_ventas.php', 'texto' => 'Panel ventas'],
+    'opcion2' => ['ruta' => 'registro_abono.php?id_venta_auto=' . $id_venta, 'texto' => 'abono'],     
+];
+require __DIR__ .( '/../../includes/header.php');
 ?>
 
 <main class="container mt-4">
@@ -95,7 +100,9 @@ require __DIR__ . '/../../includes/header.php';
                                 <th>Referencia</th>
                                 <th>Observaciones</th>
                                 <th>Empleado</th>
-                                <th>Acciones</th>
+                                <?php if ($_SESSION['Rol'] == 1 ): ?>
+                                    <th>Acciones</th>
+                                <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,14 +118,20 @@ require __DIR__ . '/../../includes/header.php';
                                     <td><?= !empty($pago['observaciones']) ? htmlspecialchars($pago['observaciones']) : '<span class="text-muted">Ninguna</span>' ?></td>
                                     <td><?= !empty($pago['empleado']) ? htmlspecialchars($pago['empleado']) : '<span class="text-muted">No especificado</span>' ?></td>
                                     <td>
-                                        <div class="btn-group">
-                                            <a href="editar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-info">
-                                                <i class="bi bi-pencil"></i> Editar
-                                            </a>
-                                            <a href="eliminar_pago.php?id=<?= $pago['id_pago'] ?>" class="btn btn-sm btn-warning">
-                                                <i class="bi bi-trash"></i> Eliminar
-                                            </a>
-                                        </div>
+                                        <?php if ($_SESSION['Rol'] == 1 ): ?>
+                                            <div class="btn-group">
+                                                <a href="editar_pago.php?id=<?= $pago['id_pago'] ?>" 
+                                                 style="background-color: var(--color-accent); border-color: var(--color-accent);"
+                                                class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-pencil"></i> 
+                                                </a>
+                                                <a href="eliminar_pago.php?id=<?= $pago['id_pago'] ?>"
+                                                 style="background-color: var(--color-danger); border-color: var(--color-danger);"
+                                                 class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
                                         
                                     </td>
                                 </tr>
@@ -143,6 +156,7 @@ require __DIR__ . '/../../includes/header.php';
 </main>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>    
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

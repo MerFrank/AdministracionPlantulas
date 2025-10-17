@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/includes/validacion_session.php');
 // 1. Incluir archivo de configuración y conexión a BD
 require_once(__DIR__ . '/includes/config.php');
 

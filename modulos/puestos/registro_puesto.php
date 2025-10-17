@@ -1,5 +1,5 @@
 <?php
-
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 require_once __DIR__ . '/../../includes/config.php';
 // Variables para el encabezado
 $titulo = "Registrar Puesto";
@@ -7,7 +7,7 @@ $encabezado = "Registrar Puesto";
 $subtitulo = "Registra nuevos puestos en la empresa.";
 
 //Botón
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "dashboard_puestos.php";
 
 require_once __DIR__ . '/../../includes/header.php';

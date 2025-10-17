@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // ==============================================
 // CONFIGURACIÓN INICIAL
 // ==============================================
@@ -10,9 +11,7 @@ $active_page = "ventas";
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -31,7 +30,7 @@ try {
 // ==============================================
 if (isset($_GET['ajax_action'])) {
     header('Content-Type: application/json');
-    
+
     try {
         switch ($_GET['ajax_action']) {
             case 'get_colores':
@@ -40,7 +39,7 @@ if (isset($_GET['ajax_action'])) {
                 $stmt->execute([$id_especie]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
-                
+
             case 'get_variedades':
                 $id_especie = (int)$_GET['id_especie'];
                 $id_color = (int)$_GET['id_color'];
@@ -48,7 +47,7 @@ if (isset($_GET['ajax_action'])) {
                 $stmt->execute([$id_especie, $id_color]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
-                
+
             default:
                 echo json_encode(['error' => 'Acción AJAX no válida']);
         }
@@ -155,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $num_regis = $_POST['num-regis'] ?? '';
             $nom_aval = $_POST['nom-aval'] ?? '';
             $monto_garantia = $_POST['monto'] ?? 0;
-            
+
             // Validar que los campos de garantía estén completos
             if (empty($nom_bien)) {
                 throw new Exception("El campo 'Bien de intercambio' es requerido para garantía.");
@@ -163,9 +162,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (empty($num_regis)) {
                 throw new Exception("El campo 'Número de registro' es requerido para garantía.");
             }
-            if (empty($nom_aval)) {
+           /* if (empty($nom_aval)) {
                 throw new Exception("El campo 'Nombre del aval' es requerido para garantía.");
-            }
+            }*/
             if (empty($monto_garantia) || $monto_garantia <= 0) {
                 throw new Exception("El monto de la garantía debe ser mayor a cero.");
             }
@@ -184,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':monto' => $anticipo,
                 ':id_cuenta' => $id_cuenta
             ]);
-            
+
             // Verificar que se actualizó correctamente
             if ($stmt_update_cuenta->rowCount() === 0) {
                 throw new Exception("No se pudo actualizar el saldo de la cuenta bancaria.");
@@ -196,18 +195,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $folio = 'NP-' . date('Y') . '-' . str_pad($countRow + 1, 5, '0', STR_PAD_LEFT);
         $num_remision = 'REM-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
-        // Insertar nota (fechaPedido = NOW(), fecha_entrega = lo que enviaste en formulario)
+        // Insertar nota 
         $stmt = $con->prepare("
             INSERT INTO notaspedidos (
                 folio, fechaPedido, id_cliente, tipo_pago, metodo_Pago,
                 subtotal, total, saldo_pendiente, estado, observaciones,
-                num_pagare, fecha_validez, fecha_entrega, lugar_pago, id_cuenta, num_remision
+                num_pagare, fecha_validez, fecha_entrega, lugar_pago, id_cuenta, num_remision, ID_Operador
             ) VALUES (:folio, NOW(), :id_cliente, :tipo_pago, :metodo_Pago, :subtotal, :total, :saldo_pendiente, :estado, :observaciones,
-                      :num_pagare, DATE_ADD(NOW(), INTERVAL 30 DAY), :fecha_entrega, 'Oficinas centrales', :id_cuenta, :num_remision)
+                      :num_pagare, DATE_ADD(NOW(), INTERVAL 30 DAY), :fecha_entrega, 'Oficinas centrales', :id_cuenta, :num_remision, :ID_Operador)
         ");
 
         // id_cuenta puede venir del formulario si existe; usar null si no
         $id_cuenta = isset($_POST['id_cuenta']) ? (int)$_POST['id_cuenta'] : null;
+        // Agregar el operador a la consulta
+        $ID_Operador = $_SESSION['ID_Operador'] ?? null;
 
         $stmt->execute([
             ':folio' => $folio,
@@ -222,6 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':num_pagare' => rand(1000, 9999),
             ':fecha_entrega' => $fecha_entrega,
             ':id_cuenta' => $id_cuenta,
+            ':ID_Operador' => $ID_Operador, //ID del operador 
             ':num_remision' => $num_remision
         ]);
 
@@ -252,12 +254,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $num_regis = $_POST['num-regis'] ?? '';
             $nom_aval = $_POST['nom-aval'] ?? '';
             $monto_garantia = $_POST['monto'] ?? 0;
-            
+
             $stmt_garantia = $con->prepare("
                 INSERT INTO datos_garantia (id_notaPedido, nom_bien, num_regis, nom_aval, monto)
                 VALUES (:id_notaPedido, :nom_bien, :num_regis, :nom_aval, :monto)
             ");
-            
+
             $stmt_garantia->execute([
                 ':id_notaPedido' => $id_notaPedido,
                 ':nom_bien' => $nom_bien,
@@ -270,19 +272,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Registrar pago en pagosventas (reemplazando seguimientoanticipos)
         if ($anticipo > 0) {
             $stmt_pago = $con->prepare("
-                INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta)
-                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta)
+                INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta, ID_Operador)
+                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta, :ID_Operador)
             ");
-            
+
             $referencia = 'PAG-' . date('Ymd') . '-' . str_pad($con->query("SELECT COUNT(*) FROM pagosventas WHERE DATE(fecha)=CURDATE()")->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
-            
+
             $stmt_pago->execute([
                 ':id_notaPedido' => $id_notaPedido,
                 ':monto' => $anticipo,
                 ':metodo_pago' => $metodo_Pago,
                 ':referencia' => $referencia,
                 ':observaciones' => 'Anticipo de venta',
-                ':id_cuenta' => $id_cuenta
+                ':id_cuenta' => $id_cuenta,
+                ':ID_Operador' => $ID_Operador //ID del operador 
             ]);
         }
 
@@ -292,7 +295,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['success_message'] = "Venta registrada correctamente con folio #{$folio}";
         header("Location: lista_ventas.php");
         exit;
-
     } catch (Exception $e) {
         if ($con && $con->inTransaction()) $con->rollBack();
         // Devuelve el mensaje de error (lo puedes mostrar en pantalla)
@@ -302,7 +304,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 $ruta = "dashboard_ventas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 
 require __DIR__ . '/../../includes/header.php';
 ?>
@@ -310,45 +312,55 @@ require __DIR__ . '/../../includes/header.php';
 <!-- ==============================================
 // CONTENIDO PRINCIPAL
 // ============================================== -->
-<main class="container-fluid mt-4 px-0">    
+<main class="container-fluid mt-4 px-0">
     <div class="card shadow border-0 rounded-0">
         <div class="card-header bg-primary text-white">
             <h2><i class="bi bi-cart-plus"></i> <?= $encabezado ?></h2>
         </div>
-        
+
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        
+
         <form method="post" id="ventaForm" class="form-doble-columna">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
             <input type="hidden" name="items" id="itemsVenta" value="">
-            
+
             <!-- Sección Cliente y Fecha -->
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
                     <div class="mb-3">
+
                         <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                        <select class="form-select" name="id_cliente" required>
-                            <option value="">Seleccione un cliente...</option>
+
+                        <input type="text"
+                            class="form-control"
+                            id="inputClienteNombre"
+                            list="listaClientes"
+                            placeholder="click para seleccionar o escribir un cliente"
+                            autocomplete="off"
+                            required>
+
+                        <input type="hidden" name="id_cliente" id="inputClienteId" required>
+
+                        <datalist id="listaClientes">
                             <?php foreach ($clientes as $cliente): ?>
-                                <option value="<?= $cliente['id_cliente'] ?>">
-                                    <?= htmlspecialchars($cliente['nombre_Cliente']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                                <option value="<?= htmlspecialchars($cliente['nombre_Cliente']) ?>"
+                                    data-id="<?= $cliente['id_cliente'] ?>">
+                                <?php endforeach; ?>
+                        </datalist>
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Fecha de Entrega <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" name="fechaPedido" required 
-                                min="<?= date('Y-m-d') ?>">
+                        <input type="date" class="form-control" name="fechaPedido" id="inputFechaEntrega" required
+                            min="<?= date('Y-m-d') ?>">
                     </div>
                 </div>
             </div>
-            
+
             <!-- Sección Productos -->
             <div class="card mb-4">
                 <div class="card-header bg-secondary text-white">
@@ -367,26 +379,28 @@ require __DIR__ . '/../../includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <label class="form-label">Color <span class="text-danger">*</span></label>
-                            <select class="form-select" id="selectColor" disabled required>
+                            <select class="form-select" id="selectColor" disabled>
                                 <option value="">Seleccione especie primero</option>
                             </select>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <label class="form-label">Variedad <span class="text-danger">*</span></label>
-                            <select class="form-select" id="selectVariedad" disabled required>
+                            <select class="form-select" id="selectVariedad" disabled>
                                 <option value="">Seleccione color primero</option>
                             </select>
                         </div>
-                        
+
                         <div class="col-md-2">
                             <label class="form-label">Cantidad <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="inputCantidad" min="1" value="1" required>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="inputCantidad" min="1" value="1" required>
+                            </div>
                         </div>
-                        
+
                         <div class="col-md-2">
                             <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -394,14 +408,14 @@ require __DIR__ . '/../../includes/header.php';
                                 <input type="number" class="form-control" id="inputPrecio" step="0.01" min="0.01" required>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-2 d-flex align-items-end">
                             <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
                                 <i class="bi bi-plus-circle"></i> Agregar
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="mt-4">
                         <div class="table-responsive">
                             <table class="table table-striped" id="tablaItems">
@@ -419,19 +433,15 @@ require __DIR__ . '/../../includes/header.php';
                                 <tbody id="tbodyItems">
                                     <!-- Items dinámicos -->
                                 </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="5" class="text-end">Total:</th>
-                                        <th id="totalVenta">$0.00</th>
-                                        <th></th>
-                                    </tr>
+                                <tfoot
+                                    id="tfootItems">
                                 </tfoot>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Sección Pagos -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
@@ -442,11 +452,11 @@ require __DIR__ . '/../../includes/header.php';
                         <div class="col-md-4">
                             <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
                             <select class="form-select" name="tipo_pago" id="tipoPago" required>
-                                <option value="Contado">Contado</option>
-                                <option value="Crédito">Crédito</option>
+                                <option value="credito">Crédito</option>
+                                <option value="contado">Contado</option>
                             </select>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
                             <select class="form-select" name="metodo_pago" required>
@@ -455,7 +465,7 @@ require __DIR__ . '/../../includes/header.php';
                                 <option value="Tarjeta">Tarjeta</option>
                             </select>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
                             <select class="form-select" name="id_cuenta" required>
@@ -467,7 +477,7 @@ require __DIR__ . '/../../includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        
+
                         <div class="col-md-6" id="montoPagoContainer">
                             <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -476,7 +486,7 @@ require __DIR__ . '/../../includes/header.php';
                             </div>
                             <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
                         </div>
-                        
+
                         <div class="col-md-6" id="saldoContainer" style="display:none;">
                             <label class="form-label">Saldo Pendiente</label>
                             <div class="input-group">
@@ -487,21 +497,21 @@ require __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
             </div>
-            
+
             <!-- Observaciones -->
             <div class="mb-4">
                 <label class="form-label">Observaciones</label>
                 <textarea class="form-control" name="observaciones" rows="2"></textarea>
             </div>
-            
+
             <!-- Garantia -->
             <div class="form-section">
                 <h5><i class="bi bi-receipt"></i> Datos de Garantia</h5>
-                
+
                 <div class="mb-3">
                     <label class="form-label">¿Requiere Garantia?</label>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si" 
+                        <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si"
                             <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? 'checked' : '' ?>>
                         <label class="form-check-label" for="opcion-si">Sí</label>
                     </div>
@@ -511,27 +521,27 @@ require __DIR__ . '/../../includes/header.php';
                         <label class="form-check-label" for="opcion-no">No</label>
                     </div>
                 </div>
-                
+
                 <div id="datos-garantia" class="bg-light p-3 rounded <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? '' : 'd-none' ?>">
                     <div class="row g-3">
-                        
+
                         <div class="col-md-6">
                             <label for="nom-bien" class="form-label">Bien de intercambio</label>
-                            <input type="text" class="form-control" id="nom-bien" name="nom-bien" maxlength="14" 
-                                    placeholder="Carro, terreno, inmueble"
-                                    value="<?= htmlspecialchars($_POST['nom-bien'] ?? '') ?>">
+                            <input type="text" class="form-control" id="nom-bien" name="nom-bien" maxlength="14"
+                                placeholder="Carro, terreno, inmueble"
+                                value="<?= htmlspecialchars($_POST['nom-bien'] ?? '') ?>">
                         </div>
-                        
+
                         <div class="col-md-6">
                             <label for="num-regis" class="form-label">Número de registro o de factura</label>
                             <textarea class="form-control" id="num-regis" name="num-regis" maxlength="255"
-                                        placeholder="XAXX010101000"><?= htmlspecialchars($_POST['num-regis'] ?? '') ?></textarea>
+                                placeholder="XAXX010101000"><?= htmlspecialchars($_POST['num-regis'] ?? '') ?></textarea>
                         </div>
 
                         <div class="col-md-6">
                             <label for="nom-aval" class="form-label">Nombre del aval</label>
-                            <input type="text" class="form-control" id="nom-aval" name="nom-aval" maxlength="14" 
-                                    value="<?= htmlspecialchars($_POST['nom-aval'] ?? '') ?>">
+                            <input type="text" class="form-control" id="nom-aval" name="nom-aval" maxlength="14"
+                                value="<?= htmlspecialchars($_POST['nom-aval'] ?? '') ?>">
                         </div>
 
                         <div class="col-md-2">
@@ -546,19 +556,22 @@ require __DIR__ . '/../../includes/header.php';
                 </div>
             </div>
 
+            <input type="hidden" id="totalVenta" data-venta-total="0" value="0">
+
+
             <!-- Botones -->
             <div class="d-flex justify-content-between">
-            <a href="lista_ventas.php" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Cancelar
-            </a>
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-check-circle"></i> Registrar Venta
-            </button>
-        </div>
-        
+                <a href="lista_ventas.php" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Registrar Venta
+                </button>
+            </div>
+
         </form>
-        
-        
+
+
     </div>
 </main>
 
@@ -567,209 +580,332 @@ require __DIR__ . '/../../includes/header.php';
 // ============================================== -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-
-document.querySelectorAll('input[name="opcion"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const datosGarantia = document.getElementById('datos-garantia');
-        if (this.value === 'si') {
-            datosGarantia.classList.remove('d-none');
-        } else {
-            datosGarantia.classList.add('d-none');
-        }
+    document.querySelectorAll('input[name="opcion"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const datosGarantia = document.getElementById('datos-garantia');
+            if (this.value === 'si') {
+                datosGarantia.classList.remove('d-none');
+            } else {
+                datosGarantia.classList.add('d-none');
+            }
+        });
     });
-});
 
-// Estado inicial
-document.addEventListener('DOMContentLoaded', function() {
-    const datosGarantia = document.getElementById('datos-garantia');
-    if (!document.getElementById('opcion-si').checked) {
-        datosGarantia.classList.add('d-none');
-    }
-});
-
-
-$(document).ready(function() {
-    const items = [];
-    const tipoPago = $('#tipoPago');
-    const inputMontoPago = $('#inputMontoPago');
-    const inputSaldoPendiente = $('#inputSaldoPendiente');
-    
-    // Manejo de tipo de pago
-    tipoPago.on('change', function() {
-        const esCredito = $(this).val() === 'credito';
-        $('#saldoContainer').toggle(esCredito);
-        $('#labelMontoPago').text(esCredito ? 'Anticipo' : 'Monto de Pago');
-        $('#ayudaMontoPago').text(esCredito ? 'Ingrese el anticipo (opcional)' : 'Ingrese el monto total');
-        inputMontoPago.prop('required', !esCredito);
-        actualizarSaldo();
-    });
-    
-    function actualizarSaldo() {
-        const total = parseFloat($('#totalVenta').text().replace('$', '')) || 0;
-        const monto = parseFloat(inputMontoPago.val()) || 0;
+    // Estado inicial
+    document.addEventListener('DOMContentLoaded', function() {
         
-        if (tipoPago.val() === 'credito') {
-            inputSaldoPendiente.val((total - monto).toFixed(2));
-        } else {
-            inputMontoPago.val(total.toFixed(2));
+        const opcionSi = document.getElementById('opcion-si');
+        const opcionNo = document.getElementById('opcion-no');
+        const datosGarantiaDiv = document.getElementById('datos-garantia');
+
+        // Función que maneja la visibilidad
+        function toggleGarantia() {
+            // Si el radio button 'Sí' está marcado, mostramos la sección de garantía
+            if (opcionSi.checked) {
+                datosGarantiaDiv.classList.remove('d-none'); // Muestra
+            } else {
+                // Si 'No' está marcado, ocultamos la sección
+                datosGarantiaDiv.classList.add('d-none'); // Oculta
+            }
+        }
+
+        // 1. Ejecutar la función para establecer el estado inicial al cargar la página
+        // Esto es vital por si recargas la página y 'Sí' ya estaba seleccionado.
+        toggleGarantia();
+
+        // 2. Asignar los escuchadores de eventos para que reaccione al clic del usuario
+        opcionSi.addEventListener('change', toggleGarantia);
+        opcionNo.addEventListener('change', toggleGarantia);
+    });
+    // Se usa para comprobar si el usuario sigue trabajando con la misma especie.
+    let lastSelectedEspecieId = null;
+    //Se usa para rellenar automáticamente el campo de precio.
+    let lastUnitPrecio = null;
+
+
+    $(document).ready(function() {
+        const items = [];
+        const tipoPago = $('#tipoPago');
+        const inputMontoPago = $('#inputMontoPago');
+        const inputSaldoPendiente = $('#inputSaldoPendiente');
+
+
+        const inputNombreCliente = $('#inputClienteNombre');
+        const inputIdCliente = $('#inputClienteId');
+        const dataListClientes = $('#listaClientes');
+
+        inputNombreCliente.on('input', function() {
+            const val = $(this).val();
+            let clienteId = '';
+            let encontrado = false;
+
+            // Opciones del datalist para encontrar el ID
+            dataListClientes.find('option').each(function() {
+                // Compara el nombre escrito 
+                if ($(this).val() === val) {
+
+                    clienteId = $(this).data('id');
+                    encontrado = true;
+                    return false;
+                }
+            });
+
+            // Asigna el ID al campo oculto
+            inputIdCliente.val(clienteId);
+
+            if (!encontrado && items.length > 0) {
+                resetearVenta();
+            } else if (items.length > 0 && inputIdCliente.val() !== lastClientId) {
+                resetearVenta();
+            }
+
+            inputNombreCliente[0].setCustomValidity(
+                (encontrado || val.length === 0) ?
+                '' :
+                'Debe seleccionar un cliente válido de la lista.'
+            );
+        });
+
+
+        // Manejo de tipo de pago
+        tipoPago.on('change', function() {
+            const esCredito = $(this).val() === 'credito';
+            $('#saldoContainer').toggle(esCredito);
+            $('#labelMontoPago').text(esCredito ? 'Anticipo' : 'Monto de Pago');
+            $('#ayudaMontoPago').text(esCredito ? 'Ingrese el anticipo (opcional)' : 'Ingrese el monto total');
+            inputMontoPago.prop('required', !esCredito);
+
+            actualizarSaldo();
+        });
+
+        function actualizarSaldo() {
+            const total = $('#totalVenta').data('venta-total') || 0;
+            const monto = parseFloat(inputMontoPago.val()) || 0;
+
+            if (tipoPago.val() === 'credito') {
+                inputSaldoPendiente.val((total - monto).toFixed(2));
+            } else {
+                inputMontoPago.val(total.toFixed(2));
+                inputSaldoPendiente.val('0.00');
+            }
+        }
+        inputMontoPago.on('input', function() {
+            if (tipoPago.val() === 'credito') {
+                actualizarSaldo();
+            }
+        });
+
+        function resetearVenta() {
+            items.length = 0;
+
+            // Limpiar los campos del ítem
+            $('#selectEspecie').val('').trigger('change');
+            $('#inputCantidad').val('1');
+            $('#inputPrecio').val('');
+
+
+            $('#selectColor').html('<option value="">Seleccione especie primero</option>').prop('disabled', true).prop('required', false);
+            $('#selectVariedad').html('<option value="">Seleccione color primero</option>').prop('disabled', true).prop('required', false);
+
+
+
+            $('#inputFechaEntrega').val('');
+
+
+            inputMontoPago.val('');
             inputSaldoPendiente.val('0.00');
+
+
+            $('textarea[name="observaciones"]').val('');
+
+            $('#opcion-no').prop('checked', true).trigger('change');
+
+
+            lastSelectedEspecieId = null;
+            lastUnitPrecio = null;
+
+            // Actualizar la interfaz
+            actualizarTablaItems();
+            actualizarSaldo();
         }
-    }
-    
-    // Carga de colores y variedades
-    $('#selectEspecie').on('change', function() {
-        const idEspecie = $(this).val();
-        const $selectColor = $('#selectColor');
-        const $selectVariedad = $('#selectVariedad');
-        
-        if (!idEspecie) {
-            $selectColor.prop('disabled', true).html('<option value="">Seleccione especie primero</option>');
-            $selectVariedad.prop('disabled', true).html('<option value="">Seleccione color primero</option>');
-            return;
-        }
-        
-        $selectColor.prop('disabled', true).html('<option value="">Cargando colores...</option>');
-        
-        $.ajax({
-            url: 'registro_venta.php',
-            type: 'GET',
-            dataType: 'json',
-            data: {
-                ajax_action: 'get_colores',
-                id_especie: idEspecie
-            },
-            success: function(data) {
-                if (data && data.length > 0) {
-                    let options = '<option value="">Seleccione color</option>';
-                    $.each(data, function(index, color) {
-                        options += '<option value="' + color.id_color + '">' + color.nombre_color + '</option>';
-                    });
-                    $selectColor.html(options).prop('disabled', false);
-                } else {
-                    $selectColor.html('<option value="">No hay colores disponibles</option>').prop('disabled', false);
-                }
+
+        // Carga de colores y variedades
+        $('#selectEspecie').on('change', function() {
+            const idEspecie = $(this).val();
+            const $selectColor = $('#selectColor');
+            const $selectVariedad = $('#selectVariedad');
+
+            // Comprueba si la especie no ha cambiado y si ya tenemos un precio guardado.
+            const $inputPrecio = $('#inputPrecio');
+            if (idEspecie === lastSelectedEspecieId && lastUnitPrecio !== null) {
+                $inputPrecio.val(lastUnitPrecio.toFixed(2));
+            } else {
+
+                $inputPrecio.val('');
+            }
+
+
+
+            if (!idEspecie) {
+                $selectColor.prop('disabled', true).html('<option value="">Seleccione especie primero</option>');
                 $selectVariedad.prop('disabled', true).html('<option value="">Seleccione color primero</option>');
-            },
-            error: function(xhr, status, error) {
-                console.error('Error al cargar colores:', error);
-                $selectColor.html('<option value="">Error al cargar colores</option>');
+                return;
             }
-        });
-    });
-    
-    $('#selectColor').on('change', function() {
-        const idColor = $(this).val();
-        const idEspecie = $('#selectEspecie').val();
-        const $selectVariedad = $('#selectVariedad');
-        
-        if (!idColor) {
-            $selectVariedad.prop('disabled', true).html('<option value="">Seleccione color primero</option>');
-            return;
-        }
-        
-        $selectVariedad.prop('disabled', true).html('<option value="">Cargando variedades...</option>');
-        
-        $.ajax({
-            url: 'registro_venta.php',
-            type: 'GET',
-            dataType: 'json',
-            data: {
-                ajax_action: 'get_variedades',
-                id_especie: idEspecie,
-                id_color: idColor
-            },
-            success: function(data) {
-                if (data && data.length > 0) {
-                    let options = '<option value="">Seleccione variedad</option>';
-                    $.each(data, function(index, variedad) {
-                        const texto = variedad.codigo ? variedad.nombre_variedad + ' (' + variedad.codigo + ')' : variedad.nombre_variedad;
-                        options += '<option value="' + variedad.id_variedad + '">' + texto + '</option>';
-                    });
-                    $selectVariedad.html(options).prop('disabled', false);
-                } else {
-                    $selectVariedad.html('<option value="">No hay variedades disponibles</option>').prop('disabled', false);
+
+            $selectColor.prop('disabled', true).html('<option value="">Cargando colores...</option>');
+
+            $.ajax({
+                url: 'registro_venta.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    ajax_action: 'get_colores',
+                    id_especie: idEspecie
+                },
+                success: function(data) {
+                    if (data && data.length > 0) {
+                        let options = '<option value="">Seleccione color</option>';
+                        $.each(data, function(index, color) {
+                            options += '<option value="' + color.id_color + '">' + color.nombre_color + '</option>';
+                        });
+
+                        $selectColor.html(options).prop('disabled', false).prop('required', true);
+                    } else {
+                        $selectColor.html('<option value="">No hay colores disponibles</option>').prop('disabled', false);
+                    }
+                    $selectVariedad.prop('disabled', true).html('<option value="">Seleccione color primero</option>');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al cargar colores:', error);
+                    $selectColor.html('<option value="">Error al cargar colores</option>');
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error al cargar variedades:', error);
-                $selectVariedad.html('<option value="">Error al cargar variedades</option>');
-            }
+            });
         });
-    });
-    
-    // Agregar items
-    $('#btnAgregarItem').on('click', function() {
-        const $especie = $('#selectEspecie');
-        const $color = $('#selectColor');
-        const $variedad = $('#selectVariedad');
-        const $cantidad = $('#inputCantidad');
-        const $precio = $('#inputPrecio');
-        
-        // Validaciones mejoradas
-        if (!$especie.val()) {
-            alert('Seleccione una especie');
-            $especie.focus();
-            return;
-        }
-        if (!$color.val()) {
-            alert('Seleccione un color');
-            $color.focus();
-            return;
-        }
-        if (!$variedad.val()) {
-            alert('Seleccione una variedad');
-            $variedad.focus();
-            return;
-        }
-        if (!$cantidad.val() || parseInt($cantidad.val()) <= 0) {
-            alert('Ingrese una cantidad válida (mayor a cero)');
-            $cantidad.focus();
-            return;
-        }
-        if (!$precio.val() || isNaN(parseFloat($precio.val()))) {
-            alert('Ingrese un precio válido');
-            $precio.focus();
-            return;
-        }
-        
-        const precioValue = parseFloat($precio.val());
-        if (precioValue <= 0) {
-            alert('El precio debe ser mayor a cero');
-            $precio.focus();
-            return;
-        }
-        
-        // Crear item
-        const item = {
-            id_variedad: $variedad.val(),
-            id_especie: $especie.val(),
-            id_color: $color.val(),
-            especie: $especie.find('option:selected').text(),
-            color: $color.find('option:selected').text(),
-            variedad: $variedad.find('option:selected').text(),
-            cantidad: parseInt($cantidad.val()),
-            precio_unitario: precioValue,
-            subtotal: precioValue * parseInt($cantidad.val())
-        };
-        
-        items.push(item);
-        actualizarTablaItems();
-        
-        // Resetear campos
-        $cantidad.val('1');
-        $precio.val('');
-        $precio.focus();
-    });
-    
-    // Actualizar tabla de items
-    function actualizarTablaItems() {
-        const $tbody = $('#tbodyItems');
-        $tbody.empty();
-        let total = 0;
-        
-        items.forEach((item, index) => {
-            total += item.subtotal;
-            $tbody.append(`
+
+        $('#selectColor').on('change', function() {
+            const idColor = $(this).val();
+            const idEspecie = $('#selectEspecie').val();
+            const $selectVariedad = $('#selectVariedad');
+
+            if (!idColor) {
+                $selectVariedad.prop('disabled', true).html('<option value="">Seleccione color primero</option>');
+                return;
+            }
+
+            $selectVariedad.prop('disabled', true).html('<option value="">Cargando variedades...</option>');
+
+            $.ajax({
+                url: 'registro_venta.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    ajax_action: 'get_variedades',
+                    id_especie: idEspecie,
+                    id_color: idColor
+                },
+                success: function(data) {
+                    if (data && data.length > 0) {
+                        let options = '<option value="">Seleccione variedad</option>';
+                        $.each(data, function(index, variedad) {
+                            const texto = variedad.codigo ? variedad.nombre_variedad + ' (' + variedad.codigo + ')' : variedad.nombre_variedad;
+                            options += '<option value="' + variedad.id_variedad + '">' + texto + '</option>';
+                        });
+                        $selectVariedad.html(options).prop('disabled', false).prop('required', true);
+                    } else {
+                        $selectVariedad.html('<option value="">No hay variedades disponibles</option>').prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al cargar variedades:', error);
+                    $selectVariedad.html('<option value="">Error al cargar variedades</option>');
+                }
+            });
+        });
+
+        // Agregar items
+        $('#btnAgregarItem').on('click', function() {
+            const $especie = $('#selectEspecie');
+            const $color = $('#selectColor');
+            const $variedad = $('#selectVariedad');
+            const $cantidad = $('#inputCantidad');
+            const $precio = $('#inputPrecio');
+
+
+            // Validaciones mejoradas
+            if (!$especie.val()) {
+                alert('Seleccione una especie');
+                $especie.focus();
+                return;
+            }
+            if (!$color.val()) {
+                alert('Seleccione un color');
+                $color.focus();
+                return;
+            }
+            if (!$variedad.val()) {
+                alert('Seleccione una variedad');
+                $variedad.focus();
+                return;
+            }
+            if (!$cantidad.val() || parseInt($cantidad.val()) <= 0) {
+                alert('Ingrese una cantidad válida (mayor a cero)');
+                $cantidad.focus();
+                return;
+            }
+            if (!$precio.val() || isNaN(parseFloat($precio.val()))) {
+                alert('Ingrese un precio válido');
+                $precio.focus();
+                return;
+            }
+
+            const precioValue = parseFloat($precio.val());
+            if (precioValue <= 0) {
+                alert('El precio debe ser mayor a cero');
+                $precio.focus();
+                return;
+            }
+
+            lastSelectedEspecieId = $especie.val();
+            lastUnitPrecio = precioValue;
+
+            // Crear item
+            const item = {
+                id_variedad: $variedad.val(),
+                id_especie: $especie.val(),
+                id_color: $color.val(),
+                especie: $especie.find('option:selected').text(),
+                color: $color.find('option:selected').text(),
+                variedad: $variedad.find('option:selected').text(),
+                cantidad: parseInt($cantidad.val()),
+                precio_unitario: precioValue,
+                subtotal: precioValue * parseInt($cantidad.val())
+            };
+
+            items.push(item);
+            actualizarTablaItems();
+
+            // Resetear campos
+            $cantidad.val('1');
+
+            $('#selectColor').focus();
+        });
+
+        // Actualizar tabla de items
+        function actualizarTablaItems() {
+            const $tbody = $('#tbodyItems');
+            const $tfoot = $('#tfootItems');
+
+            $tbody.empty();
+            $tfoot.empty();
+
+            let totalVenta = 0;
+            let totalCantidad = 0;
+
+            items.forEach((item, index) => {
+                totalVenta += item.subtotal;
+                totalCantidad += item.cantidad;
+
+                $tbody.append(`
                 <tr data-index="${index}">
                     <td>${item.especie}</td>
                     <td>${item.color}</td>
@@ -784,49 +920,67 @@ $(document).ready(function() {
                     </td>
                 </tr>
             `);
+            });
+
+
+            $tfoot.append(`
+            <tr>
+            <td colspan="3" class="text-end fw-bold">TOTAL UNIDADES:</td> 
+            
+            <td class="fw-bold">${totalCantidad}</td> 
+            
+            <td class="text-end fw-bold">TOTAL VENTA:</td> 
+            
+            <td class="fw-bold">$${totalVenta.toFixed(2)}</td> 
+            
+            <td></td>
+            
+            </tr>
+        `);
+
+
+            $('#totalVenta').data('venta-total', totalVenta);
+            $('#totalVenta').text(`$${totalVenta.toFixed(2)}`);
+            $('#itemsVenta').val(JSON.stringify(items));
+            actualizarSaldo();
+        }
+
+        // Eliminar items
+        $('#tbodyItems').on('click', '.btnEliminarItem', function() {
+            const index = $(this).closest('tr').data('index');
+            if (confirm('¿Eliminar este item?')) {
+                items.splice(index, 1);
+                actualizarTablaItems();
+            }
         });
-        
-        $('#totalVenta').text(`$${total.toFixed(2)}`);
-        $('#itemsVenta').val(JSON.stringify(items));
-        actualizarSaldo();
-    }
-    
-    // Eliminar items
-    $('#tbodyItems').on('click', '.btnEliminarItem', function() {
-        const index = $(this).closest('tr').data('index');
-        if (confirm('¿Eliminar este item?')) {
-            items.splice(index, 1);
-            actualizarTablaItems();
-        }
+
+        // Validar formulario
+        $('#ventaForm').on('submit', function(e) {
+            if (items.length === 0) {
+                e.preventDefault();
+                alert('Agregue al menos un producto');
+                return;
+            }
+
+            const total = parseFloat($('#totalVenta').text().replace('$', ''));
+            const monto = parseFloat(inputMontoPago.val()) || 0;
+
+            if (tipoPago.val() === 'contado' && monto !== total) {
+                e.preventDefault();
+                alert('El pago debe ser igual al total en ventas de contado');
+                return;
+            }
+
+            if (tipoPago.val() === 'credito' && monto > total) {
+                e.preventDefault();
+                alert('El anticipo no puede ser mayor al total');
+                return;
+            }
+        });
+
+        // Inicializar
+        tipoPago.trigger('change');
     });
-    
-    // Validar formulario
-    $('#ventaForm').on('submit', function(e) {
-        if (items.length === 0) {
-            e.preventDefault();
-            alert('Agregue al menos un producto');
-            return;
-        }
-        
-        const total = parseFloat($('#totalVenta').text().replace('$', ''));
-        const monto = parseFloat(inputMontoPago.val()) || 0;
-        
-        if (tipoPago.val() === 'contado' && monto !== total) {
-            e.preventDefault();
-            alert('El pago debe ser igual al total en ventas de contado');
-            return;
-        }
-        
-        if (tipoPago.val() === 'credito' && monto > total) {
-            e.preventDefault();
-            alert('El anticipo no puede ser mayor al total');
-            return;
-        }
-    });
-    
-    // Inicializar
-    tipoPago.trigger('change');
-});
 </script>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>

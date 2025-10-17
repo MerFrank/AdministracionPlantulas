@@ -1,10 +1,9 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -196,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $titulo = 'Editar Venta #' . $venta['id_notaPedido'];
 $ruta = "lista_ventas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 ?>
 

@@ -1,18 +1,19 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 require_once __DIR__ . '/../../includes/config.php';
 
-function safe_html($value) {
+function safe_html($value)
+{
     return $value !== null ? htmlspecialchars($value) : '';
 }
 
-function format_currency($value) {
+function format_currency($value)
+{
     return '$' . number_format($value, 2);
 }
 
@@ -117,7 +118,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     header('Content-Disposition: attachment; filename=movimientos_' . safe_html($cuenta['nombre']) . '.xls');
     header('Pragma: no-cache');
     header('Expires: 0');
-    
+
     echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
     echo '<head>';
     echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
@@ -133,45 +134,45 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     echo '</style>';
     echo '</head>';
     echo '<body>';
-    
+
     echo '<table>';
     echo '<tr><td colspan="6" class="empresa">Plantulas Agrodex S.C. de P de R.L. de C.V.</td></tr>';
     echo '<tr><td colspan="6" class="titulo">REPORTE DE MOVIMIENTOS BANCARIOS</td></tr>';
     echo '<tr><td colspan="6">&nbsp;</td></tr>';
-    
+
     // Información de la cuenta
     echo '<tr>';
     echo '<td colspan="2" class="label">Estado de Cuenta:</td>';
     echo '<td colspan="4">' . safe_html($cuenta['nombre']) . '</td>';
     echo '</tr>';
-    
+
     echo '<tr>';
     echo '<td colspan="2" class="label">Período:</td>';
     echo '<td colspan="4">Del ' . date('d/m/Y', strtotime($fecha_inicio)) . ' al ' . date('d/m/Y', strtotime($fecha_fin)) . '</td>';
     echo '</tr>';
-    
+
     echo '<tr>';
     echo '<td colspan="2" class="label">Banco:</td>';
     echo '<td colspan="4">' . safe_html($cuenta['banco']) . '</td>';
     echo '</tr>';
-    
+
     echo '<tr>';
     echo '<td colspan="2" class="label">Tipo de Cuenta:</td>';
     echo '<td colspan="4">' . safe_html($cuenta['tipo_cuenta']) . '</td>';
     echo '</tr>';
-    
+
     echo '<tr>';
     echo '<td colspan="2" class="label">Número de Cuenta:</td>';
     echo '<td colspan="4">' . safe_html($cuenta['numero']) . '</td>';
     echo '</tr>';
-    
+
     echo '<tr>';
     echo '<td colspan="2" class="label">Saldo Inicial:</td>';
     echo '<td colspan="4">' . format_currency($saldo_inicial_periodo) . '</td>';
     echo '</tr>';
-    
+
     echo '<tr><td colspan="6">&nbsp;</td></tr>';
-    
+
     // Encabezados de la tabla
     echo '<tr>';
     echo '<th>Fecha</th>';
@@ -181,7 +182,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     echo '<th>Saldo</th>';
     echo '<th>Método Pago</th>';
     echo '</tr>';
-    
+
     // Datos de movimientos
     if (empty($movimientos)) {
         echo '<tr><td colspan="6" style="text-align: center;">No hay movimientos en este período</td></tr>';
@@ -197,9 +198,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
             echo '</tr>';
         }
     }
-    
+
     echo '<tr><td colspan="6">&nbsp;</td></tr>';
-    
+
     // Totales
     echo '<tr class="total">';
     echo '<td colspan="2">Total Ingresos:</td>';
@@ -207,29 +208,31 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     echo '<td></td>';
     echo '<td colspan="2"></td>';
     echo '</tr>';
-    
+
     echo '<tr class="total">';
     echo '<td colspan="2">Total Egresos:</td>';
     echo '<td></td>';
     echo '<td class="egreso">' . format_currency($total_egresos) . '</td>';
     echo '<td colspan="2"></td>';
     echo '</tr>';
-    
+
     echo '<tr class="total">';
     echo '<td colspan="2">Saldo Final:</td>';
     echo '<td colspan="2"></td>';
     echo '<td>' . format_currency($saldo_final) . '</td>';
     echo '<td></td>';
     echo '</tr>';
-    
+
     echo '<tr><td colspan="6">&nbsp;</td></tr>';
     echo '<tr><td colspan="6" style="text-align: right; font-size: 10px;">Generado el ' . date('d/m/Y H:i:s') . '</td></tr>';
-    
+
     echo '</table>';
     echo '</body>';
     echo '</html>';
     exit;
 }
+$ruta = "editar_cuenta.php";
+$texto_boton = "Regresar";
 
 require __DIR__ . '/../../includes/header.php';
 ?>
@@ -239,7 +242,7 @@ require __DIR__ . '/../../includes/header.php';
         <div class="card-header bg-primary text-white">
             <h2><i class="bi bi-list-ul"></i> Movimientos de Cuenta: <?= safe_html($cuenta['nombre']) ?></h2>
         </div>
-        
+
         <div class="card-body">
             <?php if (isset($_SESSION['error_message'])): ?>
                 <div class="alert alert-danger alert-dismissible fade show">
@@ -248,79 +251,95 @@ require __DIR__ . '/../../includes/header.php';
                 </div>
                 <?php unset($_SESSION['error_message']); ?>
             <?php endif; ?>
-            
-            <form method="get" class="mb-4">
-                <input type="hidden" name="id" value="<?= $id_cuenta ?>">
-                
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
-                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
-                               value="<?= safe_html($fecha_inicio) ?>" required>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label for="fecha_fin" class="form-label">Fecha Fin</label>
-                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" 
-                               value="<?= safe_html($fecha_fin) ?>" required>
-                    </div>
-                    
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="bi bi-funnel"></i> Filtrar
-                        </button>
-                        
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="bi bi-download"></i> Exportar
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="generatePDF()"><i class="bi bi-file-earmark-pdf"></i> PDF</a></li>
-                                <li><a class="dropdown-item" href="?id=<?= $id_cuenta ?>&fecha_inicio=<?= $fecha_inicio ?>&fecha_fin=<?= $fecha_fin ?>&export=excel"><i class="bi bi-file-earmark-excel"></i> Excel</a></li>
-                            </ul>
+<form method="get" class="mb-4">
+    <input type="hidden" name="id" value="<?= $id_cuenta ?>">
+
+    <div class="row g-2">
+        
+        <div class="col-12 col-md-6"> 
+            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio"
+                value="<?= safe_html($fecha_inicio) ?>" required>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin"
+                value="<?= safe_html($fecha_fin) ?>" required>
+        </div>
+        
+        <div class="col-12 col-md-12 mt-3 d-flex justify-content-center justify-content-md-start"> 
+             <div class="btn-group w-100 w-md-auto">
+                <button type="submit" class="btn btn-primary me-2 rounded-3">
+                    <i class="bi bi-funnel roudend-3"></i> Filtrar
+                </button>
+
+                <button type="button" class="btn btn-success rounded-3 dropdown-toggle me-2" data-bs-toggle="dropdown">
+                    <i class="bi bi-download"></i> Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="generatePDF()"><i class="bi bi-file-earmark-pdf"></i> PDF</a></li>
+                    <li><a class="dropdown-item" href="?id=<?= $id_cuenta ?>&fecha_inicio=<?= $fecha_inicio ?>&fecha_fin=<?= $fecha_fin ?>&export=excel"><i class="bi bi-file-earmark-excel"></i> Excel</a></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</form>
+            <div class="row mb-4 g-4 justify-content-center">
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-info h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-center text-center">
+                                <div>
+                                    <h3 class="h5 mb-1 text-muted">Saldo Inicial</h3>
+                                    <p class="fs-3 mb-0 text-dark"><?= format_currency($saldo_inicial_periodo) ?></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </form>
-            
-            <div class="row mb-4">
+
                 <div class="col-md-3">
-                    <div class="card text-white bg-info mb-3">
-                        <div class="card-header">Saldo Inicial</div>
+                    <div class="card shadow-sm border-success h-100">
                         <div class="card-body">
-                            <h5 class="card-title"><?= format_currency($saldo_inicial_periodo) ?></h5>
+                            <div class="d-flex align-items-center justify-content-center text-center">
+                                <div>
+                                    <h3 class="h5 mb-1 text-muted">Total Ingresos</h3>
+                                    <p class="fs-3 mb-0 text-dark"><?= format_currency($total_ingresos) ?></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-3">
-                    <div class="card text-white bg-success mb-3">
-                        <div class="card-header">Total Ingresos</div>
+                    <div class="card shadow-sm border-danger h-100">
                         <div class="card-body">
-                            <h5 class="card-title"><?= format_currency($total_ingresos) ?></h5>
+                            <div class="d-flex align-items-center justify-content-center text-center">
+                                <div>
+                                    <h3 class="h5 mb-1 text-muted">Total Egresos</h3>
+                                    <p class="fs-3 mb-0 text-dark"><?= format_currency($total_egresos) ?></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
                 <div class="col-md-3">
-                    <div class="card text-white bg-danger mb-3">
-                        <div class="card-header">Total Egresos</div>
+                    <div class="card shadow-sm border-primary h-100">
                         <div class="card-body">
-                            <h5 class="card-title"><?= format_currency($total_egresos) ?></h5>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card text-white bg-primary mb-3">
-                        <div class="card-header">Saldo Final</div>
-                        <div class="card-body">
-                            <h4 class="card-title"><?= format_currency($saldo_final) ?></h4>
+                            <div class="d-flex align-items-center justify-content-center text-center">
+                                <div>
+                                    <h3 class="h5 mb-1 text-muted">Saldo Final</h3>
+
+                                    <p class="fs-3 mb-0 text-dark"><?= format_currency($saldo_final) ?></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="table-responsive">
                 <table class="table table-striped table-hover table-sm">
                     <thead class="table-dark">
@@ -340,21 +359,21 @@ require __DIR__ . '/../../includes/header.php';
                             </tr>
                         <?php else: ?>
                             <?php foreach ($movimientos as $mov): ?>
-                            <tr>
-                                <td><?= date('d/m/Y', strtotime($mov['fecha'])) ?></td>
-                                <td><?= safe_html($mov['concepto']) ?></td>
-                                <td class="text-success"><?= ($mov['ingreso'] > 0 ? format_currency($mov['ingreso']) : '') ?></td>
-                                <td class="text-danger"><?= ($mov['egreso'] > 0 ? format_currency($mov['egreso']) : '') ?></td>
-                                <td><?= format_currency($mov['saldo_acumulado']) ?></td>
-                                <td><?= safe_html($mov['metodo_pago']) ?></td>
-                            </tr>
+                                <tr>
+                                    <td><?= date('d/m/Y', strtotime($mov['fecha'])) ?></td>
+                                    <td><?= safe_html($mov['concepto']) ?></td>
+                                    <td class="text-success"><?= ($mov['ingreso'] > 0 ? format_currency($mov['ingreso']) : '') ?></td>
+                                    <td class="text-danger"><?= ($mov['egreso'] > 0 ? format_currency($mov['egreso']) : '') ?></td>
+                                    <td><?= format_currency($mov['saldo_acumulado']) ?></td>
+                                    <td><?= safe_html($mov['metodo_pago']) ?></td>
+                                </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
         </div>
-        
+
         <div class="card-footer">
             <a href="lista_cuentas.php" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Volver a Cuentas
@@ -369,7 +388,7 @@ require __DIR__ . '/../../includes/header.php';
         <h1 style="font-size: 12px; font-weight: bold; margin: 0;">Plantulas Agrodex S.C. de P de R.L. de C.V.</h1>
         <h2 style="font-size: 11px; margin: 3px 0 0 0;">REPORTE DE MOVIMIENTOS BANCARIOS</h2>
     </div>
-    
+
     <table style="width: 100%; margin-bottom: 5px; font-size: 9px; margin-right: 10mm;">
         <tr>
             <td style="width: 20%; font-weight: bold;">Estado de Cuenta:</td>
@@ -390,7 +409,7 @@ require __DIR__ . '/../../includes/header.php';
             <td><?= format_currency($saldo_inicial_periodo) ?></td>
         </tr>
     </table>
-    
+
     <table style="width: 95%; border-collapse: collapse; margin-top: 5px; font-size: 8px; margin-right: 10mm;">
         <thead>
             <tr>
@@ -405,14 +424,14 @@ require __DIR__ . '/../../includes/header.php';
         <tbody>
             <?php if (!empty($movimientos)): ?>
                 <?php foreach ($movimientos as $mov): ?>
-                <tr>
-                    <td style="border: 1px solid #000; padding: 2px;"><?= date('d/m/Y', strtotime($mov['fecha'])) ?></td>
-                    <td style="border: 1px solid #000; padding: 2px;"><?= safe_html($mov['concepto']) ?></td>
-                    <td style="border: 1px solid #000; padding: 2px; color: green;"><?= ($mov['ingreso'] > 0 ? format_currency($mov['ingreso']) : '') ?></td>
-                    <td style="border: 1px solid #000; padding: 2px; color: red;"><?= ($mov['egreso'] > 0 ? format_currency($mov['egreso']) : '') ?></td>
-                    <td style="border: 1px solid #000; padding: 2px;"><?= format_currency($mov['saldo_acumulado']) ?></td>
-                    <td style="border: 1px solid #000; padding: 2px;"><?= safe_html($mov['metodo_pago']) ?></td>
-                </tr>
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 2px;"><?= date('d/m/Y', strtotime($mov['fecha'])) ?></td>
+                        <td style="border: 1px solid #000; padding: 2px;"><?= safe_html($mov['concepto']) ?></td>
+                        <td style="border: 1px solid #000; padding: 2px; color: green;"><?= ($mov['ingreso'] > 0 ? format_currency($mov['ingreso']) : '') ?></td>
+                        <td style="border: 1px solid #000; padding: 2px; color: red;"><?= ($mov['egreso'] > 0 ? format_currency($mov['egreso']) : '') ?></td>
+                        <td style="border: 1px solid #000; padding: 2px;"><?= format_currency($mov['saldo_acumulado']) ?></td>
+                        <td style="border: 1px solid #000; padding: 2px;"><?= safe_html($mov['metodo_pago']) ?></td>
+                    </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
@@ -421,7 +440,7 @@ require __DIR__ . '/../../includes/header.php';
             <?php endif; ?>
         </tbody>
     </table>
-    
+
     <div style="margin-top: 5px; border-top: 1px solid #000; padding-top: 3px; font-size: 9px; margin-right: 10mm;">
         <table style="width: 95%;">
             <tr>
@@ -436,7 +455,7 @@ require __DIR__ . '/../../includes/header.php';
             </tr>
         </table>
     </div>
-    
+
     <div style="text-align: right; margin-top: 5px; font-size: 8px; margin-right: 10mm;">
         Generado el <?= date('d/m/Y H:i:s') ?>
     </div>
@@ -446,50 +465,53 @@ require __DIR__ . '/../../includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
-function generatePDF() {
-    // Crear un nuevo div para el PDF
-    const pdfContainer = document.createElement('div');
-    pdfContainer.style.width = '180mm';
-    pdfContainer.style.padding = '5mm 10mm 5mm 5mm'; // [top, right, bottom, left]
-    
-    // Clonar el contenido del pdf-content
-    const content = document.getElementById('pdf-content').cloneNode(true);
-    content.style.position = 'relative';
-    content.style.left = '0';
-    content.style.visibility = 'visible';
-    
-    // Agregar el contenido clonado al nuevo contenedor
-    pdfContainer.appendChild(content);
-    
-    // Agregar temporalmente al cuerpo del documento
-    document.body.appendChild(pdfContainer);
-    
-    const opt = {
-        margin: [5, 10, 5, 5], // [top, right, bottom, left] - Margen derecho de 10mm
-        filename: 'movimientos_<?= safe_html($cuenta["nombre"]) ?>.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2,
-            logging: true,
-            useCORS: true,
-            scrollX: 0,
-            scrollY: 0,
-            width: 180 * 3.78 // Convertir mm a px (1mm ≈ 3.78px)
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait',
-            compress: true
-        }
-    };
+    function generatePDF() {
+        // Crear un nuevo div para el PDF
+        const pdfContainer = document.createElement('div');
+        pdfContainer.style.width = '180mm';
+        pdfContainer.style.padding = '5mm 10mm 5mm 5mm'; // [top, right, bottom, left]
 
-    // Generar el PDF
-    html2pdf().set(opt).from(pdfContainer).save().then(() => {
-        // Eliminar el contenedor temporal después de generar el PDF
-        document.body.removeChild(pdfContainer);
-    });
-}
+        // Clonar el contenido del pdf-content
+        const content = document.getElementById('pdf-content').cloneNode(true);
+        content.style.position = 'relative';
+        content.style.left = '0';
+        content.style.visibility = 'visible';
+
+        // Agregar el contenido clonado al nuevo contenedor
+        pdfContainer.appendChild(content);
+
+        // Agregar temporalmente al cuerpo del documento
+        document.body.appendChild(pdfContainer);
+
+        const opt = {
+            margin: [5, 10, 5, 5], // [top, right, bottom, left] - Margen derecho de 10mm
+            filename: 'movimientos_<?= safe_html($cuenta["nombre"]) ?>.pdf',
+            image: {
+                type: 'jpeg',
+                quality: 0.98
+            },
+            html2canvas: {
+                scale: 2,
+                logging: true,
+                useCORS: true,
+                scrollX: 0,
+                scrollY: 0,
+                width: 180 * 3.78 // Convertir mm a px (1mm ≈ 3.78px)
+            },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait',
+                compress: true
+            }
+        };
+
+        // Generar el PDF
+        html2pdf().set(opt).from(pdfContainer).save().then(() => {
+            // Eliminar el contenedor temporal después de generar el PDF
+            document.body.removeChild(pdfContainer);
+        });
+    }
 </script>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>

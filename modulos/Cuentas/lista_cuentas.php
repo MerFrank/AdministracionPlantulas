@@ -1,12 +1,10 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Configuración para mostrar todos los errores (útil durante desarrollo)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Inicia la sesión si no está activa
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 // Incluye el archivo de configuración de la base de datos
 require_once(__DIR__ . '/../../includes/config.php');
@@ -36,7 +34,7 @@ $cuentas = $con->query("
 $titulo = 'Cuentas Bancarias';
 $encabezado = 'Listado de Cuentas Bancarias';
 $ruta = "dashboard_cuentas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 // Incluye el archivo de cabecera (header) del sitio
 require __DIR__ . '/../../includes/header.php';
 ?>
@@ -106,9 +104,9 @@ require __DIR__ . '/../../includes/header.php';
                                 <td><?= $cuenta['ultimo_movimiento'] ? date('d/m/Y', strtotime($cuenta['ultimo_movimiento'])) : 'N/A' ?></td>
                                 <td>
                                      <!-- Contenedor flex para los botones de acción -->
-                                      <div class="d-flex gap-2">
+                                      <div class="btn-group">
                                      <!-- Grupo de botones -->
-                                    <div class="btn-group">
+                                   
                                         <!-- Botón Editar (color amarillo/accent) -->
                                         <a href="editar_cuenta.php?id=<?= $cuenta['id_cuenta'] ?>" class="btn btn-sm text-white" 
                                style="background-color: var(--color-accent); border-color: var(--color-accent);">
@@ -125,9 +123,9 @@ require __DIR__ . '/../../includes/header.php';
                                         <a href="movimientos_cuenta.php?id=<?= $cuenta['id_cuenta'] ?>" 
                                                class="btn btn-sm text-white" 
                                                 style="background-color: var(--color-secondary); border-color: var(--color-secondary);">
-                                              <i class="bi bi-list-ul"></i> Movimientos
+                                              <i class="bi bi"></i> Movimientos
                                         </a>
-                                    </div>
+                                    
                                 </td>
                             </tr>
                             <?php endforeach; ?>

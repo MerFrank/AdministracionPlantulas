@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Variables para el encabezado
 $titulo = "Reporte General";
 $encabezado = "Ingresos y Egresos";

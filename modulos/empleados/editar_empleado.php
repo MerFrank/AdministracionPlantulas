@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // 1. Cargar configuración y conexión a la base de datos
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -108,6 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $titulo = "Editar Empleado";
 $encabezado = "Editar Información de Empleado";
 $subtitulo = "Actualice la información del empleado seleccionado";
+$ruta = "lista_empleados.php";
+$texto_boton = "Regresar";
+
 
 // Incluir cabecera
 require_once __DIR__ . '/../../includes/header.php';

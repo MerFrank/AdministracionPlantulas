@@ -1,10 +1,9 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -34,7 +33,9 @@ $ventas_pendientes = $con->query("
     ORDER BY np.id_notaPedido DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// Procesar formulario de abono
+// Capturar el ID de venta para autoselección
+ $id_venta_auto = isset($_GET['id_venta_auto']) ? (int)$_GET['id_venta_auto'] : null; 
+ // Procesar formulario de abono $error 
 $error = '';
 $success = '';
 
@@ -62,6 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Seleccione una cuenta bancaria");
         }
         $id_cuenta = (int)$_POST['id_cuenta'];
+
+        #$ID_Operador = $_SESSION['ID_Operador'] ?? null;
         
         // MODIFICACIÓN: Consulta corregida para incluir diferentes formatos de tipo de pago
         // Obtener información de la venta
@@ -105,16 +108,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $con->prepare("
             INSERT INTO pagosventas (
                 id_notaPedido, monto, fecha, metodo_pago, 
-                referencia, observaciones, id_empleado, id_cuenta
+                referencia, observaciones, id_operador, id_cuenta
             ) VALUES (
                 ?, ?, NOW(), ?, ?, ?, ?, ?
             )
         ");
         
         // MODIFICACIÓN: Asegurar que tenemos un id_empleado válido
-        $id_empleado = $_SESSION['id_empleado'] ?? 0;
-        if ($id_empleado <= 0) {
-            $id_empleado = null; // o un valor por defecto si es necesario
+        $ID_Operador = $_SESSION['ID_Operador'] ?? 0;
+        if ($ID_Operador <= 0) {
+            $ID_Operador = null; // o un valor por defecto si es necesario
         }
         
         $stmt->execute([
@@ -123,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $metodo_pago,
             'Abono a cuenta', // referencia
             htmlspecialchars(trim($_POST['comentarios'] ?? '')),
-            $id_empleado,
+            $ID_Operador,
             $id_cuenta 
         ]);
         
@@ -149,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $titulo = 'Registrar Abono';
 $ruta = "dashboard_ventas.php";
-$texto_boton = "";
+$texto_boton = "Regresar";
 require __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -183,14 +186,14 @@ require __DIR__ . '/../../includes/header.php';
                             <label class="form-label">Venta a crédito <span class="text-danger">*</span></label>
                             <select class="form-select" name="id_notaPedido" id="selectVenta" required>
                                 <option value="">Seleccione una venta...</option>
-                                <?php foreach ($ventas_pendientes as $venta): ?>
-                                    <option value="<?= $venta['id_notaPedido'] ?>" 
-                                        data-saldo="<?= $venta['saldo_pendiente'] ?>">
-                                        #<?= $venta['id_notaPedido'] ?> - <?= htmlspecialchars($venta['nombre_Cliente']) ?> 
-                                        (Saldo: $<?= number_format($venta['saldo_pendiente'], 2) ?>)
-                                        - <?= $venta['tipo_pago'] ?> (<?= $venta['estado'] ?>)
-                                    </option>
-                                <?php endforeach; ?>
+                                <?php foreach ($ventas_pendientes as $venta): ?> <?php
+                                 // Lógica de preselección
+                                  $selected = ''; if ($id_venta_auto === $venta['id_notaPedido'])
+                                   { $selected = 'selected'; } ?> <option value="<?= $venta['id_notaPedido'] ?>" data-saldo="<?= $venta['saldo_pendiente'] ?>"
+                                    <?= $selected ?>> #<?= $venta['id_notaPedido'] ?> 
+                                  <?= htmlspecialchars($venta['nombre_Cliente']) ?> 
+                                </option>
+                                 <?php endforeach; ?>
                             </select>
                         </div>
                     </div>

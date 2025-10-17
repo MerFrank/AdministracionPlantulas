@@ -1,4 +1,4 @@
-
+<?php require_once(__DIR__ . '/../../includes/validacion_session.php');?>
 <table class="table table-striped table-hover mt-3">
     <thead>
         <tr>
@@ -67,7 +67,7 @@
                             <!-- Botón para editar al empleado -->
                             
                                 <a href="editar_empleado.php?id_empleado=<?= $empleado['id_empleado'] ?>" 
-                                   class="btn btn-sm text-white" 
+                                   class="btn btn-sm btn-primary" 
                                    style="background-color: var(--color-accent); border-color: var(--color-accent);"
                                    title="Editar">
                                     <i class="bi bi-pencil"></i> <!-- Ícono de lápiz -->
@@ -75,7 +75,7 @@
 
                                 <!-- Botón para eliminar al empleado, con confirmación -->
                                 <a href="eliminar_empleado.php?id_empleado=<?= $empleado['id_empleado'] ?>" 
-                                   class="btn btn-sm text-white" 
+                                   class="btn btn-sm btn-primary" 
                                    style="background-color: var(--color-danger); border-color: var(--color-danger);" 
                                    title="Eliminar"
                                    onclick="return confirm('¿Estás seguro de eliminar este empleado?')">
