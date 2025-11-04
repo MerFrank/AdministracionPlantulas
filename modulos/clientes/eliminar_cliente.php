@@ -1,12 +1,9 @@
 <?php
+
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Configuración de errores
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-// Iniciar sesión para mensajes flash
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 // Incluir archivos necesarios
 require_once __DIR__ . '/../../includes/config.php';

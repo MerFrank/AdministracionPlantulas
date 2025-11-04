@@ -174,7 +174,9 @@ main {
   background-color: #f7dfef;
   border-radius: var(--border-radius);
   padding: 0.5rem 0;
-  box-shadow: 0 4px 8px rgba(5, 124, 204, 0.897);
+  box-shadow: 0 4px 8px rgba(9, 108, 68, 0.897);
+  left: auto !important;
+  right: 0 !important;
 }
 
 /* Estilo de las opciones del menú */
@@ -182,11 +184,14 @@ main {
   color: #000000b9;
   font-weight: bold;
   transition: background-color 0.2s ease-in-out;
+
 }
+
+
 
 /* Estilo de las opciones del menú al pasar el cursor */
 .dropdown-item:hover {
-  background-color: #27a3d4;
+  background-color: #579353;
   color: var(--color-dark);
 }
 

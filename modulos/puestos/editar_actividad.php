@@ -1,11 +1,7 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 require_once __DIR__ . '/../../includes/config.php';
 
-// Verificar permisos si es necesario
-// if (!isset($_SESSION['usuario_id'])) {
-//     header('Location: /login.php');
-//     exit;
-// }
 
 // Obtener ID de la actividad a editar
 $id_actividad = isset($_GET['id_actividad']) ? (int)$_GET['id_actividad'] : 0;
@@ -164,7 +160,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             <!-- Botones -->
                             <div class="col-12">
                                 <div class="d-flex justify-content-end">
-                                    <a href="lista_actividades.php" class="btn btn-secondary">
+                                    <a href="actividades_extras.php" class="btn btn-secondary">
                                         <i class="bi bi-arrow-left"></i> Cancelar
                                     </a>
                                     

@@ -1,4 +1,4 @@
-
+<?php require_once(__DIR__ . '/../../includes/validacion_session.php');?>
 <table class="table table-striped table-hover mt-3">
     <thead>
         <tr>

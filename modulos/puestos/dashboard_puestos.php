@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Incluye el archivo de configuración para la conexión a la base de datos 
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -140,8 +141,8 @@ require_once __DIR__ . '/../../includes/header.php';
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                            <div class="bg-teal bg-opacity-10 p-3 rounded me-3">
-                                <i class="bi bi-bookmark-plus text-teal fs-2"></i>
+                            <div class="bg-dark bg-opacity-10 p-3 rounded me-3">
+                                <i class="bi bi-bookmark-plus text-dark fs-2"></i>
                             </div>
                             <h3 class="h5 mb-0">Actividades extras</h3>
                         </div>
@@ -158,8 +159,8 @@ require_once __DIR__ . '/../../includes/header.php';
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                            <div class="bg-teal bg-opacity-10 p-3 rounded me-3">
-                                <i class="bi bi-person-vcard text-teal fs-2"></i>
+                            <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
+                                <i class="bi bi-person-vcard text-danger fs-2"></i>
                             </div>
                             <h3 class="h5 mb-0">Listado de empleados con su puesto</h3>
                         </div>

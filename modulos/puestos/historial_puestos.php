@@ -1,11 +1,8 @@
 <?php
-
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 require_once __DIR__ . '/../../includes/config.php';
 
-// Verificar permisos
-// if (function_exists('verificarRol')) {
-//     verificarRol('admin');
-// }
+
 
 // Obtener ID del empleado
 $id_empleado = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -59,7 +56,7 @@ $titulo = "Puestos";
 $encabezado = "Historial de Puestos";
 $subtitulo = "Historial de puestos para: " . htmlspecialchars($empleado['nombre'] . ' ' . $empleado['apellido_paterno']);
 $active_page = "puestos";
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "dashboard_puestos.php";
 require_once __DIR__ . '/../../includes/header.php';
 

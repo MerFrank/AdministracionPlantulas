@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/validacion_session.php');
 // Incluye el archivo de configuración y la clase de base de datos.
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -35,7 +36,7 @@ try {
 // Incluye el encabezado de la página.
 
 //Botón
-$texto_boton = "";
+$texto_boton = "Regresar";
 $ruta = "dashboard_puestos.php";
 
 require_once __DIR__ . '/../../includes/header.php';

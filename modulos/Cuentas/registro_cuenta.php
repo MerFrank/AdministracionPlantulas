@@ -1,4 +1,7 @@
 <?php
+
+require_once(__DIR__ . '/../../includes/validacion_session.php');
+
 // Incluye el archivo de configuración que contiene constantes y configuraciones de la base de datos
 require_once __DIR__ . '/../../includes/config.php';
 
@@ -21,7 +24,7 @@ try {
 $titulo = 'Registrar Cuenta Bancaria';
 $encabezado = 'Registro de Nueva Cuenta';
 $ruta = "dashboard_cuentas.php"; // Ruta a donde redirige el botón Volver
-$texto_boton = "Volver"; // Texto del botón Volver
+$texto_boton = "Regresar"; // Texto del botón Volver
 
 // Genera un token CSRF para protección contra ataques de falsificación de solicitudes
 if (empty($_SESSION['csrf_token'])) {
