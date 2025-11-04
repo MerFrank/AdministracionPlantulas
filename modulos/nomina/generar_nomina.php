@@ -38,7 +38,7 @@ $detalleDias = [];
 $nominaCompleta = [];
 
 // Lista de empleados a excluir del reporte
-$empleadosExcluir = ['16', '17'];
+$empleadosExcluir = ['16'];
 
 // Configuración
 $jornadaCompletaHoras = 8;
@@ -126,7 +126,7 @@ function calcularHorasTrabajadas($cadenaHoras) {
 
 function obtenerInformacionEmpleado($id_checador, $pdo) {
     try {
-        // Consulta corregida - sin referencia a tabla 'actividades'
+        
         $stmt = $pdo->prepare("
             SELECT 
                 e.id_empleado,
@@ -136,6 +136,7 @@ function obtenerInformacionEmpleado($id_checador, $pdo) {
                 ep.hora_salida,
                 ep.dias_laborales,
                 p.nombre as puesto,
+                p.nivel_jerarquico,
                 COALESCE(SUM(ea.pago_calculado), 0) as pago_actividades
             FROM empleados e
             LEFT JOIN empleado_puesto ep ON e.id_empleado = ep.id_empleado AND ep.fecha_fin IS NULL
@@ -156,10 +157,10 @@ function obtenerInformacionEmpleado($id_checador, $pdo) {
         return $result ?: false;
         
     } catch (PDOException $e) {
-        error_log("Error PDO en obtenerInformacionEmpleado: " . $e->getMessage());
+        error_log("Error PDO en obtener Informacion Empleado: " . $e->getMessage());
         return false;
     } catch (Exception $e) {
-        error_log("Error general en obtenerInformacionEmpleado: " . $e->getMessage());
+        error_log("Error general en obtener Informacion Empleado: " . $e->getMessage());
         return false;
     }
 }
@@ -174,7 +175,7 @@ function obtenerActividadesExtras($pdo){
             FROM actividades_extras
             WHERE activo = 1
             ORDER BY nombre ASC
-            ");
+        ");
         if (!$stmt) {
             throw new Exception("Error preparando consulta: " . implode(", ", $pdo->errorInfo()));
         }
@@ -185,10 +186,37 @@ function obtenerActividadesExtras($pdo){
         return $resultados ?: [];  
 
     } catch (PDOException $e) {
-        error_log("Error al actividades extras: " . $e->getMessage());
-        return false;
+        error_log("Error al obtener actividades extras: " . $e->getMessage());
+        return [];
     }
 }
+
+// NUEVA FUNCIÓN: Obtener actividades extras para gerentes generales
+function obtenerActividadesExtrasGerente($pdo, $id_empleado) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 
+                ae.id_actividad,
+                ae.nombre,
+                ae.pago_extra,
+                eag.cantidad,
+                (ae.pago_extra * eag.cantidad) as total_pago
+            FROM empleado_actividades_gerente eag
+            INNER JOIN actividades_extras ae ON eag.id_actividad = ae.id_actividad
+            WHERE eag.id_empleado = ? AND eag.activo = 1
+        ");
+        
+        $stmt->execute([$id_empleado]);
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        return $resultados ?: [];
+        
+    } catch (PDOException $e) {
+        error_log("Error al obtener actividades extras de gerente: " . $e->getMessage());
+        return [];
+    }
+}
+
 $actividadesExtras = obtenerActividadesExtras($pdo);
 
 // Inicializar variables para actividades
@@ -329,7 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // CALCULAR NÓMINA COMPLETA
+            // CALCULAR NÓMINA COMPLETA - CÓDIGO MEJORADO
             if (!empty($horasPorEmpleado)) {
                 foreach ($horasPorEmpleado as $id_checador => $totalHoras) {
                     if (in_array($id_checador, $empleadosExcluir)) {
@@ -346,48 +374,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         continue;
                     }
 
+                    // NUEVA LÓGICA: Verificar si es gerente general
+                    $esGerenteGeneral = ($infoEmpleado['nivel_jerarquico'] === 'gerente_general');
+                    
                     // Cálculos de nómina
                     $sueldoDiario = floatval($infoEmpleado['sueldo_diario'] ?? 0);
-                    $valorHora = $sueldoDiario > 0 ? $sueldoDiario / $jornadaCompletaHoras : 0;
-                    $valorMinuto = $valorHora > 0 ? $valorHora / 60 : 0;
                     
-                    $diasTrabajados = 5 - ($clasificacionEmpleados[$id_checador]['dias_sin_registro'] ?? 5);
-                    $sueldoBase = $sueldoDiario * $diasTrabajados;
+                    // LÓGICA CORREGIDA: Diferente cálculo según puesto
+                    if ($esGerenteGeneral) {
+                        // Para gerente general: contar los días en dias_laborales
+                        $diasLaboralesStr = $infoEmpleado['dias_laborales'] ?? '';
+                        $diasArray = explode(',', $diasLaboralesStr);
+                        $diasArray = array_filter(array_map('trim', $diasArray)); // Limpiar y quitar vacíos
+                        $cantidadDiasLaborales = count($diasArray);
+                        // Asegurar que siempre tenga un valor
+                        if ($cantidadDiasLaborales === 0) {
+                            $cantidadDiasLaborales = 5; // Valor por defecto
+                        }
+                        
+                        $diasTrabajados = $cantidadDiasLaborales; // Usamos la cantidad de días laborales
+                        $sueldoBase = $sueldoDiario * $cantidadDiasLaborales;
+                        $descuentoRegistros = 0; // Sin descuentos por registros
+                        $diasSin4Registros = 0; // No aplica para gerente general
+                        
+                        // NUEVO: Obtener actividades extras específicas para gerente general
+                        $actividadesGerente = obtenerActividadesExtrasGerente($pdo, $infoEmpleado['id_empleado']);
+                        $pagoActividadesGerente = 0;
+                        foreach ($actividadesGerente as $actividad) {
+                            $pagoActividadesGerente += floatval($actividad['total_pago']);
+                        }
+                        
+                    } else {
+                        // Para empleados normales: cálculo actual basado en asistencia
+                        $diasTrabajados = 5 - ($clasificacionEmpleados[$id_checador]['dias_sin_registro'] ?? 5);
+                        $sueldoBase = $sueldoDiario * $diasTrabajados;
+                        
+                        // Calcular descuento por registros incompletos
+                        $diasSin4Registros = $clasificacionEmpleados[$id_checador]['turnos_simples'] + 
+                                            $clasificacionEmpleados[$id_checador]['registros_incompletos'] + 
+                                            $clasificacionEmpleados[$id_checador]['otros_registros'];
+                        $descuentoRegistros = $diasSin4Registros * $descuentoRegistrosIncompletos;
+                        $pagoActividadesGerente = 0; // No aplica para empleados normales
+                    }
                     
-                    // Calcular descuentos por horarios
-                    $descuentosHorarios = 0;
-
-                    // Calcular descuento por registros incompletos
-                    $diasSin4Registros = $clasificacionEmpleados[$id_checador]['turnos_simples'] + 
-                                        $clasificacionEmpleados[$id_checador]['registros_incompletos'] + 
-                                        $clasificacionEmpleados[$id_checador]['otros_registros'];
-                    $descuentoRegistros = $diasSin4Registros * $descuentoRegistrosIncompletos;
-                    
-                    // Pago por actividades (de BD)
+                    // Pago por actividades (de BD) - para empleados normales
                     $pagoActividades = floatval($infoEmpleado['pago_actividades'] ?? 0);
                     
                     // Pago por actividades seleccionadas manualmente
                     $pagoActividadesSeleccionadas = $_SESSION['actividades_empleado'][$id_checador]['total'] ?? 0;
                     
-                    // Total 
-                    $totalPagar = $sueldoBase + $pagoActividadesSeleccionadas - $descuentoRegistros;
+                    // Total CORREGIDO - incluir pago de actividades según el tipo de empleado
+                    if ($esGerenteGeneral) {
+                        // Para gerente: sueldo base + actividades de gerente + actividades seleccionadas
+                        $totalPagar = $sueldoBase + $pagoActividadesGerente + $pagoActividadesSeleccionadas;
+                    } else {
+                        // Para empleados normales: sueldo base + actividades BD + actividades seleccionadas - descuentos
+                        $totalPagar = $sueldoBase + $pagoActividades + $pagoActividadesSeleccionadas - $descuentoRegistros;
+                    }
 
                     $nominaCompleta[$id_checador] = [
                         'nombre_completo' => $infoEmpleado['nombre_completo'],
                         'puesto' => $infoEmpleado['puesto'] ?? 'No asignado',
+                        'nivel_jerarquico' => $infoEmpleado['nivel_jerarquico'] ?? 'normal',
                         'sueldo_diario' => $sueldoDiario,
                         'dias_trabajados' => $diasTrabajados,
+                        'dias_laborales' => $infoEmpleado['dias_laborales'] ?? '',
+                        'cantidad_dias_laborales' => $cantidadDiasLaborales ?? $diasTrabajados,
                         'sueldo_base' => $sueldoBase,
+                        'pago_actividades_bd' => $pagoActividades,
+                        'pago_actividades_gerente' => $pagoActividadesGerente,
                         'pago_actividades_seleccionadas' => $pagoActividadesSeleccionadas,
                         'descuentos_horarios' => 0,
                         'descuento_registros' => $descuentoRegistros,
                         'total_pagar' => $totalPagar,
                         'horario_esperado' => ($infoEmpleado['hora_entrada'] ?? '--:--') . ' - ' . ($infoEmpleado['hora_salida'] ?? '--:--'),
-                        'dias_sin_4_registros' => $diasSin4Registros
+                        'dias_sin_4_registros' => $diasSin4Registros ?? 0,
+                        'es_nivel_jerarquico' => $esGerenteGeneral, // Cambiado a 'es_nivel_jerarquico'
+                        'actividades_gerente' => $actividadesGerente ?? []
                     ];
 
-                    // Acumular totales generales
+                    // Acumular totales generales (actualizado para incluir actividades de gerente)
                     $totalGeneralSueldoBase += $sueldoBase;
+                    $totalGeneralActividadesBD += $pagoActividades + $pagoActividadesGerente; // Incluir ambas
                     $totalGeneralActividadesSeleccionadas += $pagoActividadesSeleccionadas;
                     $totalGeneralDescuentos += $descuentoRegistros;
                     $totalGeneralPagar += $totalPagar;
@@ -416,13 +484,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['condonaciones'])) {
-    $_SESSION['condonaciones'] = $_POST['condonaciones'];
-}
-
-// Al calcular la nómina, verificar si hay condonaciones guardadas
-$condonaciones = $_SESSION['condonaciones'] ?? [];
 
 $titulo = "Generar Nómina";
 $encabezado = "Generar Nómina";
@@ -681,127 +742,167 @@ require_once __DIR__ . '/../../includes/header.php';
             
             <div class="table-responsive-nomina">
                 <table class="table-nomina">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Puesto</th>
-                        <th>Sueldo Diario</th>
-                        <th>Días Trab.</th>
-                        <th>Sueldo Base</th>
-                        <th style="min-width: 250px;">Actividades Extras</th>
-                        <th>Días sin 4 reg.</th>
-                        <th>Días a Condonar</th>
-                        <th>Descuento Aplicado</th>
-                        <th>Total a Pagar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $totalGeneralSueldoBase = 0;
-                    $totalGeneralActividadesSeleccionadas = 0;
-                    $totalGeneralDescuentos = 0;
-                    $totalGeneralPagar = 0;
-                    
-                    foreach ($nominaCompleta as $id_checador => $nomina): 
-                        if (isset($nomina['error'])): 
-                    ?>
-                        <tr style="background-color: #ffe6e6;">
-                            <td><?= $id_checador ?></td>
-                            <td colspan="10" style="color: red;">
-                                <?= $nomina['nombre'] ?> - <?= $nomina['error'] ?>
-                            </td>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Puesto</th>
+                            <th>Sueldo Diario</th>
+                            <th>Días Trab.</th>
+                            <th>Sueldo Base</th>
+                            <th style="min-width: 250px;">Actividades Extras</th>
+                            <th>Actividades BD</th> 
+                            <th>Días sin 4 reg.</th>
+                            <th>Días a Condonar</th>
+                            <th>Descuento Aplicado</th>
+                            <th>Total a Pagar</th>
                         </tr>
-                    <?php else: 
-                        // Obtener IDs de actividades seleccionadas
-                        $actividadesSeleccionadasIds = $_SESSION['actividades_empleado'][$id_checador]['actividades_ids'] ?? [];
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $totalGeneralSueldoBase = 0;
+                        $totalGeneralActividadesBD = 0;
+                        $totalGeneralActividadesSeleccionadas = 0;
+                        $totalGeneralDescuentos = 0;
+                        $totalGeneralPagar = 0;
                         
-                        // Calcular totales para este empleado
-                        $sueldoBase = $nomina['sueldo_base'];
-                        $descuentoRegistros = $nomina['descuento_registros'];
-                        $pagoActividadesSeleccionadas = $nomina['pago_actividades_seleccionadas'];
-                        $totalPagar = $sueldoBase + $pagoActividadesSeleccionadas - $descuentoRegistros;
+                        foreach ($nominaCompleta as $id_checador => $nomina): 
+                            if (isset($nomina['error'])): 
+                        ?>
+                            <tr style="background-color: #ffe6e6;">
+                                <td><?= $id_checador ?></td>
+                                <td colspan="12" style="color: red;">
+                                    <?= $nomina['nombre'] ?> - <?= $nomina['error'] ?>
+                                </td>
+                            </tr>
+                        <?php else: 
+                            // Obtener IDs de actividades seleccionadas
+                            $actividadesSeleccionadasIds = $_SESSION['actividades_empleado'][$id_checador]['actividades_ids'] ?? [];
+                            
+                            // Calcular totales para este empleado
+                            $sueldoBase = $nomina['sueldo_base'];
+                            $descuentoRegistros = $nomina['descuento_registros'];
+                            $pagoActividadesBD = $nomina['pago_actividades_bd'];
+                            $pagoActividadesSeleccionadas = $nomina['pago_actividades_seleccionadas'];
+                            $totalPagar = $nomina['total_pagar'];
 
-                        // Acumular totales generales
-                        $totalGeneralSueldoBase += $sueldoBase;
-                        $totalGeneralActividadesSeleccionadas += $pagoActividadesSeleccionadas;
-                        $totalGeneralDescuentos += $descuentoRegistros;
-                        $totalGeneralPagar += $totalPagar;
-                    ?>
-                        <tr id="fila-<?= $id_checador ?>" 
-                            data-sueldo-base="<?= $sueldoBase ?>" 
-                            data-descuento-registros="<?= $descuentoRegistros ?>">
-                            <td><?= $id_checador ?></td>
-                            <td><?= htmlspecialchars($nomina['nombre_completo']) ?></td>
-                            <td><?= htmlspecialchars($nomina['puesto']) ?></td>
-                            <td>$<?= number_format($nomina['sueldo_diario'], 2) ?></td>
-                            <td><?= $nomina['dias_trabajados'] ?></td>
-                            <td>$<?= number_format($sueldoBase, 2) ?></td>
+                            // Acumular totales generales
+                            $totalGeneralSueldoBase += $sueldoBase;
+                            $totalGeneralActividadesBD += $pagoActividadesBD;
+                            $totalGeneralActividadesSeleccionadas += $pagoActividadesSeleccionadas;
+                            $totalGeneralDescuentos += $descuentoRegistros;
+                            $totalGeneralPagar += $totalPagar;
+                        ?>
+                            <tr id="fila-<?= $id_checador ?>" 
+                                data-sueldo-base="<?= $sueldoBase ?>" 
+                                data-descuento-registros="<?= $descuentoRegistros ?>"
+                                data-pago-actividades-bd="<?= $pagoActividadesBD ?>">
+                                <td><?= $id_checador ?></td>
+                                <td><?= htmlspecialchars($nomina['nombre_completo']) ?></td>
+                                <td>
+                                    <?= htmlspecialchars($nomina['puesto']) ?>
+                                    <?php if (isset($nomina['es_nivel_jerarquico']) && $nomina['es_nivel_jerarquico']): ?>
+                                        <br><small style="color: green;">(Gerente General)</small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>$<?= number_format($nomina['sueldo_diario'], 2) ?></td>
+                                <td>
+                                    <?= $nomina['dias_trabajados'] ?>
+                                    
+                                </td>
+                                <td>$<?= number_format($sueldoBase, 2) ?></td>
 
-                            <!-- Actividades -->
-                            <td>
-                                <div class="actividades-container">
-                                    <?php foreach ($actividadesExtras as $actividad): 
-                                        $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadasIds) ? 'checked' : '';
-                                    ?>
-                                        <div class="actividades-item">
-                                            <input type="checkbox" 
-                                                class="actividad-checkbox"
+                                <!-- Actividades Extras Seleccionadas -->
+                                <td>
+                                    <div class="actividades-container">
+                                        <?php foreach ($actividadesExtras as $actividad): 
+                                            $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadasIds) ? 'checked' : '';
+                                        ?>
+                                            <div class="actividades-item">
+                                                <input type="checkbox" 
+                                                    class="actividad-checkbox"
+                                                    name="actividades_empleado[<?= $id_checador ?>][<?= $actividad['id_actividad'] ?>]"
+                                                    data-empleado="<?= $id_checador ?>"
+                                                    data-valor="<?= $actividad['pago_extra'] ?>"
+                                                    id="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>"
+                                                    value="1"
+                                                    <?= $checked ?>>
+                                                <label for="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>" style="font-size: 12px;">
+                                                    <?= htmlspecialchars($actividad['nombre']) ?> - $<?= number_format($actividad['pago_extra'], 2) ?>
+                                                </label>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div style="margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center;">
+                                        Total: $<span id="total-actividades-<?= $id_checador ?>"><?= number_format($pagoActividadesSeleccionadas, 2) ?></span>
+                                    </div>
+                                </td>
+
+                                <!-- Actividades de BD -->
+                                <td class="positive-amount">
+                                    <?php if (isset($nomina['es_nivel_jerarquico']) && $nomina['es_nivel_jerarquico'] && !empty($nomina['actividades_gerente'])): ?>
+                                        $<?= number_format($nomina['pago_actividades_gerente'], 2) ?>
+                                        <br><small>
+                                            <?php foreach ($nomina['actividades_gerente'] as $act): ?>
+                                                <?= $act['nombre'] ?> (x<?= $act['cantidad'] ?>)<br>
+                                            <?php endforeach; ?>
+                                        </small>
+                                    <?php else: ?>
+                                        $<?= number_format($nomina['pago_actividades_bd'], 2) ?>
+                                    <?php endif; ?>
+                                </td>
+
+                                <!-- Días sin 4 reg. - COLUMNA FALTANTE -->
+                                <td style="color: orange; font-weight: bold;">
+                                    <?= $nomina['dias_sin_4_registros'] ?> días
+                                </td>
+
+                                <!-- Días a condonar -->
+                                <td>
+                                    <?php if (!(isset($nomina['es_nivel_jerarquico']) && $nomina['es_nivel_jerarquico'])): ?>
+                                        <select class="dias-condonar" 
+                                                id="condonar-<?= $id_checador ?>" 
                                                 data-empleado="<?= $id_checador ?>"
-                                                data-valor="<?= $actividad['pago_extra'] ?>"
-                                                id="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>"
-                                                <?= $checked ?>>
-                                            <label for="act_<?= $id_checador ?>_<?= $actividad['id_actividad'] ?>" style="font-size: 12px;">
-                                                <?= htmlspecialchars($actividad['nombre']) ?> - $<?= number_format($actividad['pago_extra'], 2) ?>
-                                            </label>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <div style="margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center;">
-                                    Total actividades: $<span id="total-actividades-<?= $id_checador ?>"><?= number_format($pagoActividadesSeleccionadas, 2) ?></span>
-                                </div>
-                            </td>
+                                                data-descuento-por-dia="<?= $descuentoRegistrosIncompletos ?? 0 ?>"
+                                                data-dias-sin-registros="<?= $nomina['dias_sin_4_registros'] ?>">
+                                            <?php for ($i = 0; $i <= $nomina['dias_sin_4_registros']; $i++): ?>
+                                                <option value="<?= $i ?>"><?= $i ?> días</option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    <?php else: ?>
+                                        <span style="color: green;">N/A</span>
+                                    <?php endif; ?>
+                                </td>
 
-                            <!-- Días sin registro -->
-                            <td style="color: orange; font-weight: bold;"><?= $nomina['dias_sin_4_registros'] ?> días</td>
+                                <!-- Descuento aplicado -->
+                                <td class="negative-amount" id="descuento-<?= $id_checador ?>">
+                                    <?php if (isset($nomina['es_nivel_jerarquico']) && $nomina['es_nivel_jerarquico']): ?>
+                                        <span style="color: green;">SIN DESCUENTO</span>
+                                    <?php else: ?>
+                                        -$<span id="monto-descuento-<?= $id_checador ?>"><?= number_format($descuentoRegistros, 2) ?></span>
+                                    <?php endif; ?>
+                                </td>
 
-                            <!-- Días a condonar -->
-                            <td>
-                                <select class="dias-condonar" 
-                                        id="condonar-<?= $id_checador ?>" 
-                                        data-empleado="<?= $id_checador ?>"
-                                        data-descuento-por-dia="<?= $descuentoRegistrosIncompletos ?? 0 ?>"
-                                        data-dias-sin-registros="<?= $nomina['dias_sin_4_registros'] ?>">
-                                    <?php for ($i = 0; $i <= $nomina['dias_sin_4_registros']; $i++): ?>
-                                        <option value="<?= $i ?>"><?= $i ?> días</option>
-                                    <?php endfor; ?>
-                                </select>
-                            </td>
-
-                            <!-- Descuento aplicado -->
-                            <td class="negative-amount" id="descuento-<?= $id_checador ?>">
-                                -$<span id="monto-descuento-<?= $id_checador ?>"><?= number_format($descuentoRegistros, 2) ?></span>
-                            </td>
-
-                            <!-- Total a pagar -->
-                            <td style="background-color: #e6ffe6; font-weight: bold;" class="positive-amount">
-                                $<span id="total-pagar-<?= $id_checador ?>"><?= number_format($totalPagar, 2) ?></span>
-                            </td>
+                                <!-- Total a pagar -->
+                                <td style="background-color: #e6ffe6; font-weight: bold;" class="positive-amount">
+                                    $<span id="total-pagar-<?= $id_checador ?>"><?= number_format($totalPagar, 2) ?></span>
+                                </td>
+                            </tr>
+                        <?php endif; endforeach; ?>
+                        
+                        <!-- Totales generales ACTUALIZADOS -->
+                        <tr class="total-row">
+                            <td colspan="5" style="text-align: right; font-weight: bold;">TOTALES GENERALES:</td>
+                            <td style="font-weight: bold;">$<span id="total-sueldo-base"><?= number_format($totalGeneralSueldoBase, 2) ?></span></td>
+                            <td style="font-weight: bold;">$<span id="total-actividades"><?= number_format($totalGeneralActividadesSeleccionadas, 2) ?></span></td>
+                            <td style="font-weight: bold;">$<span id="total-actividades-bd"><?= number_format($totalGeneralActividadesBD, 2) ?></span></td>
+                            <td></td>
+                            <td></td>
+                            <td style="font-weight: bold;">-$<span id="total-descuentos"><?= number_format($totalGeneralDescuentos, 2) ?></span></td>
+                            <td style="font-weight: bold; background-color: #d4edda;">$<span id="total-general"><?= number_format($totalGeneralPagar, 2) ?></span></td>
                         </tr>
-                    <?php endif; endforeach; ?>
-                    
-                    <!-- Totales generales -->
-                    <tr class="total-row">
-                        <td colspan="5" style="text-align: right; font-weight: bold;">TOTALES GENERALES:</td>
-                        <td style="font-weight: bold;">$<span id="total-sueldo-base"><?= number_format($totalGeneralSueldoBase, 2) ?></span></td>
-                        <td style="font-weight: bold;">$<span id="total-actividades"><?= number_format($totalGeneralActividadesSeleccionadas, 2) ?></span></td>
-                        <td colspan="2"></td>
-                        <td style="font-weight: bold;">-$<span id="total-descuentos"><?= number_format($totalGeneralDescuentos, 2) ?></span></td>
-                        <td style="font-weight: bold; background-color: #d4edda;">$<span id="total-general"><?= number_format($totalGeneralPagar, 2) ?></span></td>
-                    </tr>
-                </tbody>
-            </table>
-
+                    </tbody>
+                </table>
             </div>
             <p><small>* Descuento de $25 por cada día sin 4 registros completos</small></p>
         </div>
@@ -845,8 +946,9 @@ function calcularTotal(checkbox) {
     // Obtener valores base
     let totalActividadesActual = parseFloat(totalActividadesElement.textContent) || 0;
     const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+    const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
     
-    // Obtener descuento actual (puede haber sido modificado por condonación)
+    // Obtener descuento actual
     const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
     const descuentoActual = parseFloat(montoDescuentoElement.textContent) || 0;
     
@@ -862,8 +964,8 @@ function calcularTotal(checkbox) {
         totalActividadesActual = 0;
     }
     
-    // Calcular nuevo total a pagar
-    const nuevoTotalPagar = sueldoBase + totalActividadesActual - descuentoActual;
+    // Calcular nuevo total a pagar (incluye actividades de BD)
+    const nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividadesActual - descuentoActual;
     
     // Actualizar displays
     totalActividadesElement.textContent = totalActividadesActual.toFixed(2);
@@ -891,12 +993,13 @@ function calcularDescuento(select) {
     // Obtener valores base
     const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
     const totalActividades = parseFloat(document.getElementById('total-actividades-' + empleadoId).textContent) || 0;
+    const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
     
     // Actualizar monto de descuento
     montoDescuentoElement.textContent = nuevoDescuento.toFixed(2);
     
-    // Calcular nuevo total a pagar
-    const nuevoTotalPagar = sueldoBase + totalActividades - nuevoDescuento;
+    // Calcular nuevo total a pagar (incluye actividades de BD)
+    const nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividades - nuevoDescuento;
     totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
     
     // Cambiar estilo visual si no hay descuento
@@ -923,13 +1026,14 @@ function actualizarTotalesGenerales() {
         const empleadoId = fila.id.replace('fila-', '');
         const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
         const totalActividadesEmpleado = parseFloat(totalActividadesElement.textContent) || 0;
+        const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
         const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
         const descuentoEmpleado = parseFloat(montoDescuentoElement.textContent) || 0;
         
         totalSueldoBase += sueldoBase;
         totalActividades += totalActividadesEmpleado;
         totalDescuentos += descuentoEmpleado;
-        totalGeneral += (sueldoBase + totalActividadesEmpleado - descuentoEmpleado);
+        totalGeneral += (sueldoBase + pagoActividadesBD + totalActividadesEmpleado - descuentoEmpleado);
     });
     
     // Actualizar displays de totales generales
