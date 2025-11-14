@@ -45,12 +45,14 @@ $jornadaCompletaHoras = 8;
 $descuentoRegistrosIncompletos = 25; // $25 por día sin 4 registros
 
 function calcularHorasTrabajadas($cadenaHoras) {
-    if (empty($cadenaHoras) || trim($cadenaHoras) === '') {
+    // CORREGIDO: Validar que no sea null antes de trim()
+    if (empty($cadenaHoras) || $cadenaHoras === null || trim($cadenaHoras) === '') {
         return ['horas' => 0, 'entrada' => null, 'salida' => null, 'tipo' => 'sin_registros'];
     }
 
     try {
-        $cadenaHoras = preg_replace('/[^0-9:]/', '', trim($cadenaHoras));
+        // CORREGIDO: Asegurar que no sea null
+        $cadenaHoras = preg_replace('/[^0-9:]/', '', trim($cadenaHoras ?? ''));
         
         if (strlen($cadenaHoras) <= 5) {
             return ['horas' => 0, 'entrada' => null, 'salida' => null, 'tipo' => 'registro_incompleto'];
@@ -274,88 +276,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($fileType === 'xls' || $fileType === 'xlsx') {
             $spreadsheet = IOFactory::load($fileTmpPath);
-            $sheet = $spreadsheet->getActiveSheet();
+            
+            // VERIFICAR Y MOSTRAR INFORMACIÓN DE LAS HOJAS
+            $sheetNames = $spreadsheet->getSheetNames();
+            error_log("Hojas disponibles en el archivo: " . implode(", ", $sheetNames));
+            
+            // Obtener la tercera hoja (índice 2)
+            if (count($sheetNames) >= 3) {
+                $sheet = $spreadsheet->getSheet(2); // Tercera hoja (índice 2)
+                error_log("Leyendo la tercera hoja: " . $sheetNames[2]);
+            } else {
+                // Si no hay tercera hoja, usar la primera
+                $sheet = $spreadsheet->getSheet(0);
+                error_log("No hay tercera hoja, usando la primera: " . $sheetNames[0]);
+            }
+            
             $data = $sheet->toArray(null, true, true, true);
+            
+            // DEBUG: Mostrar primeras filas para diagnóstico
+            error_log("Primeras 5 filas de datos:");
+            $counter = 0;
+            foreach ($data as $numeroFila => $row) {
+                if ($counter >= 5) break;
+                error_log("Fila $numeroFila: " . json_encode($row));
+                $counter++;
+            }
 
             foreach ($data as $numeroFila => $row) {
-                // CORREGIDO: strpos necesita dos parámetros
-                if (isset($row['A']) && strpos(trim($row['A']), 'ID:') !== false) {
-                    // **COLUMNAS FIJAS: ID en C, Nombre en K**
-                    $id_checador = isset($row['C']) ? trim($row['C']) : '';
-                    $nombre = isset($row['K']) ? trim($row['K']) : '';
+                // BUSCAR PATRÓN MÁS FLEXIBLE PARA IDENTIFICAR EMPLEADOS
+                $id_checador = null;
+                $nombre = null;
+                
+                // Buscar en todas las columnas posibles
+                foreach ($row as $col => $value) {
+                    // CORREGIDO: Validar que no sea null antes de trim()
+                    $value = $value !== null ? trim($value) : '';
                     
-                    if (empty($id_checador) || !is_numeric($id_checador)) {
-                        continue;
-                    }
-
-                    // Verificar si el empleado debe ser excluido
-                    if (in_array($id_checador, $empleadosExcluir)) {
-                        continue;
-                    }
-
-                    $filaHoras = $numeroFila + 1;
-                    if (isset($data[$filaHoras])) {
-                        $horasFila = $data[$filaHoras];
-                        
-                        if (!isset($horasPorEmpleado[$id_checador])) {
-                            $horasPorEmpleado[$id_checador] = 0;
-                            $empleados[$id_checador] = $nombre;
-                            $clasificacionEmpleados[$id_checador] = [
-                                'turnos_completos' => 0,
-                                'turnos_simples' => 0,
-                                'registros_incompletos' => 0,
-                                'otros_registros' => 0,
-                                'dias_sin_registro' => 0
-                            ];
-                            $detalleDias[$id_checador] = [];
-                        }
-
-                        // Procesar cada día (Lunes a Viernes) - columnas A a E
-                        $dias = ['A' => 'Lunes', 'B' => 'Martes', 'C' => 'Miércoles', 'D' => 'Jueves', 'E' => 'Viernes'];
-                        foreach ($dias as $col => $nombreDia) {
-                            $valorCelda = isset($horasFila[$col]) ? trim($horasFila[$col]) : '';
-                            
-                            if (!empty($valorCelda)) {
-                                $resultado = calcularHorasTrabajadas($valorCelda);
-                                $horasPorEmpleado[$id_checador] += $resultado['horas'];
-                                
-                                // Clasificar el tipo de registro
-                                switch ($resultado['tipo']) {
-                                    case 'turno_completo':
-                                        $clasificacionEmpleados[$id_checador]['turnos_completos']++;
-                                        break;
-                                    case 'turno_simple':
-                                        $clasificacionEmpleados[$id_checador]['turnos_simples']++;
-                                        break;
-                                    case 'registro_incompleto':
-                                        $clasificacionEmpleados[$id_checador]['registros_incompletos']++;
-                                        break;
-                                    default:
-                                        $clasificacionEmpleados[$id_checador]['otros_registros']++;
-                                }
-                                
-                                // Guardar detalle por día
-                                $detalleDias[$id_checador][$nombreDia] = [
-                                    'horas' => $resultado['horas'],
-                                    'tipo' => $resultado['tipo'],
-                                    'registros' => $valorCelda,
-                                    'entrada' => $resultado['entrada'],
-                                    'salida' => $resultado['salida']
-                                ];
-                            } else {
-                                $clasificacionEmpleados[$id_checador]['dias_sin_registro']++;
-                                $detalleDias[$id_checador][$nombreDia] = [
-                                    'horas' => 0,
-                                    'tipo' => 'sin_registro',
-                                    'registros' => '',
-                                    'entrada' => null,
-                                    'salida' => null
-                                ];
+                    // Buscar ID numérico
+                    if (is_numeric($value) && $value > 0 && $value < 10000) {
+                        $id_checador = $value;
+                        // Intentar obtener nombre de columnas adyacentes
+                        $nombre = '';
+                        for ($i = 1; $i <= 3; $i++) {
+                            $nextCol = chr(ord($col) + $i);
+                            $nextValue = $row[$nextCol] ?? null;
+                            if ($nextValue !== null && !empty(trim($nextValue)) && !is_numeric(trim($nextValue))) {
+                                $nombre = trim($nextValue);
+                                break;
                             }
                         }
+                        break;
+                    }
+                    
+                    // Buscar patrones como "ID: 123"
+                    if (preg_match('/ID:\s*(\d+)/i', $value, $matches)) {
+                        $id_checador = $matches[1];
+                        // Buscar nombre en la misma fila
+                        foreach ($row as $col2 => $value2) {
+                            $value2 = $value2 !== null ? trim($value2) : '';
+                            if (!empty($value2) && !is_numeric($value2) && $value2 !== $value) {
+                                $nombre = $value2;
+                                break;
+                            }
+                        }
+                        break;
                     }
                 }
+                
+                if (!$id_checador || !is_numeric($id_checador)) {
+                    continue;
+                }
+
+                // Verificar si el empleado debe ser excluido
+                if (in_array($id_checador, $empleadosExcluir)) {
+                    continue;
+                }
+
+                $filaHoras = $numeroFila + 1;
+                if (isset($data[$filaHoras])) {
+                    $horasFila = $data[$filaHoras];
+                    
+                    if (!isset($horasPorEmpleado[$id_checador])) {
+                        $horasPorEmpleado[$id_checador] = 0;
+                        $empleados[$id_checador] = $nombre ?: "Empleado $id_checador";
+                        $clasificacionEmpleados[$id_checador] = [
+                            'turnos_completos' => 0,
+                            'turnos_simples' => 0,
+                            'registros_incompletos' => 0,
+                            'otros_registros' => 0,
+                            'dias_sin_registro' => 0
+                        ];
+                        $detalleDias[$id_checador] = [];
+                    }
+
+                    // Procesar cada día (Lunes a Viernes) - buscar en columnas que contengan horas
+                    $diasProcesados = 0;
+                    $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                    
+                    foreach ($horasFila as $col => $valorCelda) {
+                        if ($diasProcesados >= 5) break;
+                        
+                        // CORREGIDO: Validar que no sea null antes de trim()
+                        $valorCelda = $valorCelda !== null ? trim($valorCelda) : '';
+                        if (!empty($valorCelda) && preg_match('/\d{1,2}:\d{2}/', $valorCelda)) {
+                            $resultado = calcularHorasTrabajadas($valorCelda);
+                            $horasPorEmpleado[$id_checador] += $resultado['horas'];
+                            
+                            // Clasificar el tipo de registro
+                            switch ($resultado['tipo']) {
+                                case 'turno_completo':
+                                    $clasificacionEmpleados[$id_checador]['turnos_completos']++;
+                                    break;
+                                case 'turno_simple':
+                                    $clasificacionEmpleados[$id_checador]['turnos_simples']++;
+                                    break;
+                                case 'registro_incompleto':
+                                    $clasificacionEmpleados[$id_checador]['registros_incompletos']++;
+                                    break;
+                                default:
+                                    $clasificacionEmpleados[$id_checador]['otros_registros']++;
+                            }
+                            
+                            // Guardar detalle por día
+                            $nombreDia = $dias[$diasProcesados];
+                            $detalleDias[$id_checador][$nombreDia] = [
+                                'horas' => $resultado['horas'],
+                                'tipo' => $resultado['tipo'],
+                                'registros' => $valorCelda,
+                                'entrada' => $resultado['entrada'],
+                                'salida' => $resultado['salida']
+                            ];
+                            
+                            $diasProcesados++;
+                        }
+                    }
+                    
+                    // Si no encontramos suficientes días con datos, marcar los restantes como sin registro
+                    for ($i = $diasProcesados; $i < 5; $i++) {
+                        $nombreDia = $dias[$i];
+                        $clasificacionEmpleados[$id_checador]['dias_sin_registro']++;
+                        $detalleDias[$id_checador][$nombreDia] = [
+                            'horas' => 0,
+                            'tipo' => 'sin_registro',
+                            'registros' => '',
+                            'entrada' => null,
+                            'salida' => null
+                        ];
+                    }
+                    
+                    error_log("Procesado empleado ID: $id_checador, Nombre: " . $empleados[$id_checador] . ", Días procesados: $diasProcesados");
+                }
             }
+
+            // DEBUG: Mostrar resultados del procesamiento
+            error_log("Total empleados procesados: " . count($horasPorEmpleado));
+            error_log("IDs procesados: " . implode(", ", array_keys($horasPorEmpleado)));
 
             // CALCULAR NÓMINA COMPLETA - CÓDIGO MEJORADO
             if (!empty($horasPorEmpleado)) {
@@ -449,7 +524,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'total_pagar' => $totalPagar,
                         'horario_esperado' => ($infoEmpleado['hora_entrada'] ?? '--:--') . ' - ' . ($infoEmpleado['hora_salida'] ?? '--:--'),
                         'dias_sin_4_registros' => $diasSin4Registros ?? 0,
-                        'es_nivel_jerarquico' => $esGerenteGeneral, // Cambiado a 'es_nivel_jerarquico'
+                        'es_nivel_jerarquico' => $esGerenteGeneral,
                         'actividades_gerente' => $actividadesGerente ?? []
                     ];
 
@@ -722,6 +797,20 @@ require_once __DIR__ . '/../../includes/header.php';
             echo '<div class="alert alert-danger" style="width: 100% !important;">' . $_SESSION['error_message'] . '</div>';
             unset($_SESSION['error_message']);
         }
+        
+        // Mostrar información de depuración si no hay datos
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($horasPorEmpleado)) {
+            echo '<div class="alert alert-warning" style="width: 100% !important;">';
+            echo '<h4>Información de Depuración:</h4>';
+            echo '<p>No se encontraron datos de empleados en el archivo.</p>';
+            echo '<p>Por favor verifica que:</p>';
+            echo '<ul>';
+            echo '<li>El archivo tenga la tercera hoja con los datos de asistencia</li>';
+            echo '<li>Los IDs de empleados estén en formato numérico</li>';
+            echo '<li>Los registros de horas tengan formato de tiempo (HH:MM)</li>';
+            echo '</ul>';
+            echo '</div>';
+        }
         ?>
 
         <div class="form-container-nomina">
@@ -729,12 +818,13 @@ require_once __DIR__ . '/../../includes/header.php';
                 <div class="form-group-nomina">
                     <label for="asistencia_file">Selecciona el archivo de asistencia (XLS o XLSX):</label>
                     <input type="file" name="asistencia_file" id="asistencia_file" accept=".xls,.xlsx" required>
+                    <small class="form-text text-muted">Asegúrate de que el archivo tenga los datos en la tercera hoja.</small>
                 </div>
                 <button type="submit" class="btn-submit-nomina">Analizar y Generar Nómina</button>
             </form>
         </div>
 
-        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($horasPorEmpleado)): ?>
+        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($horasPorEmpleado) && !empty($horasPorEmpleado)): ?>
         
         <!-- Formulario para seleccionar actividades por empleado -->
         <div class="form-container-nomina">
@@ -750,8 +840,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             <th>Sueldo Diario</th>
                             <th>Días Trab.</th>
                             <th>Sueldo Base</th>
-                            <th style="min-width: 250px;">Actividades Extras</th>
-                            <th>Actividades BD</th> 
+                            <th style="min-width: 250px;">Actividades Extras</th> 
                             <th>Días sin 4 reg.</th>
                             <th>Días a Condonar</th>
                             <th>Descuento Aplicado</th>
@@ -771,7 +860,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         ?>
                             <tr style="background-color: #ffe6e6;">
                                 <td><?= $id_checador ?></td>
-                                <td colspan="12" style="color: red;">
+                                <td colspan="10" style="color: red;">
                                     <?= $nomina['nombre'] ?> - <?= $nomina['error'] ?>
                                 </td>
                             </tr>
@@ -783,12 +872,13 @@ require_once __DIR__ . '/../../includes/header.php';
                             $sueldoBase = $nomina['sueldo_base'];
                             $descuentoRegistros = $nomina['descuento_registros'];
                             $pagoActividadesBD = $nomina['pago_actividades_bd'];
+                            $pagoActividadesGerente = $nomina['pago_actividades_gerente'];
                             $pagoActividadesSeleccionadas = $nomina['pago_actividades_seleccionadas'];
                             $totalPagar = $nomina['total_pagar'];
 
                             // Acumular totales generales
                             $totalGeneralSueldoBase += $sueldoBase;
-                            $totalGeneralActividadesBD += $pagoActividadesBD;
+                            $totalGeneralActividadesBD += $pagoActividadesBD + $pagoActividadesGerente;
                             $totalGeneralActividadesSeleccionadas += $pagoActividadesSeleccionadas;
                             $totalGeneralDescuentos += $descuentoRegistros;
                             $totalGeneralPagar += $totalPagar;
@@ -796,7 +886,9 @@ require_once __DIR__ . '/../../includes/header.php';
                             <tr id="fila-<?= $id_checador ?>" 
                                 data-sueldo-base="<?= $sueldoBase ?>" 
                                 data-descuento-registros="<?= $descuentoRegistros ?>"
-                                data-pago-actividades-bd="<?= $pagoActividadesBD ?>">
+                                data-pago-actividades-bd="<?= $pagoActividadesBD ?>"
+                                data-pago-actividades-gerente="<?= $pagoActividadesGerente ?>"
+                                data-es-gerente="<?= $nomina['es_nivel_jerarquico'] ? 'true' : 'false' ?>">
                                 <td><?= $id_checador ?></td>
                                 <td><?= htmlspecialchars($nomina['nombre_completo']) ?></td>
                                 <td>
@@ -838,21 +930,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     </div>
                                 </td>
 
-                                <!-- Actividades de BD -->
-                                <td class="positive-amount">
-                                    <?php if (isset($nomina['es_nivel_jerarquico']) && $nomina['es_nivel_jerarquico'] && !empty($nomina['actividades_gerente'])): ?>
-                                        $<?= number_format($nomina['pago_actividades_gerente'], 2) ?>
-                                        <br><small>
-                                            <?php foreach ($nomina['actividades_gerente'] as $act): ?>
-                                                <?= $act['nombre'] ?> (x<?= $act['cantidad'] ?>)<br>
-                                            <?php endforeach; ?>
-                                        </small>
-                                    <?php else: ?>
-                                        $<?= number_format($nomina['pago_actividades_bd'], 2) ?>
-                                    <?php endif; ?>
-                                </td>
-
-                                <!-- Días sin 4 reg. - COLUMNA FALTANTE -->
+                                <!-- Días sin 4 reg. -->
                                 <td style="color: orange; font-weight: bold;">
                                     <?= $nomina['dias_sin_4_registros'] ?> días
                                 </td>
@@ -894,8 +972,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         <tr class="total-row">
                             <td colspan="5" style="text-align: right; font-weight: bold;">TOTALES GENERALES:</td>
                             <td style="font-weight: bold;">$<span id="total-sueldo-base"><?= number_format($totalGeneralSueldoBase, 2) ?></span></td>
-                            <td style="font-weight: bold;">$<span id="total-actividades"><?= number_format($totalGeneralActividadesSeleccionadas, 2) ?></span></td>
-                            <td style="font-weight: bold;">$<span id="total-actividades-bd"><?= number_format($totalGeneralActividadesBD, 2) ?></span></td>
+                            <td style="font-weight: bold;">$<span id="total-actividades"><?= number_format($totalGeneralActividadesSeleccionadas + $totalGeneralActividadesBD, 2) ?></span></td>
                             <td></td>
                             <td></td>
                             <td style="font-weight: bold;">-$<span id="total-descuentos"><?= number_format($totalGeneralDescuentos, 2) ?></span></td>
@@ -914,6 +991,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.totalesGenerales = {
         sueldoBase: <?= $totalGeneralSueldoBase ?? 0 ?>,
         actividades: <?= $totalGeneralActividadesSeleccionadas ?? 0 ?>,
+        actividadesBD: <?= $totalGeneralActividadesBD ?? 0 ?>,
         descuentos: <?= $totalGeneralDescuentos ?? 0 ?>,
         general: <?= $totalGeneralPagar ?? 0 ?>
     };
@@ -947,6 +1025,8 @@ function calcularTotal(checkbox) {
     let totalActividadesActual = parseFloat(totalActividadesElement.textContent) || 0;
     const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
     const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+    const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
+    const esGerente = fila.dataset.esGerente === 'true';
     
     // Obtener descuento actual
     const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
@@ -964,8 +1044,15 @@ function calcularTotal(checkbox) {
         totalActividadesActual = 0;
     }
     
-    // Calcular nuevo total a pagar (incluye actividades de BD)
-    const nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividadesActual - descuentoActual;
+    // Calcular nuevo total a pagar (incluye actividades de BD y gerente según corresponda)
+    let nuevoTotalPagar;
+    if (esGerente) {
+        // Para gerente: sueldo base + actividades de gerente + actividades seleccionadas
+        nuevoTotalPagar = sueldoBase + pagoActividadesGerente + totalActividadesActual - descuentoActual;
+    } else {
+        // Para empleados normales: sueldo base + actividades BD + actividades seleccionadas - descuentos
+        nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividadesActual - descuentoActual;
+    }
     
     // Actualizar displays
     totalActividadesElement.textContent = totalActividadesActual.toFixed(2);
@@ -994,12 +1081,20 @@ function calcularDescuento(select) {
     const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
     const totalActividades = parseFloat(document.getElementById('total-actividades-' + empleadoId).textContent) || 0;
     const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+    const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
+    const esGerente = fila.dataset.esGerente === 'true';
     
     // Actualizar monto de descuento
     montoDescuentoElement.textContent = nuevoDescuento.toFixed(2);
     
-    // Calcular nuevo total a pagar (incluye actividades de BD)
-    const nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividades - nuevoDescuento;
+    // Calcular nuevo total a pagar (incluye actividades según el tipo de empleado)
+    let nuevoTotalPagar;
+    if (esGerente) {
+        nuevoTotalPagar = sueldoBase + pagoActividadesGerente + totalActividades - nuevoDescuento;
+    } else {
+        nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividades - nuevoDescuento;
+    }
+    
     totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
     
     // Cambiar estilo visual si no hay descuento
@@ -1027,18 +1122,26 @@ function actualizarTotalesGenerales() {
         const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
         const totalActividadesEmpleado = parseFloat(totalActividadesElement.textContent) || 0;
         const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+        const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
         const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
         const descuentoEmpleado = parseFloat(montoDescuentoElement.textContent) || 0;
+        const esGerente = fila.dataset.esGerente === 'true';
         
         totalSueldoBase += sueldoBase;
         totalActividades += totalActividadesEmpleado;
         totalDescuentos += descuentoEmpleado;
-        totalGeneral += (sueldoBase + pagoActividadesBD + totalActividadesEmpleado - descuentoEmpleado);
+        
+        // Calcular total según tipo de empleado
+        if (esGerente) {
+            totalGeneral += (sueldoBase + pagoActividadesGerente + totalActividadesEmpleado - descuentoEmpleado);
+        } else {
+            totalGeneral += (sueldoBase + pagoActividadesBD + totalActividadesEmpleado - descuentoEmpleado);
+        }
     });
     
     // Actualizar displays de totales generales
     document.getElementById('total-sueldo-base').textContent = totalSueldoBase.toFixed(2);
-    document.getElementById('total-actividades').textContent = totalActividades.toFixed(2);
+    document.getElementById('total-actividades').textContent = (totalActividades + <?= $totalGeneralActividadesBD ?>).toFixed(2);
     document.getElementById('total-descuentos').textContent = totalDescuentos.toFixed(2);
     document.getElementById('total-general').textContent = totalGeneral.toFixed(2);
     
