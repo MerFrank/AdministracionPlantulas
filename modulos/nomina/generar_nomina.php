@@ -985,13 +985,13 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
 
         <!-- JavaScript para calcular totales en tiempo real -->
-        <script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar totales desde PHP
     window.totalesGenerales = {
         sueldoBase: <?= $totalGeneralSueldoBase ?? 0 ?>,
-        actividades: <?= $totalGeneralActividadesSeleccionadas ?? 0 ?>,
         actividadesBD: <?= $totalGeneralActividadesBD ?? 0 ?>,
+        actividadesSeleccionadas: <?= $totalGeneralActividadesSeleccionadas ?? 0 ?>,
         descuentos: <?= $totalGeneralDescuentos ?? 0 ?>,
         general: <?= $totalGeneralPagar ?? 0 ?>
     };
@@ -1030,7 +1030,7 @@ function calcularTotal(checkbox) {
     
     // Obtener descuento actual
     const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
-    const descuentoActual = parseFloat(montoDescuentoElement.textContent) || 0;
+    const descuentoActual = parseFloat(montoDescuentoElement?.textContent) || 0;
     
     // Actualizar total de actividades
     if (estaMarcado) {
@@ -1085,7 +1085,9 @@ function calcularDescuento(select) {
     const esGerente = fila.dataset.esGerente === 'true';
     
     // Actualizar monto de descuento
-    montoDescuentoElement.textContent = nuevoDescuento.toFixed(2);
+    if (montoDescuentoElement) {
+        montoDescuentoElement.textContent = nuevoDescuento.toFixed(2);
+    }
     
     // Calcular nuevo total a pagar (incluye actividades según el tipo de empleado)
     let nuevoTotalPagar;
@@ -1099,10 +1101,12 @@ function calcularDescuento(select) {
     
     // Cambiar estilo visual si no hay descuento
     const descuentoElement = document.getElementById('descuento-' + empleadoId);
-    if (nuevoDescuento === 0) {
-        descuentoElement.classList.add('descuento-condonado');
-    } else {
-        descuentoElement.classList.remove('descuento-condonado');
+    if (descuentoElement) {
+        if (nuevoDescuento === 0) {
+            descuentoElement.classList.add('descuento-condonado');
+        } else {
+            descuentoElement.classList.remove('descuento-condonado');
+        }
     }
     
     // Actualizar totales generales
@@ -1111,7 +1115,8 @@ function calcularDescuento(select) {
 
 function actualizarTotalesGenerales() {
     let totalSueldoBase = 0;
-    let totalActividades = 0;
+    let totalActividadesSeleccionadas = 0;
+    let totalActividadesBD = 0;
     let totalDescuentos = 0;
     let totalGeneral = 0;
     
@@ -1120,15 +1125,16 @@ function actualizarTotalesGenerales() {
         const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
         const empleadoId = fila.id.replace('fila-', '');
         const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
-        const totalActividadesEmpleado = parseFloat(totalActividadesElement.textContent) || 0;
+        const totalActividadesEmpleado = parseFloat(totalActividadesElement?.textContent) || 0;
         const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
         const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
         const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
-        const descuentoEmpleado = parseFloat(montoDescuentoElement.textContent) || 0;
+        const descuentoEmpleado = parseFloat(montoDescuentoElement?.textContent) || 0;
         const esGerente = fila.dataset.esGerente === 'true';
         
         totalSueldoBase += sueldoBase;
-        totalActividades += totalActividadesEmpleado;
+        totalActividadesSeleccionadas += totalActividadesEmpleado;
+        totalActividadesBD += pagoActividadesBD + pagoActividadesGerente;
         totalDescuentos += descuentoEmpleado;
         
         // Calcular total según tipo de empleado
@@ -1141,19 +1147,22 @@ function actualizarTotalesGenerales() {
     
     // Actualizar displays de totales generales
     document.getElementById('total-sueldo-base').textContent = totalSueldoBase.toFixed(2);
-    document.getElementById('total-actividades').textContent = (totalActividades + <?= $totalGeneralActividadesBD ?>).toFixed(2);
+    document.getElementById('total-actividades').textContent = (totalActividadesSeleccionadas + totalActividadesBD).toFixed(2);
     document.getElementById('total-descuentos').textContent = totalDescuentos.toFixed(2);
     document.getElementById('total-general').textContent = totalGeneral.toFixed(2);
     
     // Actualizar el objeto global
     window.totalesGenerales = {
         sueldoBase: totalSueldoBase,
-        actividades: totalActividades,
+        actividadesSeleccionadas: totalActividadesSeleccionadas,
+        actividadesBD: totalActividadesBD,
         descuentos: totalDescuentos,
         general: totalGeneral
     };
+    
+    console.log('Totales actualizados:', window.totalesGenerales);
 }
-        </script>
+</script>
 
         <!-- El resto del código para las otras tablas permanece igual -->
         <!-- Tabla de Asistencia Resumen -->
