@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__ . '/../../includes/validacion_session.php');
+
 require_once __DIR__ . '/../../includes/config.php';
 // Variables para el encabezado
 $titulo = "Registrar Puesto";
@@ -7,7 +7,7 @@ $encabezado = "Registrar Puesto";
 $subtitulo = "Registra nuevos puestos en la empresa.";
 
 //Botón
-$texto_boton = "Regresar";
+$texto_boton = "";
 $ruta = "dashboard_puestos.php";
 
 require_once __DIR__ . '/../../includes/header.php';
@@ -120,8 +120,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                             <select class="form-select" id="nivel_jerarquico" name="nivel_jerarquico" required>
                                 <option value="">Seleccione un nivel</option>
                                 <option value="gerente_general">Gerente General</option>
-                                <option value="supervisor">Supervisor</option>
-                                <option value="responsable">Responsable</option>
+                                <option value="sub_gerente">Sub Gerente</option>
+                                <option value="responsable_de_area">Responsable de area</option>
                                 <option value="operativo">Operativo</option>
                             </select>
                             <div class="invalid-feedback">Seleccione un nivel jerárquico</div>

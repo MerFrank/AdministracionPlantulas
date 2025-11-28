@@ -44,6 +44,125 @@ $empleadosExcluir = ['16'];
 $jornadaCompletaHoras = 8;
 $descuentoRegistrosIncompletos = 25; // $25 por día sin 4 registros
 
+// FUNCIÓN PARA PROCESAR GUARDADO DE NÓMINA - NUEVA SECCIÓN
+function procesarGuardadoNomina($pdo, &$nominaCompleta) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_nomina'])) {
+        try {
+            $fechaInicio = $_POST['fecha_inicio'] ?? '';
+            $fechaFin = $_POST['fecha_fin'] ?? '';
+            $idCuenta = $_POST['id_cuenta'] ?? '';
+            $idOperador = $_POST['id_operador'] ?? '';
+            
+            // DECODIFICAR LOS DATOS DE NÓMINA CON VALIDACIÓN
+            $nominaDataJson = $_POST['nomina_data'] ?? '{}';
+            $nominaData = json_decode($nominaDataJson, true);
+            
+            $actividadesDataJson = $_POST['actividades_data'] ?? '{}';
+            $actividadesData = json_decode($actividadesDataJson, true);
+            
+            // Validaciones básicas
+            if (empty($fechaInicio) || empty($fechaFin) || empty($idCuenta)) {
+                throw new Exception("Faltan datos requeridos para guardar la nómina");
+            }
+
+            // CORRECCIÓN PRINCIPAL: Usar los datos de la sesión y validar
+            if (isset($_SESSION['nomina_completa']) && !empty($_SESSION['nomina_completa'])) {
+                $nominaCompleta = $_SESSION['nomina_completa'];
+                
+                // DEBUG DETALLADO: Mostrar datos antes de guardar
+                error_log("=== DATOS DE NÓMINA ANTES DE GUARDAR ===");
+                $totalCalculado = 0;
+                $empleadosValidos = 0;
+                
+                foreach ($nominaCompleta as $id => $nomina) {
+                    if (!isset($nomina['error'])) {
+                        $empleadosValidos++;
+                        $totalCalculado += $nomina['total_pagar'];
+                        error_log("EMPLEADO {$id}:");
+                        error_log("  - Sueldo Base: {$nomina['sueldo_base']}");
+                        error_log("  - Actividades BD: {$nomina['pago_actividades_bd']}");
+                        error_log("  - Actividades Gerente: {$nomina['pago_actividades_gerente']}");
+                        error_log("  - Actividades Seleccionadas: {$nomina['pago_actividades_seleccionadas']}");
+                        error_log("  - Descuentos: {$nomina['descuento_registros']}");
+                        error_log("  - Total a Pagar: {$nomina['total_pagar']}");
+                    }
+                }
+                
+                error_log("TOTAL CALCULADO DESDE SESIÓN: {$totalCalculado}");
+                error_log("EMPLEADOS VÁLIDOS: {$empleadosValidos}");
+                
+                // DEBUG: Mostrar datos del formulario JSON
+                error_log("=== DATOS DEL FORMULARIO JSON ===");
+                if (!empty($nominaData)) {
+                    $totalJSON = 0;
+                    foreach ($nominaData as $idChecador => $datosEmpleado) {
+                        $totalJSON += $datosEmpleado['total_pagar'];
+                        error_log("EMPLEADO {$idChecador} desde JSON:");
+                        error_log("  - Sueldo Base: {$datosEmpleado['sueldo_base']}");
+                        error_log("  - Actividades Extras: {$datosEmpleado['actividades_extras']}");
+                        error_log("  - Deducciones: {$datosEmpleado['deducciones']}");
+                        error_log("  - Total a Pagar: {$datosEmpleado['total_pagar']}");
+                    }
+                    error_log("TOTAL DESDE JSON: {$totalJSON}");
+                } else {
+                    error_log("NO HAY DATOS EN nominaData JSON");
+                }
+
+                // ACTUALIZACIÓN CRÍTICA: Usar los datos de la sesión, NO del formulario
+                // Solo actualizar campos que pueden haber cambiado dinámicamente
+                if (!empty($nominaData)) {
+                    foreach ($nominaData as $idChecador => $datosEmpleado) {
+                        if (isset($nominaCompleta[$idChecador]) && !isset($nominaCompleta[$idChecador]['error'])) {
+                            // CORRECCIÓN: Usar los valores actualizados del formulario
+                            $nominaCompleta[$idChecador]['pago_actividades_seleccionadas'] = floatval(str_replace(',', '', $datosEmpleado['actividades_extras']));
+                            $nominaCompleta[$idChecador]['descuento_registros'] = floatval(str_replace(',', '', $datosEmpleado['deducciones']));
+                            $nominaCompleta[$idChecador]['total_pagar'] = floatval(str_replace(',', '', $datosEmpleado['total_pagar']));
+
+                            
+                            error_log("ACTUALIZADO EMPLEADO {$idChecador}:");
+                            error_log("  - Nuevo Total: {$nominaCompleta[$idChecador]['total_pagar']}");
+                        }
+                    }
+                }
+                
+                // Guardar en la base de datos
+                $resultado = guardarNominaEnBD($pdo, $nominaCompleta, $fechaInicio, $fechaFin, $idCuenta, $idOperador);
+                
+                if ($resultado['success']) {
+                    $_SESSION['success_message'] = "✅ Nómina guardada exitosamente. ID: " . $resultado['id_nomina_general'] . 
+                                                 ". Empleados procesados: " . $resultado['empleados_insertados'] .
+                                                 ". Total: $" . number_format($resultado['totales']['total_pagar'], 2);
+                    
+                    // DEBUG: Mostrar lo que se guardó
+                    error_log("=== RESULTADO DEL GUARDADO ===");
+                    error_log("Total guardado en BD: {$resultado['totales']['total_pagar']}");
+                    
+                    // Limpiar datos de sesión después de guardar exitosamente
+                    unset($_SESSION['actividades_empleado']);
+                    unset($_SESSION['nomina_completa']);
+                    unset($_SESSION['horas_por_empleado']);
+                    unset($_SESSION['empleados']);
+                    unset($_SESSION['clasificacion_empleados']);
+                    unset($_SESSION['detalle_dias']);
+                    
+                    // Redirigir para evitar reenvío del formulario
+                    header('Location: generar_nomina.php');
+                    exit;
+                } else {
+                    throw new Exception("Error al guardar nómina: " . $resultado['error']);
+                }
+                
+            } else {
+                throw new Exception("No hay datos de nómina disponibles. Por favor, sube el archivo de asistencia primero.");
+            }
+            
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = $e->getMessage();
+            error_log("Error en procesarGuardadoNomina: " . $e->getMessage());
+        }
+    }
+}
+
 function calcularHorasTrabajadas($cadenaHoras) {
     // CORREGIDO: Validar que no sea null antes de trim()
     if (empty($cadenaHoras) || $cadenaHoras === null || trim($cadenaHoras) === '') {
@@ -219,6 +338,231 @@ function obtenerActividadesExtrasGerente($pdo, $id_empleado) {
     }
 }
 
+function guardarNominaEnBD($pdo, $nominaCompleta, $fechaInicio, $fechaFin, $idCuenta, $idOperador) {
+    try {
+        // Iniciar transacción para asegurar la integridad de los datos
+        $pdo->beginTransaction();
+
+        // 1. Insertar en nomina_general (encabezado)
+        $totalEmpleados = 0;
+        $totalSueldos = 0;
+        $totalActividadesExtras = 0;
+        $totalDeducciones = 0;
+        $totalAPagar = 0;
+
+        // Calcular totales generales - SOLO empleados sin error
+        foreach ($nominaCompleta as $id_checador => $nomina) {
+            if (!isset($nomina['error'])) {
+                $totalEmpleados++;
+                $totalSueldos += $nomina['sueldo_base'];
+                
+                // CORRECCIÓN: Calcular actividades extras correctamente
+                $actividadesExtrasEmpleado = $nomina['pago_actividades_seleccionadas'] + 
+                                           $nomina['pago_actividades_bd'] + 
+                                           $nomina['pago_actividades_gerente'];
+                
+                $totalActividadesExtras += $actividadesExtrasEmpleado;
+                $totalDeducciones += $nomina['descuento_registros'];
+                
+                // CORRECCIÓN: Usar el total_pagar ya calculado en lugar de recalcular
+                $totalAPagar += $nomina['total_pagar'];
+                
+                error_log("Empleado {$id_checador}: Sueldo={$nomina['sueldo_base']}, Actividades={$actividadesExtrasEmpleado}, Descuentos={$nomina['descuento_registros']}, Total={$nomina['total_pagar']}");
+            }
+        }
+
+        // DEBUG: Mostrar totales calculados
+        error_log("TOTALES CALCULADOS: Empleados={$totalEmpleados}, Sueldos={$totalSueldos}, Actividades={$totalActividadesExtras}, Deducciones={$totalDeducciones}, Total={$totalAPagar}");
+
+        // Insertar en nomina_general
+        $stmtGeneral = $pdo->prepare("
+            INSERT INTO nomina_general (
+                fecha_inicio, fecha_fin, empleados_pagados, 
+                total_sueldos, total_actividades_extras, total_deducciones, 
+                total_a_pagar, id_cuenta, id_operador, fecha_registro
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+
+        $stmtGeneral->execute([
+            $fechaInicio,
+            $fechaFin,
+            $totalEmpleados,
+            $totalSueldos,
+            $totalActividadesExtras,
+            $totalDeducciones,
+            $totalAPagar, // CORREGIDO: Usar el total calculado correctamente
+            $idCuenta,
+            $idOperador
+        ]);
+
+        // Obtener el ID de la nómina general recién insertada
+        $idNominaGeneral = $pdo->lastInsertId();
+
+        // 2. Insertar en nomina_detalle (detalle por empleado)
+        $stmtDetalle = $pdo->prepare("
+            INSERT INTO nomina_detalle (
+                id_nomina_general, id_empleado, dias_laborados, 
+                sueldo_base, actividades_extras, deducciones, 
+                total_pagar, id_operador, fecha_registro
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+
+        $empleadosInsertados = 0;
+
+        foreach ($nominaCompleta as $id_checador => $nomina) {
+            if (isset($nomina['error'])) {
+                continue; // Saltar empleados con error
+            }
+
+            // Obtener información completa del empleado para obtener id_empleado
+            $infoEmpleado = obtenerInformacionEmpleado($id_checador, $pdo);
+            if (!$infoEmpleado || !isset($infoEmpleado['id_empleado'])) {
+                error_log("No se pudo obtener ID de empleado para ID checador: $id_checador");
+                continue;
+            }
+
+            $idEmpleado = $infoEmpleado['id_empleado'];
+
+            // CORRECCIÓN: Calcular actividades extras totales para este empleado (igual que arriba)
+            $actividadesExtrasEmpleado = $nomina['pago_actividades_seleccionadas'] + 
+                                       $nomina['pago_actividades_bd'] + 
+                                       $nomina['pago_actividades_gerente'];
+
+            // Insertar detalle - CORREGIDO: Usar los valores ya calculados
+            $stmtDetalle->execute([
+                $idNominaGeneral,
+                $idEmpleado,
+                $nomina['dias_trabajados'],
+                $nomina['sueldo_base'],
+                $actividadesExtrasEmpleado,
+                $nomina['descuento_registros'],
+                $nomina['total_pagar'], // CORREGIDO: Usar el total ya calculado
+                $idOperador
+            ]);
+
+            $empleadosInsertados++;
+        }
+
+        // Confirmar transacción
+        $pdo->commit();
+
+        return [
+            'success' => true,
+            'id_nomina_general' => $idNominaGeneral,
+            'empleados_insertados' => $empleadosInsertados,
+            'totales' => [
+                'sueldos' => $totalSueldos,
+                'actividades_extras' => $totalActividadesExtras,
+                'deducciones' => $totalDeducciones,
+                'total_pagar' => $totalAPagar
+            ]
+        ];
+
+    } catch (Exception $e) {
+        // Revertir transacción en caso de error
+        $pdo->rollBack();
+        
+        error_log("Error al guardar nómina: " . $e->getMessage());
+        
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
+// Función para obtener las cuentas bancarias disponibles
+function obtenerCuentasBancarias($pdo) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id_cuenta, nombre, banco, numero 
+            FROM cuentas_bancarias 
+            WHERE activo = 1 
+            ORDER BY nombre 
+        ");
+        
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+    } catch (Exception $e) {
+        error_log("Error al obtener cuentas bancarias: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+function validarTotalesNomina($nominaCompleta) {
+    $totalSueldoBase = 0;
+    $totalActividadesBD = 0;
+    $totalActividadesSeleccionadas = 0;
+    $totalDescuentos = 0;
+    $totalPagar = 0;
+    
+    foreach ($nominaCompleta as $id_checador => $nomina) {
+        if (!isset($nomina['error'])) {
+            $totalSueldoBase += $nomina['sueldo_base'];
+            $totalActividadesBD += $nomina['pago_actividades_bd'] + $nomina['pago_actividades_gerente'];
+            $totalActividadesSeleccionadas += $nomina['pago_actividades_seleccionadas'];
+            $totalDescuentos += $nomina['descuento_registros'];
+            $totalPagar += $nomina['total_pagar'];
+        }
+    }
+    
+    // Verificar que la suma sea consistente
+    $totalCalculado = $totalSueldoBase + $totalActividadesBD + $totalActividadesSeleccionadas - $totalDescuentos;
+    
+    error_log("VALIDACIÓN DE TOTALES:");
+    error_log("Sueldo Base: $totalSueldoBase");
+    error_log("Actividades BD: $totalActividadesBD");
+    error_log("Actividades Seleccionadas: $totalActividadesSeleccionadas");
+    error_log("Descuentos: $totalDescuentos");
+    error_log("Total Pagar (calculado): $totalCalculado");
+    error_log("Total Pagar (real): $totalPagar");
+    error_log("Diferencia: " . ($totalPagar - $totalCalculado));
+    
+    return [
+        'sueldo_base' => $totalSueldoBase,
+        'actividades_bd' => $totalActividadesBD,
+        'actividades_seleccionadas' => $totalActividadesSeleccionadas,
+        'descuentos' => $totalDescuentos,
+        'total_pagar' => $totalPagar,
+        'total_calculado' => $totalCalculado,
+        'diferencia' => $totalPagar - $totalCalculado
+    ];
+}
+
+// Llama a esta función después de calcular la nómina completa
+if (!empty($nominaCompleta)) {
+    // Validar totales
+    $validacion = validarTotalesNomina($nominaCompleta);
+    
+    // Si hay discrepancia, usar los totales calculados consistentemente
+    if (abs($validacion['diferencia']) > 0.01) {
+        error_log("ADVERTENCIA: Discrepancia en totales. Usando totales calculados.");
+        $totalGeneralSueldoBase = $validacion['sueldo_base'];
+        $totalGeneralActividadesBD = $validacion['actividades_bd'];
+        $totalGeneralActividadesSeleccionadas = $validacion['actividades_seleccionadas'];
+        $totalGeneralDescuentos = $validacion['descuentos'];
+        $totalGeneralPagar = $validacion['total_calculado']; // Usar el calculado para consistencia
+    }
+    
+    // Guardar datos en sesión
+    $_SESSION['nomina_completa'] = $nominaCompleta;
+    $_SESSION['horas_por_empleado'] = $horasPorEmpleado;
+    $_SESSION['empleados'] = $empleados;
+    $_SESSION['clasificacion_empleados'] = $clasificacionEmpleados;
+    $_SESSION['detalle_dias'] = $detalleDias;
+}
+
+// CORRECCIÓN: Cargar datos desde sesión si existen
+if (isset($_SESSION['nomina_completa']) && !empty($_SESSION['nomina_completa'])) {
+    $nominaCompleta = $_SESSION['nomina_completa'];
+    $horasPorEmpleado = $_SESSION['horas_por_empleado'] ?? [];
+    $empleados = $_SESSION['empleados'] ?? [];
+    $clasificacionEmpleados = $_SESSION['clasificacion_empleados'] ?? [];
+    $detalleDias = $_SESSION['detalle_dias'] ?? [];
+}
+
 $actividadesExtras = obtenerActividadesExtras($pdo);
 
 // Inicializar variables para actividades
@@ -232,8 +576,12 @@ $totalGeneralActividadesSeleccionadas = 0;
 $totalGeneralDescuentos = 0;
 $totalGeneralPagar = 0;
 
-// Lógica de procesamiento de datos
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// CORRECCIÓN IMPORTANTE: Reordenar el flujo
+// 1. Primero procesar el guardado de nómina
+procesarGuardadoNomina($pdo, $nominaCompleta);
+
+// 2. Luego procesar el archivo de asistencia (si se envió)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['asistencia_file'])) {
     try {
         // Procesar actividades seleccionadas si se enviaron
         if (isset($_POST['actividades_empleado'])) {
@@ -482,6 +830,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         // Para empleados normales: cálculo actual basado en asistencia
                         $diasTrabajados = 5 - ($clasificacionEmpleados[$id_checador]['dias_sin_registro'] ?? 5);
+                        $diasTrabajados = max($diasTrabajados, 0); // mínimo permitido = 0
+                        $diasTrabajados = abs($diasTrabajados); // elimina negativo si aparece
                         $sueldoBase = $sueldoDiario * $diasTrabajados;
                         
                         // Calcular descuento por registros incompletos
@@ -508,6 +858,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     $nominaCompleta[$id_checador] = [
+                        'id_empleado' => $infoEmpleado['id_empleado'], // AÑADIDO: Incluir ID del empleado
                         'nombre_completo' => $infoEmpleado['nombre_completo'],
                         'puesto' => $infoEmpleado['puesto'] ?? 'No asignado',
                         'nivel_jerarquico' => $infoEmpleado['nivel_jerarquico'] ?? 'normal',
@@ -535,6 +886,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $totalGeneralDescuentos += $descuentoRegistros;
                     $totalGeneralPagar += $totalPagar;
                 }
+            }
+
+            // CORRECCIÓN: Guardar datos en sesión después de procesar el archivo
+            if (!empty($nominaCompleta)) {
+                $_SESSION['nomina_completa'] = $nominaCompleta;
+                $_SESSION['horas_por_empleado'] = $horasPorEmpleado;
+                $_SESSION['empleados'] = $empleados;
+                $_SESSION['clasificacion_empleados'] = $clasificacionEmpleados;
+                $_SESSION['detalle_dias'] = $detalleDias;
             }
 
         } elseif ($fileType === 'csv') {
@@ -570,226 +930,226 @@ require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <style>
-/* ESTILOS ESPECÍFICOS PARA NÓMINA - SOBRESCRIBIENDO REGLAS EXISTENTES */
-.form-container-nomina {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: 10px;
-    border: 1px solid #dee2e6;
-    margin-bottom: 25px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-}
-
-/* FORZAR ANCHO COMPLETO PARA TODOS LOS ELEMENTOS DE NÓMINA */
-.container-nomina-full {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 15px;
-    margin: 0 auto;
-}
-
-.table-responsive-nomina {
-    overflow-x: auto;
-    width: 100% !important;
-    margin-top: 20px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-}
-
-.table-nomina {
-    width: 100% !important;
-    min-width: 1400px !important;
-    border-collapse: collapse;
-    background-color: white;
-    margin-bottom: 0;
-}
-
-.table-nomina th,
-.table-nomina td {
-    border: 1px solid #dee2e6;
-    padding: 12px;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.table-nomina thead {
-    background-color: #45814d !important;
-    color: white;
-}
-
-.table-nomina thead th {
-    background-color: #45814d !important;
-    color: white !important;
-    text-transform: uppercase;
-    font-weight: 500;
-    padding: 1rem;
-    border: none;
-}
-
-.form-group-nomina {
-    margin-bottom: 20px;
-    width: 100% !important;
-}
-
-.form-group-nomina label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #495057;
-    width: 100% !important;
-}
-
-.form-group-nomina input[type="file"] {
-    width: 100% !important;
-    padding: 10px;
-    border: 2px dashed #ced4da;
-    border-radius: 5px;
-    background: white;
-    transition: all 0.3s ease;
-}
-
-.btn-submit-nomina {
-    background: #007bff;
-    color: white;
-    padding: 12px 30px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    width: auto !important;
-    display: inline-block !important;
-}
-
-.btn-submit-nomina:hover {
-    background: #0056b3;
-}
-
-.total-row {
-    background: #e3f2fd !important;
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-.total-row td {
-    padding: 15px 12px;
-    border-top: 2px solid #007bff;
-}
-
-.actividades-container {
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
-    padding: 10px;
-    background: white;
-    width: 100% !important;
-}
-
-.actividades-item {
-    margin-bottom: 8px;
-    padding: 5px;
-    border-radius: 3px;
-    transition: background 0.2s ease;
-    width: 100% !important;
-}
-
-.actividades-item:hover {
-    background: #f8f9fa;
-}
-
-.actividades-item label {
-    font-weight: normal;
-    margin-bottom: 0;
-    cursor: pointer;
-    width: 100% !important;
-}
-
-.positive-amount {
-    color: #28a745;
-    font-weight: 600;
-}
-
-.negative-amount {
-    color: #dc3545;
-    font-weight: 600;
-}
-
-.section-title-nomina {
-    color: #495057;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    width: 100% !important;
-}
-
-.employee-detail-section {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    width: 100% !important;
-}
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-    .container-nomina-full {
-        padding: 0 10px;
-    }
-    
+    /* ESTILOS ESPECÍFICOS PARA NÓMINA - SOBRESCRIBIENDO REGLAS EXISTENTES */
     .form-container-nomina {
-        padding: 15px;
-    }
-    
-    .table-nomina {
-        min-width: 1200px !important;
-    }
-}
-
-/* Agregar en la sección de estilos */
-.condonar-checkbox {
-    transform: scale(1.2);
-    margin: 0 8px;
-}
-
-.condonar-label {
-    font-weight: normal;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.descuento-condonado {
-    text-decoration: line-through;
-    color: #6c757d !important;
-}
-
-.sin-descuento {
-    color: #28a745 !important;
-    font-weight: bold;
-}
-
-@media (max-width: 576px) {
-    .container-nomina-full {
-        padding: 0 5px;
-    }
-    
-    .form-container-nomina {
-        padding: 10px;
-    }
-    
-    .btn-submit-nomina {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 25px;
         width: 100% !important;
-        padding: 15px;
+        max-width: 100% !important;
+        box-sizing: border-box;
     }
-}
+
+    /* FORZAR ANCHO COMPLETO PARA TODOS LOS ELEMENTOS DE NÓMINA */
+    .container-nomina-full {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 15px;
+        margin: 0 auto;
+    }
+
+    .table-responsive-nomina {
+        overflow-x: auto;
+        width: 100% !important;
+        margin-top: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+
+    .table-nomina {
+        width: 100% !important;
+        min-width: 1400px !important;
+        border-collapse: collapse;
+        background-color: white;
+        margin-bottom: 0;
+    }
+
+    .table-nomina th,
+    .table-nomina td {
+        border: 1px solid #dee2e6;
+        padding: 12px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .table-nomina thead {
+        background-color: #45814d !important;
+        color: white;
+    }
+
+    .table-nomina thead th {
+        background-color: #45814d !important;
+        color: white !important;
+        text-transform: uppercase;
+        font-weight: 500;
+        padding: 1rem;
+        border: none;
+    }
+
+    .form-group-nomina {
+        margin-bottom: 20px;
+        width: 100% !important;
+    }
+
+    .form-group-nomina label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #495057;
+        width: 100% !important;
+    }
+
+    .form-group-nomina input[type="file"] {
+        width: 100% !important;
+        padding: 10px;
+        border: 2px dashed #ced4da;
+        border-radius: 5px;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit-nomina {
+        background: #007bff;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: auto !important;
+        display: inline-block !important;
+    }
+
+    .btn-submit-nomina:hover {
+        background: #0056b3;
+    }
+
+    .total-row {
+        background: #e3f2fd !important;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    .total-row td {
+        padding: 15px 12px;
+        border-top: 2px solid #007bff;
+    }
+
+    .actividades-container {
+        max-height: 150px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        background: white;
+        width: 100% !important;
+    }
+
+    .actividades-item {
+        margin-bottom: 8px;
+        padding: 5px;
+        border-radius: 3px;
+        transition: background 0.2s ease;
+        width: 100% !important;
+    }
+
+    .actividades-item:hover {
+        background: #f8f9fa;
+    }
+
+    .actividades-item label {
+        font-weight: normal;
+        margin-bottom: 0;
+        cursor: pointer;
+        width: 100% !important;
+    }
+
+    .positive-amount {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .negative-amount {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .section-title-nomina {
+        color: #495057;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        width: 100% !important;
+    }
+
+    .employee-detail-section {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 100% !important;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .container-nomina-full {
+            padding: 0 10px;
+        }
+        
+        .form-container-nomina {
+            padding: 15px;
+        }
+        
+        .table-nomina {
+            min-width: 1200px !important;
+        }
+    }
+
+    /* Agregar en la sección de estilos */
+    .condonar-checkbox {
+        transform: scale(1.2);
+        margin: 0 8px;
+    }
+
+    .condonar-label {
+        font-weight: normal;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .descuento-condonado {
+        text-decoration: line-through;
+        color: #6c757d !important;
+    }
+
+    .sin-descuento {
+        color: #28a745 !important;
+        font-weight: bold;
+    }
+
+    @media (max-width: 576px) {
+        .container-nomina-full {
+            padding: 0 5px;
+        }
+        
+        .form-container-nomina {
+            padding: 10px;
+        }
+        
+        .btn-submit-nomina {
+            width: 100% !important;
+            padding: 15px;
+        }
+    }
 </style>
 
 <main>
-    <div class="container-nomina-full">
+<div class="container-nomina-full">
         <h1 class="section-title-nomina">Generar Nómina</h1>
 
         <?php
@@ -798,17 +1158,16 @@ require_once __DIR__ . '/../../includes/header.php';
             unset($_SESSION['error_message']);
         }
         
+        if (isset($_SESSION['success_message'])) {
+            echo '<div class="alert alert-success" style="width: 100% !important;">' . $_SESSION['success_message'] . '</div>';
+            unset($_SESSION['success_message']);
+        }
+        
         // Mostrar información de depuración si no hay datos
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($horasPorEmpleado)) {
             echo '<div class="alert alert-warning" style="width: 100% !important;">';
             echo '<h4>Información de Depuración:</h4>';
             echo '<p>No se encontraron datos de empleados en el archivo.</p>';
-            echo '<p>Por favor verifica que:</p>';
-            echo '<ul>';
-            echo '<li>El archivo tenga la tercera hoja con los datos de asistencia</li>';
-            echo '<li>Los IDs de empleados estén en formato numérico</li>';
-            echo '<li>Los registros de horas tengan formato de tiempo (HH:MM)</li>';
-            echo '</ul>';
             echo '</div>';
         }
         ?>
@@ -849,6 +1208,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     </thead>
                     <tbody>
                         <?php 
+                        // Reinicializar totales
                         $totalGeneralSueldoBase = 0;
                         $totalGeneralActividadesBD = 0;
                         $totalGeneralActividadesSeleccionadas = 0;
@@ -900,7 +1260,6 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <td>$<?= number_format($nomina['sueldo_diario'], 2) ?></td>
                                 <td>
                                     <?= $nomina['dias_trabajados'] ?>
-                                    
                                 </td>
                                 <td>$<?= number_format($sueldoBase, 2) ?></td>
 
@@ -968,7 +1327,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             </tr>
                         <?php endif; endforeach; ?>
                         
-                        <!-- Totales generales ACTUALIZADOS -->
+                        <!-- Totales generales -->
                         <tr class="total-row">
                             <td colspan="5" style="text-align: right; font-weight: bold;">TOTALES GENERALES:</td>
                             <td style="font-weight: bold;">$<span id="total-sueldo-base"><?= number_format($totalGeneralSueldoBase, 2) ?></span></td>
@@ -984,185 +1343,351 @@ require_once __DIR__ . '/../../includes/header.php';
             <p><small>* Descuento de $25 por cada día sin 4 registros completos</small></p>
         </div>
 
+        <!-- FORMULARIO PARA GUARDAR NÓMINA - AQUÍ ESTÁ EL BOTÓN DE GUARDAR -->
+        <div class="form-container-nomina">
+            <h2 class="section-title-nomina">Guardar Nómina en Base de Datos</h2>
+            
+            <?php
+            // Obtener cuentas bancarias
+            $cuentasBancarias = obtenerCuentasBancarias($pdo);
+            $idOperador = $_SESSION['user_id'] ?? 1; // ID del usuario logueado
+            ?>
+
+            <!-- FORMULARIO DE GUARDADO -->
+            <form id="form-guardar-nomina" action="generar_nomina.php" method="post">
+                <!-- Campos ocultos con los datos de la nómina -->
+                <input type="hidden" name="guardar_nomina" value="1">
+                <input type="hidden" name="nomina_data" id="nomina_data" value="">
+                <input type="hidden" name="actividades_data" id="actividades_data" value="">
+                <input type="hidden" name="id_operador" value="<?= $idOperador ?>">
+                
+                <div class="form-group-nomina">
+                    <label for="fecha_inicio">Fecha de Inicio del Período:</label>
+                    <input type="date" name="fecha_inicio" id="fecha_inicio" required 
+                           value="<?= date('Y-m-d', strtotime('last monday')) ?>">
+                </div>
+                
+                <div class="form-group-nomina">
+                    <label for="fecha_fin">Fecha de Fin del Período:</label>
+                    <input type="date" name="fecha_fin" id="fecha_fin" required
+                           value="<?= date('Y-m-d', strtotime('last friday')) ?>">
+                </div>
+                
+                <div class="form-group-nomina">
+                    <label for="id_cuenta">Cuenta Bancaria para Pago:</label>
+                    <select name="id_cuenta" id="id_cuenta" required>
+                        <option value="">Seleccione una cuenta</option>
+                        <?php foreach ($cuentasBancarias as $cuenta): ?>
+                            <option value="<?= $cuenta['id_cuenta'] ?>">
+                                <?= htmlspecialchars($cuenta['nombre']) ?> - 
+                                <?= htmlspecialchars($cuenta['banco']) ?> 
+                                (****<?= substr($cuenta['numero'], -4) ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <div class="resumen-totales" style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                    <h4>Resumen de la Nómina a Guardar:</h4>
+                    <div class="totales-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <div><strong>Total Empleados:</strong> <span id="resumen-empleados"><?= count(array_filter($nominaCompleta, function($nomina) { return !isset($nomina['error']); })) ?></span></div>
+                        <div><strong>Total Sueldos:</strong> $<span id="resumen-sueldos"><?= number_format($totalGeneralSueldoBase, 2) ?></span></div>
+                        <div><strong>Total Actividades Extras:</strong> $<span id="resumen-actividades"><?= number_format($totalGeneralActividadesSeleccionadas + $totalGeneralActividadesBD, 2) ?></span></div>
+                        <div><strong>Total Deducciones:</strong> $<span id="resumen-deducciones"><?= number_format($totalGeneralDescuentos, 2) ?></span></div>
+                        <div><strong>Total a Pagar:</strong> $<span id="resumen-total"><?= number_format($totalGeneralPagar, 2) ?></span></div>
+                    </div>
+                    <!-- AÑADIR ESTA LÍNEA PARA DEBUG -->
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <strong>DEBUG:</strong> 
+                        Sueldos: $<?= number_format($totalGeneralSueldoBase, 2) ?> | 
+                        Actividades: $<?= number_format($totalGeneralActividadesSeleccionadas + $totalGeneralActividadesBD, 2) ?> | 
+                        Deducciones: $<?= number_format($totalGeneralDescuentos, 2) ?> | 
+                        Total: $<?= number_format($totalGeneralPagar, 2) ?>
+                    </div>
+                </div>
+                
+                <!-- BOTÓN DE GUARDAR NÓMINA -->
+                <button type="submit" class="btn-submit-nomina" style="background: #28a745;">
+                    💾 Guardar Nómina en Base de Datos
+                </button>
+            </form>
+        </div>
+
         <!-- JavaScript para calcular totales en tiempo real -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar totales desde PHP
-    window.totalesGenerales = {
-        sueldoBase: <?= $totalGeneralSueldoBase ?? 0 ?>,
-        actividadesBD: <?= $totalGeneralActividadesBD ?? 0 ?>,
-        actividadesSeleccionadas: <?= $totalGeneralActividadesSeleccionadas ?? 0 ?>,
-        descuentos: <?= $totalGeneralDescuentos ?? 0 ?>,
-        general: <?= $totalGeneralPagar ?? 0 ?>
-    };
-    
-    // Agregar event listeners a todos los checkboxes de actividades
-    document.querySelectorAll('.actividad-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            calcularTotal(this);
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar totales desde PHP
+            window.totalesGenerales = {
+                sueldoBase: <?= $totalGeneralSueldoBase ?? 0 ?>,
+                actividadesBD: <?= $totalGeneralActividadesBD ?? 0 ?>,
+                actividadesSeleccionadas: <?= $totalGeneralActividadesSeleccionadas ?? 0 ?>,
+                descuentos: <?= $totalGeneralDescuentos ?? 0 ?>,
+                general: <?= $totalGeneralPagar ?? 0 ?>
+            };
+            
+            // Agregar event listeners a todos los checkboxes de actividades
+            document.querySelectorAll('.actividad-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    calcularTotal(this);
+                });
+            });
+            
+            // Agregar event listeners a todos los selects de días a condonar
+            document.querySelectorAll('.dias-condonar').forEach(select => {
+                select.addEventListener('change', function() {
+                    calcularDescuento(this);
+                });
+            });
+
+            // Función para preparar los datos antes de enviar el formulario
+            document.getElementById('form-guardar-nomina').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Preparar datos de la nómina
+                const nominaData = {};
+                const actividadesData = {};
+                
+                // Recopilar datos de cada empleado
+                document.querySelectorAll('[id^="fila-"]').forEach(fila => {
+                    const empleadoId = fila.id.replace('fila-', '');
+                    
+                    // Solo procesar empleados sin error
+                    if (!fila.querySelector('.alert-danger')) {
+                        const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+                        const descuentoRegistros = parseFloat(document.getElementById('monto-descuento-' + empleadoId)?.textContent) || 0;
+                        const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+                        const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
+                        const totalActividadesSeleccionadas = parseFloat(document.getElementById('total-actividades-' + empleadoId)?.textContent) || 0;
+                        const totalPagar = parseFloat(document.getElementById('total-pagar-' + empleadoId)?.textContent) || 0;
+                        const esGerente = fila.dataset.esGerente === 'true';
+                        
+                        // Calcular actividades extras totales
+                        const actividadesExtrasTotales = totalActividadesSeleccionadas + pagoActividadesBD + pagoActividadesGerente;
+                        
+                        // Obtener días trabajados
+                        let diasTrabajados = 0;
+                        if (esGerente) {
+                            // Para gerentes, buscar en los datos originales de PHP
+                            const diasTrabajadosElement = fila.querySelector('td:nth-child(5)');
+                            diasTrabajados = parseInt(diasTrabajadosElement?.textContent) || 5;
+                        } else {
+                            // Para empleados normales
+                            const diasTrabajadosElement = fila.querySelector('td:nth-child(5)');
+                            diasTrabajados = parseInt(diasTrabajadosElement?.textContent) || 5;
+                        }
+                        
+                        nominaData[empleadoId] = {
+                            sueldo_base: sueldoBase,
+                            actividades_extras: actividadesExtrasTotales,
+                            deducciones: descuentoRegistros,
+                            total_pagar: totalPagar,
+                            dias_trabajados: diasTrabajados,
+                            es_gerente: esGerente
+                        };
+                        
+                        // Recopilar actividades seleccionadas
+                        const actividadesEmpleado = [];
+                        document.querySelectorAll('.actividad-checkbox[data-empleado="' + empleadoId + '"]:checked').forEach(checkbox => {
+                            actividadesEmpleado.push(checkbox.name.match(/\[(\d+)\]$/)[1]);
+                        });
+                        
+                        actividadesData[empleadoId] = actividadesEmpleado;
+                    }
+                });
+                
+                // Validar que hay datos para guardar
+                if (Object.keys(nominaData).length === 0) {
+                    alert('No hay datos de nómina para guardar. Por favor, verifica que se haya procesado el archivo de asistencia.');
+                    return;
+                }
+                
+                // Asignar datos a los campos ocultos
+                document.getElementById('nomina_data').value = JSON.stringify(nominaData);
+                document.getElementById('actividades_data').value = JSON.stringify(actividadesData);
+                
+                // Mostrar confirmación
+                if (confirm('¿Está seguro de guardar la nómina en la base de datos? Esta acción no se puede deshacer.')) {
+                    this.submit();
+                }
+
+                const totalCalculado = parseFloat(document.getElementById('total-general').textContent) || 0;
+                const totalResumen = parseFloat(document.getElementById('resumen-total').textContent) || 0;
+                
+                if (totalCalculado === 0) {
+                    alert('Error: El total calculado es $0.00. Verifica los datos de la nómina.');
+                    return;
+                }
+                
+                if (Math.abs(totalCalculado - totalResumen) > 0.01) {
+                    console.warn('Advertencia: Los totales no coinciden completamente', {
+                        calculado: totalCalculado,
+                        resumen: totalResumen
+                    });
+                }
+
+            });
+
         });
-    });
-    
-    // Agregar event listeners a todos los selects de días a condonar
-    document.querySelectorAll('.dias-condonar').forEach(select => {
-        select.addEventListener('change', function() {
-            calcularDescuento(this);
+
+        function calcularTotal(checkbox) {
+            const empleadoId = checkbox.dataset.empleado;
+            const valorActividad = parseFloat(checkbox.dataset.valor);
+            const estaMarcado = checkbox.checked;
+            
+            // Obtener los elementos relevantes
+            const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
+            const totalPagarElement = document.getElementById('total-pagar-' + empleadoId);
+            const fila = document.getElementById('fila-' + empleadoId);
+            
+            // Obtener valores base
+            let totalActividadesActual = parseFloat(totalActividadesElement.textContent) || 0;
+            const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+            const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+            const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
+            const esGerente = fila.dataset.esGerente === 'true';
+            
+            // Obtener descuento actual
+            const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
+            const descuentoActual = parseFloat(montoDescuentoElement?.textContent) || 0;
+            
+            // Actualizar total de actividades
+            if (estaMarcado) {
+                totalActividadesActual += valorActividad;
+            } else {
+                totalActividadesActual -= valorActividad;
+            }
+            
+            // Asegurarse de que no sea negativo
+            if (totalActividadesActual < 0) {
+                totalActividadesActual = 0;
+            }
+            
+            // Calcular nuevo total a pagar (incluye actividades de BD y gerente según corresponda)
+            let nuevoTotalPagar;
+            if (esGerente) {
+                // Para gerente: sueldo base + actividades de gerente + actividades seleccionadas
+                nuevoTotalPagar = sueldoBase + pagoActividadesGerente + totalActividadesActual - descuentoActual;
+            } else {
+                // Para empleados normales: sueldo base + actividades BD + actividades seleccionadas - descuentos
+                nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividadesActual - descuentoActual;
+            }
+            
+            // Actualizar displays
+            totalActividadesElement.textContent = totalActividadesActual.toFixed(2);
+            totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
+            
+            // Actualizar totales generales
+            actualizarTotalesGenerales();
+        }
+
+        function calcularDescuento(select) {
+            const empleadoId = select.dataset.empleado;
+            const diasACondonar = parseInt(select.value);
+            const descuentoPorDia = parseFloat(select.dataset.descuentoPorDia);
+            const diasSinRegistros = parseInt(select.dataset.diasSinRegistros);
+            
+            // Calcular nuevo descuento
+            const diasConDescuento = diasSinRegistros - diasACondonar;
+            const nuevoDescuento = diasConDescuento * descuentoPorDia;
+            
+            // Obtener elementos relevantes
+            const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
+            const totalPagarElement = document.getElementById('total-pagar-' + empleadoId);
+            const fila = document.getElementById('fila-' + empleadoId);
+            
+            // Obtener valores base
+            const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+            const totalActividades = parseFloat(document.getElementById('total-actividades-' + empleadoId).textContent) || 0;
+            const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+            const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
+            const esGerente = fila.dataset.esGerente === 'true';
+            
+            // Actualizar monto de descuento
+            if (montoDescuentoElement) {
+                montoDescuentoElement.textContent = nuevoDescuento.toFixed(2);
+            }
+            
+            // Calcular nuevo total a pagar (incluye actividades según el tipo de empleado)
+            let nuevoTotalPagar;
+            if (esGerente) {
+                nuevoTotalPagar = sueldoBase + pagoActividadesGerente + totalActividades - nuevoDescuento;
+            } else {
+                nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividades - nuevoDescuento;
+            }
+            
+            totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
+            
+            // Cambiar estilo visual si no hay descuento
+            const descuentoElement = document.getElementById('descuento-' + empleadoId);
+            if (descuentoElement) {
+                if (nuevoDescuento === 0) {
+                    descuentoElement.classList.add('descuento-condonado');
+                } else {
+                    descuentoElement.classList.remove('descuento-condonado');
+                }
+            }
+            
+            // Actualizar totales generales
+            actualizarTotalesGenerales();
+        }
+
+        function actualizarTotalesGenerales() {
+        let totalSueldoBase = 0;
+        let totalActividadesSeleccionadas = 0;
+        let totalActividadesBD = 0;
+        let totalDescuentos = 0;
+        let totalGeneral = 0;
+        
+        // Recalcular todos los totales desde cero
+        document.querySelectorAll('[id^="fila-"]').forEach(fila => {
+            const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
+            const empleadoId = fila.id.replace('fila-', '');
+            const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
+            const totalActividadesEmpleado = parseFloat(totalActividadesElement?.textContent) || 0;
+            const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+            const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
+            const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
+            const descuentoEmpleado = parseFloat(montoDescuentoElement?.textContent) || 0;
+            const esGerente = fila.dataset.esGerente === 'true';
+            
+            totalSueldoBase += sueldoBase;
+            totalActividadesSeleccionadas += totalActividadesEmpleado;
+            totalActividadesBD += pagoActividadesBD + pagoActividadesGerente;
+            totalDescuentos += descuentoEmpleado;
+            
+            // Calcular total según tipo de empleado
+            if (esGerente) {
+                totalGeneral += (sueldoBase + pagoActividadesGerente + totalActividadesEmpleado - descuentoEmpleado);
+            } else {
+                totalGeneral += (sueldoBase + pagoActividadesBD + totalActividadesEmpleado - descuentoEmpleado);
+            }
         });
-    });
-});
-
-function calcularTotal(checkbox) {
-    const empleadoId = checkbox.dataset.empleado;
-    const valorActividad = parseFloat(checkbox.dataset.valor);
-    const estaMarcado = checkbox.checked;
-    
-    // Obtener los elementos relevantes
-    const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
-    const totalPagarElement = document.getElementById('total-pagar-' + empleadoId);
-    const fila = document.getElementById('fila-' + empleadoId);
-    
-    // Obtener valores base
-    let totalActividadesActual = parseFloat(totalActividadesElement.textContent) || 0;
-    const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
-    const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
-    const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
-    const esGerente = fila.dataset.esGerente === 'true';
-    
-    // Obtener descuento actual
-    const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
-    const descuentoActual = parseFloat(montoDescuentoElement?.textContent) || 0;
-    
-    // Actualizar total de actividades
-    if (estaMarcado) {
-        totalActividadesActual += valorActividad;
-    } else {
-        totalActividadesActual -= valorActividad;
-    }
-    
-    // Asegurarse de que no sea negativo
-    if (totalActividadesActual < 0) {
-        totalActividadesActual = 0;
-    }
-    
-    // Calcular nuevo total a pagar (incluye actividades de BD y gerente según corresponda)
-    let nuevoTotalPagar;
-    if (esGerente) {
-        // Para gerente: sueldo base + actividades de gerente + actividades seleccionadas
-        nuevoTotalPagar = sueldoBase + pagoActividadesGerente + totalActividadesActual - descuentoActual;
-    } else {
-        // Para empleados normales: sueldo base + actividades BD + actividades seleccionadas - descuentos
-        nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividadesActual - descuentoActual;
-    }
-    
-    // Actualizar displays
-    totalActividadesElement.textContent = totalActividadesActual.toFixed(2);
-    totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
-    
-    // Actualizar totales generales
-    actualizarTotalesGenerales();
-}
-
-function calcularDescuento(select) {
-    const empleadoId = select.dataset.empleado;
-    const diasACondonar = parseInt(select.value);
-    const descuentoPorDia = parseFloat(select.dataset.descuentoPorDia);
-    const diasSinRegistros = parseInt(select.dataset.diasSinRegistros);
-    
-    // Calcular nuevo descuento
-    const diasConDescuento = diasSinRegistros - diasACondonar;
-    const nuevoDescuento = diasConDescuento * descuentoPorDia;
-    
-    // Obtener elementos relevantes
-    const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
-    const totalPagarElement = document.getElementById('total-pagar-' + empleadoId);
-    const fila = document.getElementById('fila-' + empleadoId);
-    
-    // Obtener valores base
-    const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
-    const totalActividades = parseFloat(document.getElementById('total-actividades-' + empleadoId).textContent) || 0;
-    const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
-    const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
-    const esGerente = fila.dataset.esGerente === 'true';
-    
-    // Actualizar monto de descuento
-    if (montoDescuentoElement) {
-        montoDescuentoElement.textContent = nuevoDescuento.toFixed(2);
-    }
-    
-    // Calcular nuevo total a pagar (incluye actividades según el tipo de empleado)
-    let nuevoTotalPagar;
-    if (esGerente) {
-        nuevoTotalPagar = sueldoBase + pagoActividadesGerente + totalActividades - nuevoDescuento;
-    } else {
-        nuevoTotalPagar = sueldoBase + pagoActividadesBD + totalActividades - nuevoDescuento;
-    }
-    
-    totalPagarElement.textContent = nuevoTotalPagar.toFixed(2);
-    
-    // Cambiar estilo visual si no hay descuento
-    const descuentoElement = document.getElementById('descuento-' + empleadoId);
-    if (descuentoElement) {
-        if (nuevoDescuento === 0) {
-            descuentoElement.classList.add('descuento-condonado');
-        } else {
-            descuentoElement.classList.remove('descuento-condonado');
-        }
-    }
-    
-    // Actualizar totales generales
-    actualizarTotalesGenerales();
-}
-
-function actualizarTotalesGenerales() {
-    let totalSueldoBase = 0;
-    let totalActividadesSeleccionadas = 0;
-    let totalActividadesBD = 0;
-    let totalDescuentos = 0;
-    let totalGeneral = 0;
-    
-    // Recalcular todos los totales desde cero
-    document.querySelectorAll('[id^="fila-"]').forEach(fila => {
-        const sueldoBase = parseFloat(fila.dataset.sueldoBase) || 0;
-        const empleadoId = fila.id.replace('fila-', '');
-        const totalActividadesElement = document.getElementById('total-actividades-' + empleadoId);
-        const totalActividadesEmpleado = parseFloat(totalActividadesElement?.textContent) || 0;
-        const pagoActividadesBD = parseFloat(fila.dataset.pagoActividadesBd) || 0;
-        const pagoActividadesGerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
-        const montoDescuentoElement = document.getElementById('monto-descuento-' + empleadoId);
-        const descuentoEmpleado = parseFloat(montoDescuentoElement?.textContent) || 0;
-        const esGerente = fila.dataset.esGerente === 'true';
         
-        totalSueldoBase += sueldoBase;
-        totalActividadesSeleccionadas += totalActividadesEmpleado;
-        totalActividadesBD += pagoActividadesBD + pagoActividadesGerente;
-        totalDescuentos += descuentoEmpleado;
+        // Actualizar displays de totales generales en la TABLA
+        document.getElementById('total-sueldo-base').textContent = totalSueldoBase.toFixed(2);
+        document.getElementById('total-actividades').textContent = (totalActividadesSeleccionadas + totalActividadesBD).toFixed(2);
+        document.getElementById('total-descuentos').textContent = totalDescuentos.toFixed(2);
+        document.getElementById('total-general').textContent = totalGeneral.toFixed(2);
         
-        // Calcular total según tipo de empleado
-        if (esGerente) {
-            totalGeneral += (sueldoBase + pagoActividadesGerente + totalActividadesEmpleado - descuentoEmpleado);
-        } else {
-            totalGeneral += (sueldoBase + pagoActividadesBD + totalActividadesEmpleado - descuentoEmpleado);
-        }
-    });
-    
-    // Actualizar displays de totales generales
-    document.getElementById('total-sueldo-base').textContent = totalSueldoBase.toFixed(2);
-    document.getElementById('total-actividades').textContent = (totalActividadesSeleccionadas + totalActividadesBD).toFixed(2);
-    document.getElementById('total-descuentos').textContent = totalDescuentos.toFixed(2);
-    document.getElementById('total-general').textContent = totalGeneral.toFixed(2);
-    
-    // Actualizar el objeto global
-    window.totalesGenerales = {
+        // ACTUALIZAR TAMBIÉN EL RESUMEN
+        document.getElementById('resumen-sueldos').textContent = totalSueldoBase.toFixed(2);
+        document.getElementById('resumen-actividades').textContent = (totalActividadesSeleccionadas + totalActividadesBD).toFixed(2);
+        document.getElementById('resumen-deducciones').textContent = totalDescuentos.toFixed(2);
+        document.getElementById('resumen-total').textContent = totalGeneral.toFixed(2);
+        document.getElementById('debug-total').textContent = totalGeneral.toFixed(2);
+        
+        // Actualizar el objeto global
+        window.totalesGenerales = {
         sueldoBase: totalSueldoBase,
         actividadesSeleccionadas: totalActividadesSeleccionadas,
         actividadesBD: totalActividadesBD,
-        descuentos: totalDescuentos,
-        general: totalGeneral
-    };
-    
-    console.log('Totales actualizados:', window.totalesGenerales);
-}
-</script>
+                descuentos: totalDescuentos,
+                general: totalGeneral
+            };
+            
+            console.log('Totales actualizados:', window.totalesGenerales);
+        }
+        </script>
 
         <!-- El resto del código para las otras tablas permanece igual -->
         <!-- Tabla de Asistencia Resumen -->
