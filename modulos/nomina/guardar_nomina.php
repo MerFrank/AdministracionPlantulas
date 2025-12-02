@@ -3,15 +3,15 @@ session_start();
 require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-// Verificar que viene del formulario
+// ---- 1. VALIDAR POST ----
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: generar_nomina.php');
     exit;
 }
 
-// Verificar que hay datos de nómina
-if (!isset($_POST['nomina']) || empty($_POST['nomina'])) {
-    $_SESSION['error_message'] = "No hay datos de nómina para guardar";
+// ---- 2. VALIDAR LOGIN ----
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['error_message'] = "Debe iniciar sesión para guardar nóminas";
     header('Location: generar_nomina.php');
     exit;
 }
@@ -19,70 +19,96 @@ if (!isset($_POST['nomina']) || empty($_POST['nomina'])) {
 try {
     $database = new Database();
     $pdo = $database->conectar();
-    
-    // Obtener ID_Operador de la sesión
-    $ID_Operador = $_SESSION['ID_Operador'] ?? null;
-    
-    // Iniciar transacción
-    $pdo->beginTransaction();
-    
-    // Preparar statement
-    $stmt = $pdo->prepare("
-        INSERT INTO nomina_registrada (
-            periodo_nomina, id_empleado, id_checador, nombre_empleado, puesto,
-            sueldo_diario, dias_trabajados, sueldo_base, pago_actividades_extras, 
-            dias_sin_4_registros, dias_condonados, descuento_registros, total_pagar, 
-            actividades_seleccionadas_ids, usuario_registro
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )
-    ");
-    
-    $periodo_nomina = $_POST['periodo_nomina'];
-    $contador = 0;
-    
-    foreach ($_POST['nomina'] as $id_checador => $datos) {
-        // Obtener días condonados
-        $dias_condonados = $_POST['dias_condonados'][$id_checador] ?? 0;
-        
-        // Obtener IDs de actividades seleccionadas
-        $actividades_ids = [];
-        if (isset($_POST['actividades'][$id_checador])) {
-            $actividades_ids = array_keys($_POST['actividades'][$id_checador]);
-        }
-        $actividades_ids_str = !empty($actividades_ids) ? implode(',', $actividades_ids) : '';
-        
-        $stmt->execute([
-            $periodo_nomina,
-            $datos['id_empleado'],
-            $id_checador,
-            $datos['nombre_completo'],
-            $datos['puesto'],
-            $datos['sueldo_diario'],
-            $datos['dias_trabajados'],
-            $datos['sueldo_base'],
-            $datos['pago_actividades_seleccionadas'],
-            $datos['dias_sin_4_registros'],
-            $dias_condonados,
-            $datos['descuento_registros'],
-            $datos['total_pagar'],
-            $actividades_ids_str,
-            $ID_Operador
-        ]);
-        
-        $contador++;
+
+    // ---- 3. OBTENER DATOS ----
+    $fechaInicio = $_POST['fecha_inicio'] ?? '';
+    $fechaFin    = $_POST['fecha_fin'] ?? '';
+    $idCuenta    = $_POST['id_cuenta'] ?? '';
+    $idOperador  = $_POST['id_operador'] ?? '';
+
+    // Los datos reales vienen de los POST
+    $nominaCompleta   = json_decode($_POST['nomina_data'] ?? '{}', true);
+    $actividadesData  = json_decode($_POST['actividades_data'] ?? '{}', true);
+
+    // ---- 4. VALIDAR DATOS ----
+    if (empty($fechaInicio) || empty($fechaFin) || empty($idCuenta)) {
+        throw new Exception("Faltan datos requeridos para guardar la nómina");
     }
-    
-    $pdo->commit();
-    
-    $_SESSION['success_message'] = "✅ Nómina guardada exitosamente. Se registraron $contador empleados.";
-    
+
+    if (empty($nominaCompleta)) {
+        throw new Exception("No hay datos de nómina para guardar");
+    }
+
+    // ---- 5. INICIALIZAR ACUMULADORES ----
+    $totalEmpleados       = 0;
+    $totalSueldos         = 0.0;
+    $totalActividadesExt  = 0.0;
+    $totalDescuentos      = 0.0;
+    $totalPagar           = 0.0;
+
+    // ---- 6. PROCESAR EMPLEADOS ----
+    foreach ($nominaCompleta as $idChecador => $nomina) {
+        if (!isset($nomina['error'])) {
+
+            // ---- 7. VALIDAR CLAVES REQUERIDAS ----
+            if (!isset(
+                    $nomina['sueldo_base'],
+                    $nomina['pago_actividades_seleccionadas'],
+                    $nomina['pago_actividades_bd'],
+                    $nomina['pago_actividades_gerente'],
+                    $nomina['descuento_registros'],
+                    $nomina['total_pagar']
+                )) {
+                error_log("⚠ Empleado $idChecador omitido: datos incompletos");
+                continue;
+            }
+
+            // ---- 8. SANEAR Y CONVERTIR A FLOAT ----
+            $sueldo     = floatval($nomina['sueldo_base']);
+            $actividad  = floatval($nomina['pago_actividades_seleccionadas'])
+                        + floatval($nomina['pago_actividades_bd'])
+                        + floatval($nomina['pago_actividades_gerente']);
+            $descuento  = floatval($nomina['descuento_registros']);
+            $pagoTotal  = floatval($nomina['total_pagar']);
+
+            // ---- 9. SUMAR A TOTALES GENERALES ----
+            $totalEmpleados++;
+            $totalSueldos         += $sueldo;
+            $totalActividadesExt  += $actividad;
+            $totalDescuentos      += $descuento;
+            $totalPagar           += $pagoTotal;
+
+            // ---- 10. LOG DEBUG INDIVIDUAL ----
+            error_log("👤 Emp:$idChecador | Sueldo:$sueldo | Actividad:$actividad | Descuento:$descuento | Pago:$pagoTotal");
+        }
+    }
+
+    // ---- 11. LOG RESUMEN GENERAL ----
+    error_log("=== RESUMEN GENERAL CALCULADO ===");
+    error_log("Total Empleados: $totalEmpleados");
+    error_log("Total Sueldos: $totalSueldos");
+    error_log("Total Actividades Extras: $totalActividadesExt");
+    error_log("Total Descuentos: $totalDescuentos");
+    error_log("Total a Pagar: $totalPagar");
+
+    // ---- 12. GUARDAR EN BD ----
+    $resultado = guardarNominaEnBD($pdo, $nominaCompleta, $fechaInicio, $fechaFin, $idCuenta, $idOperador);
+
+    if (!$resultado['success']) {
+        throw new Exception("Error al guardar nómina: {$resultado['error']}");
+    }
+
+    // ---- 13. MENSAJE OK ----
+    $_SESSION['success_message'] =
+        "✅ Nómina guardada exitosamente. ID: {$resultado['id_nomina_general']}. Empleados procesados: {$resultado['empleados_insertados']}. Total a pagar: $" . number_format($totalPagar, 2);
+
+    header('Location: generar_nomina.php');
+    exit;
+
 } catch (Exception $e) {
-    $pdo->rollBack();
-    $_SESSION['error_message'] = "❌ Error al guardar la nómina: " . $e->getMessage();
-    error_log("Error guardando nómina: " . $e->getMessage());
+    $_SESSION['error_message'] = "❌ " . $e->getMessage();
+    error_log("Error en procesar_guardar_nomina: " . $e->getMessage());
 }
 
 header('Location: generar_nomina.php');
 exit;
-?>
