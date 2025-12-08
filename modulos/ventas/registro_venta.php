@@ -482,7 +482,7 @@ require __DIR__ . '/../../includes/header.php';
                             <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
+                                <input type="text" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
                             </div>
                             <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
                         </div>
@@ -627,6 +627,32 @@ require __DIR__ . '/../../includes/header.php';
         const items = [];
         const tipoPago = $('#tipoPago');
         const inputMontoPago = $('#inputMontoPago');
+        // Formatear con comas mientras el usuario escribe
+        inputMontoPago.on('input', function () {
+            let value = $(this).val();
+
+            // Quitar comas existentes
+            value = value.replace(/,/g, '');
+
+            // Permitir solo números y punto
+            value = value.replace(/[^0-9.]/g, '');
+
+            // Separar parte entera y decimal
+            let parts = value.split('.');
+            let integer = parts[0];
+            let decimal = parts.length > 1 ? '.' + parts[1] : '';
+
+            // Agregar comas a la parte entera
+            integer = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+            $(this).val(integer + decimal);
+
+            // Actualizar saldo si aplica
+            if ($('#tipoPago').val() === 'credito') {
+                actualizarSaldo();
+            }
+        });
+
         const inputSaldoPendiente = $('#inputSaldoPendiente');
 
 
@@ -680,7 +706,7 @@ require __DIR__ . '/../../includes/header.php';
 
         function actualizarSaldo() {
             const total = $('#totalVenta').data('venta-total') || 0;
-            const monto = parseFloat(inputMontoPago.val()) || 0;
+            const monto = parseFloat(inputMontoPago.val().replace(/,/g, '')) || 0;
 
             if (tipoPago.val() === 'credito') {
                 inputSaldoPendiente.val((total - monto).toFixed(2));
@@ -963,7 +989,7 @@ require __DIR__ . '/../../includes/header.php';
             }
 
             const total = parseFloat($('#totalVenta').text().replace('$', ''));
-            const monto = parseFloat(inputMontoPago.val()) || 0;
+            const monto = parseFloat(inputMontoPago.val().replace(/,/g, '')) || 0;
 
             if (tipoPago.val() === 'contado' && monto !== total) {
                 e.preventDefault();
@@ -976,6 +1002,8 @@ require __DIR__ . '/../../includes/header.php';
                 alert('El anticipo no puede ser mayor al total');
                 return;
             }
+            
+            inputMontoPago.val(inputMontoPago.val().replace(/,/g, ''));
         });
 
         // Inicializar
