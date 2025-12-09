@@ -421,6 +421,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>Cuenta</th>
                                 <th>Operador</th>
                                 <th>Fecha Registro</th>
+                                <th>Detalle</th>
                             </tr>
                         </thead>
                             <tbody>
@@ -436,6 +437,19 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <td><?= isset($nomina['nombre_cuenta']) ? htmlspecialchars($nomina['nombre_cuenta']) : 'N/A' ?></td>
                                         <td><?= isset($nomina['nombre_operador']) ? htmlspecialchars($nomina['nombre_operador']) : 'N/A' ?></td>
                                         <td><?= isset($nomina['fecha_registro']) ? date('d/m/Y H:i', strtotime($nomina['fecha_registro'])) : 'N/A' ?></td>
+                                        <td>
+                                            <button 
+                                                class="btn-nav btn-next btn-detalle" 
+                                                data-id="<?= $nomina['id_nomina_general'] ?>"
+                                            >
+                                                📄 Ver Detalle
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr id="detalle-<?= $nomina['id_nomina_general'] ?>" style="display:none; background:#f8f9fa;">
+                                        <td colspan="10" class="detalle-container">
+                                            Cargando detalle...
+                                        </td>
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -482,5 +496,83 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('→ Flecha derecha: Semana siguiente');
 });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    document.querySelectorAll(".btn-detalle").forEach(btn => {
+
+        btn.addEventListener("click", function() {
+            const id = this.dataset.id;
+            const filaDetalle = document.getElementById("detalle-" + id);
+
+            // Si ya está visible, ocultarlo
+            if (filaDetalle.style.display === "table-row") {
+                filaDetalle.style.display = "none";
+                return;
+            }
+
+            // Mostrar temporalmente
+            filaDetalle.style.display = "table-row";
+            filaDetalle.querySelector(".detalle-container").innerHTML = "Cargando detalle...";
+
+            // Petición AJAX
+            fetch(`detalle_nomina.php?id_nomina=${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!Array.isArray(data) || data.length === 0) {
+                        filaDetalle.querySelector(".detalle-container").innerHTML = `
+                            <div style='text-align:center; padding:10px; color:#666;'>
+                                No hay detalles para esta nómina
+                            </div>`;
+                        return;
+                    }
+
+                    // Construir tabla detalle
+                    let html = `
+                        <table style="width:100%; background:white; border-collapse:collapse;">
+                            <thead style="background:#6c757d; color:white;">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Empleado</th>
+                                    <th>Sueldo Base</th>
+                                    <th>Horas</th>
+                                    <th>Extras</th>
+                                    <th>Descuentos</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.forEach(det => {
+                        html += `
+                            <tr>
+                                <td>${det.id_nomina_detalle}</td>
+                                <td>${det.nombre_empleado}</td>
+                                <td>$${Number(det.sueldo_base).toFixed(2)}</td>
+                                <td>${det.horas ?? 0}</td>
+                                <td>$${Number(det.pago_extras ?? 0).toFixed(2)}</td>
+                                <td>$${Number(det.descuentos ?? 0).toFixed(2)}</td>
+                                <td>$${Number(det.total ?? 0).toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `</tbody></table>`;
+                    filaDetalle.querySelector(".detalle-container").innerHTML = html;
+                })
+                .catch(err => {
+                    filaDetalle.querySelector(".detalle-container").innerHTML = `
+                        Error cargando detalle: ${err}
+                    `;
+                });
+        });
+
+    });
+
+});
+</script>
+
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
