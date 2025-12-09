@@ -44,15 +44,15 @@ function obtenerNominasPorSemana($pdo, $inicio_semana, $fin_semana) {
     try {
         $stmt = $pdo->prepare("
             SELECT 
-                nr.*,
-                e.id_checador,
-                e.nombre,
-                e.apellido_paterno,
-                e.apellido_materno
-            FROM nomina_registrada nr
-            LEFT JOIN empleados e ON nr.id_empleado = e.id_empleado
-            WHERE DATE(nr.fecha_registro) BETWEEN ? AND ?
-            ORDER BY nr.periodo_nomina DESC, nr.nombre_empleado ASC
+                ng.*,
+                c.nombre AS nombre_cuenta, 
+                o.nombre nombre_operador
+            FROM nomina_general ng
+            LEFT JOIN cuentas_bancarias c ON ng.id_cuenta = c.id_cuenta
+            LEFT JOIN operadores o ON ng.id_operador = o.ID_Operador
+            WHERE ng.fecha_inicio >= ? 
+            AND ng.fecha_inicio <= ?
+            ORDER BY ng.fecha_inicio DESC, ng.id_nomina_general ASC
         ");
         
         $stmt->execute([$inicio_semana, $fin_semana]);
@@ -68,8 +68,8 @@ function obtenerNominasPorSemana($pdo, $inicio_semana, $fin_semana) {
 function obtenerSemanasDisponibles($pdo) {
     try {
         $stmt = $pdo->prepare("
-            SELECT DISTINCT DATE(fecha_registro) as fecha
-            FROM nomina_registrada 
+            SELECT DISTINCT DATE(fecha_inicio) as fecha
+            FROM nomina_general 
             ORDER BY fecha DESC
         ");
         
@@ -104,21 +104,21 @@ $nominas = obtenerNominasPorSemana($pdo, $inicio_semana, $fin_semana);
 $semanas_disponibles = obtenerSemanasDisponibles($pdo);
 
 // Calcular totales
-$totales = [
-    'sueldo_base' => 0,
-    'pago_actividades' => 0,
-    'descuentos' => 0,
-    'total_pagar' => 0,
-    'empleados' => 0
-];
+// $totales = [
+//     'sueldo_base' => 0,
+//     'pago_actividades' => 0,
+//     'descuentos' => 0,
+//     'total_pagar' => 0,
+//     'empleados' => 0
+// ];
 
-foreach ($nominas as $nomina) {
-    $totales['sueldo_base'] += $nomina['sueldo_base'];
-    $totales['pago_actividades'] += $nomina['pago_actividades_extras'];
-    $totales['descuentos'] += $nomina['descuento_registros'];
-    $totales['total_pagar'] += $nomina['total_pagar'];
-    $totales['empleados']++;
-}
+// foreach ($nominas as $nomina) {
+//     $totales['sueldo_base'] += $nomina['sueldo_base'];
+//     $totales['pago_actividades'] += $nomina['pago_actividades_extras'];
+//     $totales['descuentos'] += $nomina['descuento_registros'];
+//     $totales['total_pagar'] += $nomina['total_pagar'];
+//     $totales['empleados']++;
+// }
 
 $titulo = "Nóminas Guardadas";
 $encabezado = "Nóminas Guardadas";
@@ -130,217 +130,217 @@ require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <style>
-/* ESTILOS ESPECÍFICOS PARA NÓMINAS GUARDADAS */
-.form-container-nomina {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: 10px;
-    border: 1px solid #dee2e6;
-    margin-bottom: 25px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-}
+    /* ESTILOS ESPECÍFICOS PARA NÓMINAS GUARDADAS */
+    .form-container-nomina {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 25px;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
 
-.container-nomina-full {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 15px;
-    margin: 0 auto;
-}
-
-.table-responsive-nomina {
-    overflow-x: auto;
-    width: 100% !important;
-    margin-top: 20px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-}
-
-.table-nomina {
-    width: 100% !important;
-    min-width: 1200px !important;
-    border-collapse: collapse;
-    background-color: white;
-    margin-bottom: 0;
-}
-
-.table-nomina th,
-.table-nomina td {
-    border: 1px solid #dee2e6;
-    padding: 12px;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.table-nomina thead {
-    background-color: #45814d !important;
-    color: white;
-}
-
-.table-nomina thead th {
-    background-color: #45814d !important;
-    color: white !important;
-    text-transform: uppercase;
-    font-weight: 500;
-    padding: 1rem;
-    border: none;
-}
-
-.section-title-nomina {
-    color: #495057;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    width: 100% !important;
-}
-
-.navigation-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.week-display {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #495057;
-}
-
-.nav-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-nav {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.btn-prev {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-next {
-    background: #007bff;
-    color: white;
-}
-
-.btn-prev:hover {
-    background: #5a6268;
-}
-
-.btn-next:hover {
-    background: #0056b3;
-}
-
-.filter-container {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.filter-select {
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 5px;
-    font-size: 14px;
-}
-
-.total-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 25px;
-}
-
-.total-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-.total-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: #6c757d;
-    text-transform: uppercase;
-}
-
-.total-card .amount {
-    font-size: 24px;
-    font-weight: bold;
-    color: #495057;
-}
-
-.total-card.positive {
-    border-left: 4px solid #28a745;
-}
-
-.total-card.negative {
-    border-left: 4px solid #dc3545;
-}
-
-.total-card.neutral {
-    border-left: 4px solid #007bff;
-}
-
-.positive-amount {
-    color: #28a745;
-    font-weight: 600;
-}
-
-.negative-amount {
-    color: #dc3545;
-    font-weight: 600;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 40px;
-    color: #6c757d;
-}
-
-.empty-state i {
-    font-size: 48px;
-    margin-bottom: 15px;
-    opacity: 0.5;
-}
-
-@media (max-width: 768px) {
     .container-nomina-full {
-        padding: 0 10px;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 15px;
+        margin: 0 auto;
     }
-    
+
+    .table-responsive-nomina {
+        overflow-x: auto;
+        width: 100% !important;
+        margin-top: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+
     .table-nomina {
-        min-width: 1000px !important;
+        width: 100% !important;
+        min-width: 1200px !important;
+        border-collapse: collapse;
+        background-color: white;
+        margin-bottom: 0;
     }
-    
+
+    .table-nomina th,
+    .table-nomina td {
+        border: 1px solid #dee2e6;
+        padding: 12px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .table-nomina thead {
+        background-color: #45814d !important;
+        color: white;
+    }
+
+    .table-nomina thead th {
+        background-color: #45814d !important;
+        color: white !important;
+        text-transform: uppercase;
+        font-weight: 500;
+        padding: 1rem;
+        border: none;
+    }
+
+    .section-title-nomina {
+        color: #495057;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        width: 100% !important;
+    }
+
     .navigation-container {
-        flex-direction: column;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .week-display {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #495057;
+    }
+
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-nav {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-prev {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-next {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-prev:hover {
+        background: #5a6268;
+    }
+
+    .btn-next:hover {
+        background: #0056b3;
+    }
+
+    .filter-container {
+        display: flex;
         gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
     }
-    
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
     .total-cards {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
     }
-}
+
+    .total-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .total-card h3 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+
+    .total-card .amount {
+        font-size: 24px;
+        font-weight: bold;
+        color: #495057;
+    }
+
+    .total-card.positive {
+        border-left: 4px solid #28a745;
+    }
+
+    .total-card.negative {
+        border-left: 4px solid #dc3545;
+    }
+
+    .total-card.neutral {
+        border-left: 4px solid #007bff;
+    }
+
+    .positive-amount {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .negative-amount {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        .container-nomina-full {
+            padding: 0 10px;
+        }
+        
+        .table-nomina {
+            min-width: 1000px !important;
+        }
+        
+        .navigation-container {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .total-cards {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <main>
@@ -368,13 +368,13 @@ require_once __DIR__ . '/../../includes/header.php';
             </div>
             
             <div class="nav-buttons">
-                <a href="ver_nominas.php?semana=<?= $semana_actual ?>&accion=anterior" class="btn-nav btn-prev">
+                <a href="historial_nominas.php?semana=<?= $semana_actual ?>&accion=anterior" class="btn-nav btn-prev">
                     ⬅️ Semana Anterior
                 </a>
-                <a href="ver_nominas.php?semana=<?= date('Y-m-d') ?>" class="btn-nav" style="background: #6c757d; color: white;">
+                <a href="historial_nominas.php?semana=<?= date('Y-m-d') ?>" class="btn-nav" style="background: #6c757d; color: white;">
                     🏠 Semana Actual
                 </a>
-                <a href="ver_nominas.php?semana=<?= $semana_actual ?>&accion=siguiente" class="btn-nav btn-next">
+                <a href="historial_nominas.php?semana=<?= $semana_actual ?>&accion=siguiente" class="btn-nav btn-next">
                     Semana Siguiente ➡️
                 </a>
             </div>
@@ -383,7 +383,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <!-- Filtro por semanas específicas -->
         <div class="filter-container">
             <label for="select_semana" style="font-weight: bold;">Saltar a semana:</label>
-            <select id="select_semana" class="filter-select" onchange="if(this.value) window.location.href = 'ver_nominas.php?semana=' + this.value">
+            <select id="select_semana" class="filter-select" onchange="if(this.value) window.location.href = 'historial_nominas.php?semana=' + this.value">
                 <option value="">-- Seleccionar semana --</option>
                 <?php foreach ($semanas_disponibles as $semana): ?>
                     <option value="<?= $semana['inicio'] ?>" <?= $semana['inicio'] == $inicio_semana ? 'selected' : '' ?>>
@@ -391,39 +391,8 @@ require_once __DIR__ . '/../../includes/header.php';
                     </option>
                 <?php endforeach; ?>
             </select>
-            
-            <span style="color: #6c757d; font-size: 14px;">
-                📊 <?= count($nominas) ?> nómina(s) encontrada(s)
-            </span>
         </div>
 
-        <!-- Tarjetas de totales -->
-        <?php if (!empty($nominas)): ?>
-        <div class="total-cards">
-            <div class="total-card neutral">
-                <h3>Total Empleados</h3>
-                <div class="amount"><?= $totales['empleados'] ?></div>
-            </div>
-            <div class="total-card positive">
-                <h3>Sueldo Base</h3>
-                <div class="amount">$<?= number_format($totales['sueldo_base'], 2) ?></div>
-            </div>
-            <div class="total-card positive">
-                <h3>Actividades Extras</h3>
-                <div class="amount">$<?= number_format($totales['pago_actividades'], 2) ?></div>
-            </div>
-            <div class="total-card negative">
-                <h3>Descuentos</h3>
-                <div class="amount">$<?= number_format($totales['descuentos'], 2) ?></div>
-            </div>
-            <div class="total-card positive" style="background: #e8f5e8;">
-                <h3>Total a Pagar</h3>
-                <div class="amount" style="color: #28a745; font-size: 28px;">
-                    $<?= number_format($totales['total_pagar'], 2) ?>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
 
         <!-- Tabla de nóminas -->
         <div class="form-container-nomina">
@@ -443,68 +412,38 @@ require_once __DIR__ . '/../../includes/header.php';
                     <table class="table-nomina">
                         <thead>
                             <tr>
-                                <th>Período</th>
-                                <th>Empleado</th>
-                                <th>Puesto</th>
-                                <th>Sueldo Diario</th>
-                                <th>Días Trab.</th>
-                                <th>Sueldo Base</th>
+                                <th>Fecha</th>
+                                <th>Empleado Pagados</th>
+                                <th>Sueldos</th>
                                 <th>Actividades Extras</th>
-                                <th>Días Cond.</th>
                                 <th>Descuentos</th>
-                                <th>Total Pagar</th>
+                                <th>Total a Pagar</th>
+                                <th>Cuenta</th>
+                                <th>Operador</th>
                                 <th>Fecha Registro</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php foreach ($nominas as $nomina): ?>
-                            <tr>
-                                <td style="font-weight: bold;"><?= htmlspecialchars($nomina['periodo_nomina']) ?></td>
-                                <td>
-                                    <strong><?= htmlspecialchars($nomina['nombre_empleado']) ?></strong>
-                                    <br><small style="color: #6c757d;">ID: <?= $nomina['id_checador'] ?></small>
-                                </td>
-                                <td><?= htmlspecialchars($nomina['puesto']) ?></td>
-                                <td>$<?= number_format($nomina['sueldo_diario'], 2) ?></td>
-                                <td><?= $nomina['dias_trabajados'] ?></td>
-                                <td>$<?= number_format($nomina['sueldo_base'], 2) ?></td>
-                                <td class="positive-amount">
-                                    $<?= number_format($nomina['pago_actividades_extras'], 2) ?>
-                                    <?php if (!empty($nomina['actividades_seleccionadas_ids'])): ?>
-                                        <br><small style="color: #6c757d; font-size: 10px;">
-                                            IDs: <?= htmlspecialchars($nomina['actividades_seleccionadas_ids']) ?>
-                                        </small>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?= $nomina['dias_condonados'] ?> / <?= $nomina['dias_sin_4_registros'] ?>
-                                </td>
-                                <td class="negative-amount">
-                                    -$<?= number_format($nomina['descuento_registros'], 2) ?>
-                                </td>
-                                <td style="background-color: #e6ffe6; font-weight: bold;" class="positive-amount">
-                                    $<?= number_format($nomina['total_pagar'], 2) ?>
-                                </td>
-                                <td>
-                                    <?= date('d/m/Y H:i', strtotime($nomina['fecha_registro'])) ?>
-                                    <br><small style="color: #6c757d;">Por: <?= $nomina['usuario_registro'] ?></small>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                            
-                            <!-- Fila de totales -->
-                            <tr style="background-color: #e3f2fd; font-weight: bold;">
-                                <td colspan="5" style="text-align: right;">TOTALES:</td>
-                                <td>$<?= number_format($totales['sueldo_base'], 2) ?></td>
-                                <td class="positive-amount">$<?= number_format($totales['pago_actividades'], 2) ?></td>
-                                <td></td>
-                                <td class="negative-amount">-$<?= number_format($totales['descuentos'], 2) ?></td>
-                                <td style="background-color: #d4edda;" class="positive-amount">
-                                    $<?= number_format($totales['total_pagar'], 2) ?>
-                                </td>
-                                <td><?= $totales['empleados'] ?> empleados</td>
-                            </tr>
-                        </tbody>
+                            <tbody>
+                                <?php if (!empty($nominas)): ?>
+                                    <?php foreach ($nominas as $nomina): ?>
+                                    <tr>
+                                        <td><?= isset($nomina['fecha_inicio']) ? date('d/m/Y', strtotime($nomina['fecha_inicio'])) : 'N/A' ?></td>
+                                        <td><?= isset($nomina['empleados_pagados']) ? htmlspecialchars($nomina['empleados_pagados']) : 'N/A' ?></td>
+                                        <td>$<?= isset($nomina['total_sueldos']) ? number_format($nomina['total_sueldos'], 2) : '0.00' ?></td>
+                                        <td>$<?= isset($nomina['total_actividades_extras']) ? number_format($nomina['total_actividades_extras'], 2) : '0.00' ?></td>
+                                        <td>$<?= isset($nomina['total_deducciones']) ? number_format($nomina['total_deducciones'], 2) : '0.00' ?></td>
+                                        <td>$<?= isset($nomina['total_a_pagar']) ? number_format($nomina['total_a_pagar'], 2) : '0.00' ?></td>
+                                        <td><?= isset($nomina['nombre_cuenta']) ? htmlspecialchars($nomina['nombre_cuenta']) : 'N/A' ?></td>
+                                        <td><?= isset($nomina['nombre_operador']) ? htmlspecialchars($nomina['nombre_operador']) : 'N/A' ?></td>
+                                        <td><?= isset($nomina['fecha_registro']) ? date('d/m/Y H:i', strtotime($nomina['fecha_registro'])) : 'N/A' ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="8" class="text-center">No hay datos para mostrar</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
                     </table>
                 </div>
                 
