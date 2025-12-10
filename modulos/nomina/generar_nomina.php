@@ -1449,6 +1449,127 @@ require_once __DIR__ . '/../../includes/header.php';
 
         <?php endif; ?>
     </div>
+<!-- Agrega esto después de tu formulario, antes de cerrar el main -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para actualizar los totales en el formulario de guardar
+    function actualizarResumenGuardar() {
+        const totalSueldoBase = parseFloat(document.getElementById('total-sueldo-base').textContent.replace(/[^0-9.-]+/g,"")) || 0;
+        const totalActividades = parseFloat(document.getElementById('total-actividades').textContent.replace(/[^0-9.-]+/g,"")) || 0;
+        const totalDescuentos = parseFloat(document.getElementById('total-descuentos').textContent.replace(/[^0-9.-]+/g,"")) || 0;
+        const totalGeneral = parseFloat(document.getElementById('total-general').textContent.replace(/[^0-9.-]+/g,"")) || 0;
+        
+        // Actualizar resumen en formulario de guardar
+        document.getElementById('resumen-total-sueldo').textContent = '$' + totalSueldoBase.toFixed(2);
+        document.getElementById('resumen-total-actividades').textContent = '$' + totalActividades.toFixed(2);
+        document.getElementById('resumen-total-deducciones').textContent = '$' + totalDescuentos.toFixed(2);
+        document.getElementById('resumen-total-pagar').textContent = '$' + totalGeneral.toFixed(2);
+        
+        // Contar empleados sin errores
+        const empleadosPagados = document.querySelectorAll('tbody tr[id^="fila-"]').length;
+        document.getElementById('resumen-empleados').textContent = empleadosPagados;
+    }
+    
+    // Función para recopilar todos los datos de la nómina
+    function recopilarDatosNomina() {
+        const datosNomina = {};
+        const actividadesSeleccionadas = {};
+        
+        // Recorrer cada fila de empleado
+        document.querySelectorAll('tbody tr[id^="fila-"]').forEach(fila => {
+            const idEmpleado = fila.id.replace('fila-', '');
+            const datos = {
+                id_empleado: idEmpleado,
+                nombre_completo: fila.cells[1].textContent.trim(),
+                puesto: fila.cells[2].textContent.trim().replace(/\s*\(Gerente General\)/i, ''),
+                sueldo_diario: parseFloat(fila.cells[3].textContent.replace(/[^0-9.-]+/g,"")) || 0,
+                dias_trabajados: parseInt(fila.cells[4].textContent) || 0,
+                sueldo_base: parseFloat(fila.cells[5].textContent.replace(/[^0-9.-]+/g,"")) || 0,
+                dias_sin_4_registros: parseInt(fila.cells[7].textContent) || 0,
+                descuento_registros: parseFloat(document.getElementById('monto-descuento-' + idEmpleado)?.textContent || 0),
+                pago_actividades_seleccionadas: parseFloat(document.getElementById('total-actividades-' + idEmpleado)?.textContent || 0),
+                total_pagar: parseFloat(document.getElementById('total-pagar-' + idEmpleado)?.textContent.replace(/[^0-9.-]+/g,"")) || 0
+            };
+            
+            // Agregar datos desde atributos data
+            datos.es_gerente_general = fila.dataset.esGerente === 'true';
+            datos.pago_actividades_bd = parseFloat(fila.dataset.pagoActividadesBd) || 0;
+            datos.pago_actividades_gerente = parseFloat(fila.dataset.pagoActividadesGerente) || 0;
+            datos.descuento_registros_original = parseFloat(fila.dataset.descuentoRegistros) || 0;
+            
+            // Guardar actividades seleccionadas
+            actividadesSeleccionadas[idEmpleado] = [];
+            fila.querySelectorAll('.actividad-checkbox:checked').forEach(checkbox => {
+                actividadesSeleccionadas[idEmpleado].push({
+                    id_actividad: checkbox.name.match(/\[(\d+)\]/)[1],
+                    valor: parseFloat(checkbox.dataset.valor) || 0,
+                    nombre: checkbox.nextElementSibling.textContent.trim()
+                });
+            });
+            
+            datosNomina[idEmpleado] = datos;
+        });
+        
+        return {
+            datosNomina: datosNomina,
+            actividadesSeleccionadas: actividadesSeleccionadas
+        };
+    }
+    
+    // Actualizar resumen inicialmente
+    actualizarResumenGuardar();
+    
+    // Actualizar cuando haya cambios en actividades o días condonados
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('actividad-checkbox') || 
+            e.target.classList.contains('dias-condonar')) {
+            setTimeout(actualizarResumenGuardar, 100);
+        }
+    });
+    
+    // Manejar envío del formulario de guardar
+    document.getElementById('form-guardar-nomina').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar fechas
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        
+        if (!fechaInicio || !fechaFin) {
+            alert('Por favor, completa las fechas del período');
+            return;
+        }
+        
+        // Validar formato de fechas (DD/MM/AAAA)
+        const regexFecha = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!regexFecha.test(fechaInicio) || !regexFecha.test(fechaFin)) {
+            alert('El formato de fecha debe ser DD/MM/AAAA');
+            return;
+        }
+        
+        // Recopilar datos
+        const datos = recopilarDatosNomina();
+        
+        // Calcular totales
+        const totales = {
+            total_sueldo_base: parseFloat(document.getElementById('resumen-total-sueldo').textContent.replace(/[^0-9.-]+/g,"")),
+            total_actividades: parseFloat(document.getElementById('resumen-total-actividades').textContent.replace(/[^0-9.-]+/g,"")),
+            total_deducciones: parseFloat(document.getElementById('resumen-total-deducciones').textContent.replace(/[^0-9.-]+/g,"")),
+            total_pagar: parseFloat(document.getElementById('resumen-total-pagar').textContent.replace(/[^0-9.-]+/g,"")),
+            empleados_pagados: parseInt(document.getElementById('resumen-empleados').textContent)
+        };
+        
+        // Asignar datos a campos ocultos
+        document.getElementById('nomina-data-json').value = JSON.stringify(datos.datosNomina);
+        document.getElementById('totales-json').value = JSON.stringify(totales);
+        
+        // Mostrar confirmación
+        if (confirm('¿Estás seguro de guardar esta nómina en la base de datos?')) {
+            this.submit();
+        }
+    });
+});
+</script>
 </main>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
