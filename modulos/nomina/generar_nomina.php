@@ -264,6 +264,23 @@ try {
     exit;
 }
 
+
+ // Obtener cuentas bancarias activas
+$cuentas_bancarias = [];
+try {
+    $stmt_cuentas = $pdo->prepare("
+        SELECT id_cuenta, nombre, banco, numero 
+        FROM cuentas_bancarias 
+        WHERE activo = 1
+        ORDER BY nombre
+    ");
+    $stmt_cuentas->execute();
+    $cuentas_bancarias = $stmt_cuentas->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    error_log("Error al obtener cuentas bancarias: " . $e->getMessage());
+    $cuentas_bancarias = [];
+}
+
 // Procesar POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -591,222 +608,222 @@ require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <style>
-/* ESTILOS ESPECÍFICOS PARA NÓMINA - SOBRESCRIBIENDO REGLAS EXISTENTES */
-.form-container-nomina {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: 10px;
-    border: 1px solid #dee2e6;
-    margin-bottom: 25px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-}
-
-/* FORZAR ANCHO COMPLETO PARA TODOS LOS ELEMENTOS DE NÓMINA */
-.container-nomina-full {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 15px;
-    margin: 0 auto;
-}
-
-.table-responsive-nomina {
-    overflow-x: auto;
-    width: 100% !important;
-    margin-top: 20px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-}
-
-.table-nomina {
-    width: 100% !important;
-    min-width: 1400px !important;
-    border-collapse: collapse;
-    background-color: white;
-    margin-bottom: 0;
-}
-
-.table-nomina th,
-.table-nomina td {
-    border: 1px solid #dee2e6;
-    padding: 12px;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.table-nomina thead {
-    background-color: #45814d !important;
-    color: white;
-}
-
-.table-nomina thead th {
-    background-color: #45814d !important;
-    color: white !important;
-    text-transform: uppercase;
-    font-weight: 500;
-    padding: 1rem;
-    border: none;
-}
-
-.form-group-nomina {
-    margin-bottom: 20px;
-    width: 100% !important;
-}
-
-.form-group-nomina label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #495057;
-    width: 100% !important;
-}
-
-.form-group-nomina input[type="file"] {
-    width: 100% !important;
-    padding: 10px;
-    border: 2px dashed #ced4da;
-    border-radius: 5px;
-    background: white;
-    transition: all 0.3s ease;
-}
-
-.btn-submit-nomina {
-    background: #007bff;
-    color: white;
-    padding: 12px 30px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    width: auto !important;
-    display: inline-block !important;
-}
-
-.btn-submit-nomina:hover {
-    background: #0056b3;
-}
-
-.total-row {
-    background: #e3f2fd !important;
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-.total-row td {
-    padding: 15px 12px;
-    border-top: 2px solid #007bff;
-}
-
-.actividades-container {
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
-    padding: 10px;
-    background: white;
-    width: 100% !important;
-}
-
-.actividades-item {
-    margin-bottom: 8px;
-    padding: 5px;
-    border-radius: 3px;
-    transition: background 0.2s ease;
-    width: 100% !important;
-}
-
-.actividades-item:hover {
-    background: #f8f9fa;
-}
-
-.actividades-item label {
-    font-weight: normal;
-    margin-bottom: 0;
-    cursor: pointer;
-    width: 100% !important;
-}
-
-.positive-amount {
-    color: #28a745;
-    font-weight: 600;
-}
-
-.negative-amount {
-    color: #dc3545;
-    font-weight: 600;
-}
-
-.section-title-nomina {
-    color: #495057;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    width: 100% !important;
-}
-
-.employee-detail-section {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    width: 100% !important;
-}
-
-/* Estilos para condonación */
-.condonar-checkbox {
-    transform: scale(1.2);
-    margin: 0 8px;
-}
-
-.condonar-label {
-    font-weight: normal;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.descuento-condonado {
-    text-decoration: line-through;
-    color: #6c757d !important;
-}
-
-.sin-descuento {
-    color: #28a745 !important;
-    font-weight: bold;
-}
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-    .container-nomina-full {
-        padding: 0 10px;
-    }
-    
+    /* ESTILOS ESPECÍFICOS PARA NÓMINA - SOBRESCRIBIENDO REGLAS EXISTENTES */
     .form-container-nomina {
-        padding: 15px;
-    }
-    
-    .table-nomina {
-        min-width: 1200px !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .container-nomina-full {
-        padding: 0 5px;
-    }
-    
-    .form-container-nomina {
-        padding: 10px;
-    }
-    
-    .btn-submit-nomina {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 25px;
         width: 100% !important;
-        padding: 15px;
+        max-width: 100% !important;
+        box-sizing: border-box;
     }
-}
+
+    /* FORZAR ANCHO COMPLETO PARA TODOS LOS ELEMENTOS DE NÓMINA */
+    .container-nomina-full {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 15px;
+        margin: 0 auto;
+    }
+
+    .table-responsive-nomina {
+        overflow-x: auto;
+        width: 100% !important;
+        margin-top: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+
+    .table-nomina {
+        width: 100% !important;
+        min-width: 1400px !important;
+        border-collapse: collapse;
+        background-color: white;
+        margin-bottom: 0;
+    }
+
+    .table-nomina th,
+    .table-nomina td {
+        border: 1px solid #dee2e6;
+        padding: 12px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .table-nomina thead {
+        background-color: #45814d !important;
+        color: white;
+    }
+
+    .table-nomina thead th {
+        background-color: #45814d !important;
+        color: white !important;
+        text-transform: uppercase;
+        font-weight: 500;
+        padding: 1rem;
+        border: none;
+    }
+
+    .form-group-nomina {
+        margin-bottom: 20px;
+        width: 100% !important;
+    }
+
+    .form-group-nomina label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #495057;
+        width: 100% !important;
+    }
+
+    .form-group-nomina input[type="file"] {
+        width: 100% !important;
+        padding: 10px;
+        border: 2px dashed #ced4da;
+        border-radius: 5px;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit-nomina {
+        background: #007bff;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: auto !important;
+        display: inline-block !important;
+    }
+
+    .btn-submit-nomina:hover {
+        background: #0056b3;
+    }
+
+    .total-row {
+        background: #e3f2fd !important;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    .total-row td {
+        padding: 15px 12px;
+        border-top: 2px solid #007bff;
+    }
+
+    .actividades-container {
+        max-height: 150px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        background: white;
+        width: 100% !important;
+    }
+
+    .actividades-item {
+        margin-bottom: 8px;
+        padding: 5px;
+        border-radius: 3px;
+        transition: background 0.2s ease;
+        width: 100% !important;
+    }
+
+    .actividades-item:hover {
+        background: #f8f9fa;
+    }
+
+    .actividades-item label {
+        font-weight: normal;
+        margin-bottom: 0;
+        cursor: pointer;
+        width: 100% !important;
+    }
+
+    .positive-amount {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .negative-amount {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .section-title-nomina {
+        color: #495057;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        width: 100% !important;
+    }
+
+    .employee-detail-section {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 100% !important;
+    }
+
+    /* Estilos para condonación */
+    .condonar-checkbox {
+        transform: scale(1.2);
+        margin: 0 8px;
+    }
+
+    .condonar-label {
+        font-weight: normal;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .descuento-condonado {
+        text-decoration: line-through;
+        color: #6c757d !important;
+    }
+
+    .sin-descuento {
+        color: #28a745 !important;
+        font-weight: bold;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .container-nomina-full {
+            padding: 0 10px;
+        }
+        
+        .form-container-nomina {
+            padding: 15px;
+        }
+        
+        .table-nomina {
+            min-width: 1200px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .container-nomina-full {
+            padding: 0 5px;
+        }
+        
+        .form-container-nomina {
+            padding: 10px;
+        }
+        
+        .btn-submit-nomina {
+            width: 100% !important;
+            padding: 15px;
+        }
+    }
 </style>
 
 <main>
@@ -996,6 +1013,103 @@ require_once __DIR__ . '/../../includes/header.php';
             </div>
             <p><small>* Descuento de $25 por cada día sin 4 registros completos</small></p>
         </div>
+
+        <!-- ============================================
+        FORMULARIO PARA GUARDAR NÓMINA EN BD
+        ============================================ -->
+        <div class="form-container-nomina" style="margin-top: 40px; border: 2px solid #007bff;">
+            <h2 class="section-title-nomina" style="color: #007bff;">Guardar Nómina en Base de Datos</h2>
+
+            <form id="form-guardar-nomina" action="guardar_nomina.php" method="post">
+                <!-- Campos ocultos para pasar los datos de la nómina -->
+                <input type="hidden" name="nomina_data_json" id="nomina-data-json">
+                <input type="hidden" name="totales_json" id="totales-json">
+                
+                <!-- Fechas del período -->
+                <div class="form-group-nomina" style="display: flex; gap: 20px; margin-bottom: 30px;">
+                    <div style="flex: 1;">
+                        <label for="fecha_inicio" style="font-weight: bold;">Fecha Inicio del Período *</label>
+                        <input type="text" 
+                            name="fecha_inicio" 
+                            id="fecha_inicio" 
+                            class="form-control-nomina"
+                            placeholder="DD/MM/AAAA"
+                            required
+                            pattern="\d{2}/\d{2}/\d{4}"
+                            title="Formato: DD/MM/AAAA">
+                        <small class="form-text text-muted">Ejemplo: 15/01/2024</small>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <label for="fecha_fin" style="font-weight: bold;">Fecha Fin del Período *</label>
+                        <input type="text" 
+                            name="fecha_fin" 
+                            id="fecha_fin" 
+                            class="form-control-nomina"
+                            placeholder="DD/MM/AAAA"
+                            required
+                            pattern="\d{2}/\d{2}/\d{4}"
+                            title="Formato: DD/MM/AAAA">
+                        <small class="form-text text-muted">Ejemplo: 31/01/2024</small>
+                    </div>
+                </div>
+                
+                <!-- Resumen de Totales (se actualizan automáticamente) -->
+                <div class="resumen-totales" style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 25px;">
+                    <h3 style="color: #28a745; margin-top: 0;">Resumen de Totales</h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div class="total-item">
+                            <span class="total-label">Total Sueldo Base:</span>
+                            <span class="total-value" id="resumen-total-sueldo">$0.00</span>
+                        </div>
+                        
+                        <div class="total-item">
+                            <span class="total-label">Total Actividades Extras:</span>
+                            <span class="total-value" id="resumen-total-actividades">$0.00</span>
+                        </div>
+                        
+                        <div class="total-item">
+                            <span class="total-label">Total Deducciones:</span>
+                            <span class="total-value" id="resumen-total-deducciones">$0.00</span>
+                        </div>
+                        
+                        <div class="total-item">
+                            <span class="total-label">Total a Pagar:</span>
+                            <span class="total-value" style="font-weight: bold; color: #28a745;" id="resumen-total-pagar">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="total-item" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                        <span class="total-label">Empleados a Pagar:</span>
+                        <span class="total-value" id="resumen-empleados">0</span>
+                    </div>
+                </div>
+                
+                <!-- Información de la cuenta  -->
+                <div class="form-group-nomina">
+                    <label for="id_cuenta">Cuenta de Pago </label>
+                    <select name="id_cuenta" id="id_cuenta" class="form-control-nomina">
+                        <option value="">-- Seleccionar Cuenta --</option>
+                            <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                    <option value="<?= $cuenta['id_cuenta'] ?>">
+                                        <?= htmlspecialchars($cuenta['banco'] . ' - ' . $cuenta['nombre'] . ' (' . $cuenta['numero'] . ')') ?>
+                                    </option>
+                            <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="form-group-nomina" style="display: flex; gap: 15px; margin-top: 30px;">
+                    
+                    <button type="submit" id="btn-guardar-nomina" class="btn-submit-nomina" style="background-color: #28a745;">
+                        <i class="fas fa-save"></i> Guardar Nómina en Base de Datos
+                    </button>
+                </div>
+                
+                <div id="mensaje-validacion" style="margin-top: 15px; display: none;"></div>
+            </form>
+        </div>  
 
         <!-- JavaScript para calcular totales en tiempo real -->
         <script>
