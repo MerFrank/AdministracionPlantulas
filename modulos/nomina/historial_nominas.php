@@ -536,7 +536,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                     <th>ID</th>
                                     <th>Empleado</th>
                                     <th>Sueldo Base</th>
-                                    <th>Horas</th>
+                                    <th>Dias Trabajados</th>
                                     <th>Extras</th>
                                     <th>Descuentos</th>
                                     <th>Total</th>
@@ -551,10 +551,10 @@ document.addEventListener("DOMContentLoaded", function() {
                                 <td>${det.id_nomina_detalle}</td>
                                 <td>${det.nombre_empleado}</td>
                                 <td>$${Number(det.sueldo_base).toFixed(2)}</td>
-                                <td>${det.horas ?? 0}</td>
-                                <td>$${Number(det.pago_extras ?? 0).toFixed(2)}</td>
-                                <td>$${Number(det.descuentos ?? 0).toFixed(2)}</td>
-                                <td>$${Number(det.total ?? 0).toFixed(2)}</td>
+                                <td>${det.dias_laborados ?? 0}</td>
+                                <td>$${Number(det.actividades_extras ?? 0).toFixed(2)}</td>
+                                <td>$${Number(det.deducciones ?? 0).toFixed(2)}</td>
+                                <td>$${Number(det.total_pagar ?? 0).toFixed(2)}</td>
                             </tr>
                         `;
                     });
