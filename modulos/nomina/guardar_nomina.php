@@ -93,34 +93,87 @@ try {
         
         $errores_detalle = [];
         foreach ($datos_nomina as $id_checador => $nomina) {
-            // Saltar si hay algún error implícito
-            if (empty($nomina['id_empleado'])) {
-                continue;
+            // VALIDACIÓN CRÍTICA: Asegurar que tenemos id_empleado
+            if (empty($nomina['id_empleado']) || !is_numeric($nomina['id_empleado'])) {
+                error_log("ERROR: Empleado con ID checador $id_checador no tiene id_empleado válido");
+                
+                // Intentar obtener el id_empleado desde la BD usando id_checador
+                try {
+                    $stmt_buscar = $pdo->prepare("
+                        SELECT id_empleado 
+                        FROM empleados 
+                        WHERE id_checador = ? 
+                        LIMIT 1
+                    ");
+                    $stmt_buscar->execute([$id_checador]);
+                    $result = $stmt_buscar->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($result && !empty($result['id_empleado'])) {
+                        $nomina['id_empleado'] = $result['id_empleado'];
+                        error_log("Corregido: ID empleado para $id_checador es " . $nomina['id_empleado']);
+                    } else {
+                        $errores_detalle[] = "Empleado {$nomina['nombre_completo']}: No se encontró en BD";
+                        continue;
+                    }
+                } catch (Exception $e) {
+                    $errores_detalle[] = "Empleado {$nomina['nombre_completo']}: Error buscando en BD";
+                    continue;
+                }
             }
             
-            // Calcular actividades totales para este empleado
+            // Calcular actividades totales CORRECTAMENTE
             $actividades_totales_empleado = 
-                ($nomina['pago_actividades_bd'] ?? 0) + 
-                ($nomina['pago_actividades_seleccionadas'] ?? 0) + 
-                ($nomina['pago_actividades_gerente'] ?? 0);
+                (floatval($nomina['pago_actividades_bd'] ?? 0)) + 
+                (floatval($nomina['pago_actividades_seleccionadas'] ?? 0)) + 
+                (floatval($nomina['pago_actividades_gerente'] ?? 0));
+            
+            // Validar que total_pagar sea coherente
+            $sueldo_base = floatval($nomina['sueldo_base'] ?? 0);
+            $descuento = floatval($nomina['descuento_registros'] ?? 0);
+            $total_calculado = $sueldo_base + $actividades_totales_empleado - $descuento;
+            $total_recibido = floatval($nomina['total_pagar'] ?? 0);
+            
+            // Si hay discrepancia, usar el calculado
+            if (abs($total_calculado - $total_recibido) > 0.01) {
+                error_log("ADVERTENCIA: Discrepancia en total para {$nomina['nombre_completo']}: ");
+                error_log("  Calculado: $total_calculado, Recibido: $total_recibido");
+                error_log("  Usando calculado: $total_calculado");
+                $nomina['total_pagar'] = $total_calculado;
+            }
+            
+            // LOGGING para debug
+            error_log("Insertando detalle para: " . $nomina['nombre_completo']);
+            error_log("  ID Empleado: " . $nomina['id_empleado']);
+            error_log("  Sueldo base: " . $sueldo_base);
+            error_log("  Actividades totales: " . $actividades_totales_empleado);
+            error_log("  Descuento: " . $descuento);
+            error_log("  Total a pagar: " . $nomina['total_pagar']);
             
             try {
                 $stmt_detalle->execute([
                     $id_nomina_general,
                     $nomina['id_empleado'],
                     $nomina['dias_trabajados'] ?? 0,
-                    $nomina['sueldo_base'] ?? 0,
+                    $sueldo_base,
                     $actividades_totales_empleado,
-                    $nomina['descuento_registros'] ?? 0,
-                    $nomina['total_pagar'] ?? 0,
+                    $descuento,
+                    $nomina['total_pagar'],
                     $ID_Operador
                 ]);
+                
+                error_log("  ✓ Insertado correctamente");
+                
             } catch (Exception $e) {
                 $errores_detalle[] = "Empleado {$nomina['nombre_completo']}: " . $e->getMessage();
-                error_log("Error guardando detalle para empleado {$id_checador}: " . $e->getMessage());
+                error_log("  ✗ Error: " . $e->getMessage());
+                
+                // Log detallado del error PDO
+                if ($e instanceof PDOException) {
+                    error_log("  PDO Error Info: " . print_r($stmt_detalle->errorInfo(), true));
+                }
             }
         }
-        
+
         // 9. CONFIRMAR TRANSACCIÓN
         $pdo->commit();
         
