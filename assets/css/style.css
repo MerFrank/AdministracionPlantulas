@@ -970,3 +970,122 @@ footer {
   margin-right: auto;
   margin-left: auto;
 }
+
+
+/* =========================================
+   ESTILOS GENERAR NÓMINA
+   ========================================= */
+
+.container-nomina-full {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Caja del formulario de carga */
+.form-container-nomina {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  border: 1px solid #dee2e6;
+  margin-top: 25px;
+}
+
+/* Títulos de sección */
+.section-title-nomina {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 10px;
+}
+
+/* Grupo del input file */
+.form-group-nomina label {
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.form-group-nomina input[type="file"] {
+  border: 2px dashed var(--color-primary);
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.form-group-nomina input[type="file"]:hover {
+  background: #e9f5ec;
+}
+
+/* Botón principal */
+.btn-submit-nomina {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 15px;
+  transition: var(--transition);
+}
+
+.btn-submit-nomina:hover {
+  background-color: #356d3c;
+  transform: translateY(-2px);
+}
+
+/* Tabla de resultados */
+.table-responsive-nomina {
+  overflow-x: auto;
+  margin-top: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+}
+
+.table-nomina {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  min-width: 900px;
+}
+
+.table-nomina thead {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.table-nomina th,
+.table-nomina td {
+  padding: 12px;
+  border: 1px solid #dee2e6;
+  text-align: center;
+}
+
+.table-nomina th {
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.table-nomina tbody tr:hover {
+  background-color: rgba(69, 129, 77, 0.06);
+}
+
+/* Badges internos de la tabla */
+.table-nomina .badge {
+  font-size: 0.75rem;
+  padding: 6px 10px;
+}
+
+/* Resumen visual */
+.alert-info,
+.alert-success {
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+}

@@ -278,7 +278,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     </small>
                 </div>
 
-                <button type="submit" name="procesar" class="btn-submit-nomina">
+                <button type="submit" name="procesar" class="btn btn-primary">
                     <i class="fas fa-upload me-2"></i> Procesar Archivo
                 </button>
 
