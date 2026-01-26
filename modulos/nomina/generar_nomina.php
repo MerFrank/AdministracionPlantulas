@@ -29,10 +29,12 @@ try {
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 
+$registrosEmpleados = [];
 
-function obtenerInformacionEmpleado($id_checador, $pdo) {
+function obtenerInformacionEmpleado($id_checador, $pdo)
+{
     try {
-        
+
         $stmt = $pdo->prepare("
             SELECT 
                 e.id_empleado,
@@ -52,16 +54,16 @@ function obtenerInformacionEmpleado($id_checador, $pdo) {
             GROUP BY e.id_empleado, ep.id_asignacion
             LIMIT 1
         ");
-        
+
         if (!$stmt) {
             throw new Exception("Error preparando consulta: " . implode(", ", $pdo->errorInfo()));
         }
-        
+
         $stmt->execute([$id_checador]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         return $result ?: false;
-        
+
     } catch (PDOException $e) {
         error_log("Error PDO en obtener Informacion Empleado: " . $e->getMessage());
         return false;
@@ -71,7 +73,8 @@ function obtenerInformacionEmpleado($id_checador, $pdo) {
     }
 }
 
-function obtenerActividadesExtras($pdo){
+function obtenerActividadesExtras($pdo)
+{
     try {
         $stmt = $pdo->prepare("
             SELECT
@@ -85,11 +88,11 @@ function obtenerActividadesExtras($pdo){
         if (!$stmt) {
             throw new Exception("Error preparando consulta: " . implode(", ", $pdo->errorInfo()));
         }
-        
+
         $stmt->execute();
-        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC); 
-        
-        return $resultados ?: [];  
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $resultados ?: [];
 
     } catch (PDOException $e) {
         error_log("Error al obtener actividades extras: " . $e->getMessage());
@@ -113,7 +116,111 @@ try {
     $cuentas_bancarias = [];
 }
 
+function procesarArchivo()
+{
+    try {
+        global $pdo;
+        global $registrosEmpleados;
 
+        // Verificar que el archivo se subió correctamente
+        if (!isset($_FILES['asistencia_file']) || $_FILES['asistencia_file']['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("Error al subir el archivo. Código de error: " . $_FILES['asistencia_file']['error']);
+        }
+
+        $fileTmpPath = $_FILES['asistencia_file']['tmp_name'];
+        $fileName = $_FILES['asistencia_file']['name'];
+        $fileType = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        if (!file_exists($fileTmpPath)) {
+            throw new Exception("El archivo temporal no existe");
+        }
+
+        if ($fileType === 'xls' || $fileType === 'xlsx') {
+            $spreadsheet = IOFactory::load($fileTmpPath);
+
+            $sheetNames = $spreadsheet->getSheetNames();
+            error_log("Hojas disponibles: " . implode(", ", $sheetNames));
+
+            if (count($sheetNames) >= 3) {
+                $sheet = $spreadsheet->getSheet(2);
+                error_log("Usando tercera hoja: " . $sheetNames[2]);
+            } else {
+                $sheet = $spreadsheet->getSheet(0);
+                error_log("Usando primera hoja (no hay tercera)");
+            }
+
+            $data = $sheet->toArray(null, true, true, true);
+
+            $idsEncontrados = 0;
+            $idsNoEnBD = 0;
+
+            foreach ($data as $numeroFila => $row) {
+                $columnaA = isset($row['A']) ? trim($row['A']) : '';
+                $columnaC = isset($row['C']) ? trim($row['C']) : '';
+
+                // Buscar "ID" incluso si tiene espacios, dos puntos, etc.
+                if (stripos($columnaA, 'ID') !== false && !empty($columnaC)) {
+                    $id_checador = $columnaC;
+                    error_log("ENCONTRADO - Fila $numeroFila: A='$columnaA', ID='$id_checador'");
+
+                    $infoEmpleado = obtenerInformacionEmpleado($id_checador, $pdo);
+
+                    if ($infoEmpleado) {
+                        $infoEmpleado['id_checador'] = $id_checador;
+                        $infoEmpleado['fila_excel'] = $numeroFila;
+                        $registrosEmpleados[] = $infoEmpleado;
+                        $idsEncontrados++;
+                        error_log("✓ Empleado encontrado en BD: " . $infoEmpleado['nombre_completo']);
+                    } else {
+                        error_log("✗ ID $id_checador NO encontrado en BD");
+                        $idsNoEnBD++;
+                    }
+                }
+            }
+
+            // DEPURACIÓN: Resumen
+            error_log("=== RESUMEN ===");
+            error_log("IDs encontrados en Excel: " . ($idsEncontrados + $idsNoEnBD));
+            error_log("IDs encontrados en BD: $idsEncontrados");
+            error_log("IDs NO en BD: $idsNoEnBD");
+
+            if ($idsEncontrados > 0) {
+                $_SESSION['success_message'] = "Archivo procesado. $idsEncontrados empleados encontrados.";
+                if ($idsNoEnBD > 0) {
+                    $_SESSION['warning_message'] = "$idsNoEnBD IDs no se encontraron en la base de datos.";
+                }
+            } else {
+                if (($idsEncontrados + $idsNoEnBD) > 0) {
+                    $_SESSION['error_message'] = "Se encontraron " . ($idsEncontrados + $idsNoEnBD) . " IDs en el archivo, pero NINGUNO está en la base de datos.";
+                } else {
+                    $_SESSION['error_message'] = "No se encontraron IDs en el archivo. Verifica el formato.";
+                }
+            }
+
+            return $registrosEmpleados;
+
+        } else {
+            throw new Exception("Formato de archivo no válido. Solo se permiten archivos XLS o XLSX");
+        }
+
+    } catch (ReaderException $e) {
+        $error = "Error al leer el archivo de Excel: " . $e->getMessage();
+        $_SESSION['error_message'] = $error;
+        error_log($error);
+        header('Location: generar_nomina.php');
+        exit();
+    } catch (Exception $e) {
+        $error = "Error general: " . $e->getMessage();
+        $_SESSION['error_message'] = $error;
+        error_log($error);
+        header('Location: generar_nomina.php');
+        exit();
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar']) && isset($_FILES['asistencia_file'])) {
+    procesarArchivo();
+}
 
 $titulo = "Generar Nómina";
 $encabezado = "Generar Nómina";
@@ -124,226 +231,186 @@ $texto_boton = "";
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
-<style>
-    .form-container-nomina {
-        background: #f8f9fa;
-        padding: 25px;
-        border-radius: 10px;
-        border: 1px solid #dee2e6;
-        margin-bottom: 25px;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box;
-    }
 
-    /* FORZAR ANCHO COMPLETO PARA TODOS LOS ELEMENTOS DE NÓMINA */
-    .container-nomina-full {
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 0 15px;
-        margin: 0 auto;
-    }
-
-    .table-responsive-nomina {
-        overflow-x: auto;
-        width: 100% !important;
-        margin-top: 20px;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-    }
-
-    .table-nomina {
-        width: 100% !important;
-        min-width: 1400px !important;
-        border-collapse: collapse;
-        background-color: white;
-        margin-bottom: 0;
-    }
-
-    .table-nomina th,
-    .table-nomina td {
-        border: 1px solid #dee2e6;
-        padding: 12px;
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    .table-nomina thead {
-        background-color: #45814d !important;
-        color: white;
-    }
-
-    .table-nomina thead th {
-        background-color: #45814d !important;
-        color: white !important;
-        text-transform: uppercase;
-        font-weight: 500;
-        padding: 1rem;
-        border: none;
-    }
-
-    .form-group-nomina {
-        margin-bottom: 20px;
-        width: 100% !important;
-    }
-
-    .form-group-nomina label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #495057;
-        width: 100% !important;
-    }
-
-    .form-group-nomina input[type="file"] {
-        width: 100% !important;
-        padding: 10px;
-        border: 2px dashed #ced4da;
-        border-radius: 5px;
-        background: white;
-        transition: all 0.3s ease;
-    }
-
-    .btn-submit-nomina {
-        background: #007bff;
-        color: white;
-        padding: 12px 30px;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        width: auto !important;
-        display: inline-block !important;
-    }
-
-    .btn-submit-nomina:hover {
-        background: #0056b3;
-    }
-
-    .total-row {
-        background: #e3f2fd !important;
-        font-weight: bold;
-        font-size: 1.1em;
-    }
-
-    .total-row td {
-        padding: 15px 12px;
-        border-top: 2px solid #007bff;
-    }
-
-    .actividades-container {
-        max-height: 150px;
-        overflow-y: auto;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        padding: 10px;
-        background: white;
-        width: 100% !important;
-    }
-
-    .actividades-item {
-        margin-bottom: 8px;
-        padding: 5px;
-        border-radius: 3px;
-        transition: background 0.2s ease;
-        width: 100% !important;
-    }
-
-    .actividades-item:hover {
-        background: #f8f9fa;
-    }
-
-    .actividades-item label {
-        font-weight: normal;
-        margin-bottom: 0;
-        cursor: pointer;
-        width: 100% !important;
-    }
-
-    .positive-amount {
-        color: #28a745;
-        font-weight: 600;
-    }
-
-    .negative-amount {
-        color: #dc3545;
-        font-weight: 600;
-    }
-
-    .section-title-nomina {
-        color: #495057;
-        border-bottom: 2px solid #007bff;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-        width: 100% !important;
-    }
-
-    .employee-detail-section {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        width: 100% !important;
-    }
-
-    /* Agregar en la sección de estilos */
-    .condonar-checkbox {
-        transform: scale(1.2);
-        margin: 0 8px;
-    }
-
-    .condonar-label {
-        font-weight: normal;
-        cursor: pointer;
-        font-size: 12px;
-    }
-
-    .descuento-condonado {
-        text-decoration: line-through;
-        color: #6c757d !important;
-    }
-
-    .sin-descuento {
-        color: #28a745 !important;
-        font-weight: bold;
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-        .container-nomina-full {
-            padding: 0 10px;
-        }
-        
-        .form-container-nomina {
-            padding: 15px;
-        }
-        
-        .table-nomina {
-            min-width: 1200px !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .container-nomina-full {
-            padding: 0 5px;
-        }
-        
-        .form-container-nomina {
-            padding: 10px;
-        }
-        
-        .btn-submit-nomina {
-            width: 100% !important;
-            padding: 15px;
-        }
-    }
-</style>
 
 <main>
-    
+    <div class="container-nomina-full">
+        <h1><?php echo $encabezado; ?></h1>
+        <p class="lead"><?php echo $subtitulo; ?></p>
+
+        <!-- Mostrar mensajes de error/success -->
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <?php echo $_SESSION['error_message']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['warning_message'])): ?>
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <?php echo $_SESSION['warning_message']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['warning_message']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <?php echo $_SESSION['success_message']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+        <!-- FORMULARIO PARA SUBIR ARCHIVO -->
+        <div class="form-container-nomina">
+            <h3 class="section-title-nomina">Subir Archivo de Asistencia</h3>
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="form-group-nomina">
+                    <label for="asistencia_file">Seleccionar archivo Excel (.xls o .xlsx):</label>
+                    <input type="file" name="asistencia_file" id="asistencia_file" accept=".xls,.xlsx" required
+                        class="form-control">
+                    <small class="form-text text-muted">
+                        El archivo debe tener la etiqueta "ID" en la columna A y el número de ID en la columna C
+                    </small>
+                </div>
+
+                <button type="submit" name="procesar" class="btn-submit-nomina">
+                    <i class="fas fa-upload me-2"></i> Procesar Archivo
+                </button>
+
+                <?php if (!empty($registrosEmpleados)): ?>
+                    <button type="button" class="btn btn-success ms-2" onclick="exportarDatos()">
+                        <i class="fas fa-download me-2"></i> Exportar Datos
+                    </button>
+                <?php endif; ?>
+            </form>
+        </div>
+
+        <!-- TABLA PARA MOSTRAR RESULTADOS -->
+        <?php if (!empty($registrosEmpleados)): ?>
+            <div class="employee-detail-section mt-4">
+                <h3 class="section-title-nomina">
+                    Empleados Encontrados
+                    <span class="badge bg-primary"><?php echo count($registrosEmpleados); ?></span>
+                </h3>
+
+                <div class="table-responsive-nomina">
+                    <table class="table-nomina">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ID Checador</th>
+                                <th>Nombre Completo</th>
+                                <th>Puesto</th>
+                                <th>Nivel Jerárquico</th>
+                                <th>Sueldo Diario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($registrosEmpleados as $index => $empleado): ?>
+                                <tr>
+                                    <td class="fw-bold"><?php echo $index + 1; ?></td>
+                                    <td>
+                                        <span class="badge bg-dark">
+                                            <?php echo htmlspecialchars($empleado['id_checador'] ?? 'N/A'); ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($empleado['nombre_completo'] ?? 'No encontrado'); ?></td>
+                                    <td><?php echo htmlspecialchars($empleado['puesto'] ?? 'N/A'); ?></td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            <?php echo htmlspecialchars($empleado['nivel_jerarquico'] ?? 'N/A'); ?>
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold text-primary">
+                                        $<?php echo number_format($empleado['sueldo_diario'] ?? 0, 2); ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            
+                            <!-- FILA DE TOTALES -->
+                            <tr class="total-row">
+                                <td colspan="5" class="text-end fw-bold">TOTAL EMPLEADOS:</td>
+                                <td class="fw-bold text-primary">
+                                    <?php echo count($registrosEmpleados); ?> empleados
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- RESUMEN -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-info-circle me-2"></i>Resumen</h5>
+                            <p class="mb-1">• Empleados procesados: <?php echo count($registrosEmpleados); ?></p>
+                            <p class="mb-1">• Pago total actividades: $<?php 
+                                $totalPago = 0;
+                                foreach ($registrosEmpleados as $emp) {
+                                    $totalPago += $emp['pago_actividades'] ?? 0;
+                                }
+                                echo number_format($totalPago, 2); 
+                            ?></p>
+                            <p class="mb-0">• Archivo: <?php 
+                                echo htmlspecialchars(
+                                    isset($_FILES['asistencia_file']['name']) ? 
+                                    $_FILES['asistencia_file']['name'] : 
+                                    'No procesado'
+                                ); 
+                            ?></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle me-2"></i>Procesado exitosamente</h5>
+                            <p class="mb-0">
+                                <strong><?php echo count($registrosEmpleados); ?></strong> empleados listos para nómina.
+                                <?php if (isset($_SESSION['warning_message'])): ?>
+                                    <br><small class="text-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <?php 
+                                            echo $_SESSION['warning_message'];
+                                            unset($_SESSION['warning_message']);
+                                        ?>
+                                    </small>
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php elseif (isset($_POST['procesar'])): ?>
+            <div class="alert alert-warning mt-4">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Sin resultados</h5>
+                <p class="mb-0">No se encontraron empleados en el archivo. Verifica que el formato sea correcto.</p>
+            </div>
+        <?php endif; ?>
+    </div>
 </main>
+
+<script>
+    // Evitar reenvío del formulario al recargar
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+
+    // Mostrar nombre del archivo seleccionado
+    document.getElementById('asistencia_file').addEventListener('change', function (e) {
+        const fileName = e.target.files[0]?.name || 'No seleccionado';
+        const label = this.previousElementSibling;
+        label.innerHTML = `Archivo seleccionado: <strong>${fileName}</strong>`;
+    });
+
+    function exportarDatos() {
+        // Función para exportar datos a Excel/CSV
+        alert('Función de exportación - Implementar según necesidad');
+        // window.location.href = 'exportar.php?tipo=excel';
+    }
+</script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
