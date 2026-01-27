@@ -978,114 +978,91 @@ footer {
 
 .container-nomina-full {
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  padding: 20px 30px;
 }
 
-/* Caja del formulario de carga */
+/* Tarjeta principal donde va el upload */
 .form-container-nomina {
   background: white;
-  padding: 30px;
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  border: 1px solid #dee2e6;
-  margin-top: 25px;
+  padding: 25px 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+  border-left: 6px solid var(--color-primary);
+  margin-bottom: 30px;
 }
 
-/* Títulos de sección */
 .section-title-nomina {
-  font-size: 1.4rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--color-primary);
   margin-bottom: 20px;
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 2px solid #e9ecef;
   padding-bottom: 10px;
 }
 
-/* Grupo del input file */
-.form-group-nomina label {
-  font-weight: bold;
-  margin-bottom: 10px;
-  display: block;
-}
-
+/* Input file estilo bonito */
 .form-group-nomina input[type="file"] {
   border: 2px dashed var(--color-primary);
   padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  transition: var(--transition);
+  background: #f8fdf9;
   cursor: pointer;
+  transition: 0.3s;
 }
 
 .form-group-nomina input[type="file"]:hover {
-  background: #e9f5ec;
+  background: #eaf6ed;
 }
 
-/* Botón principal */
-.btn-submit-nomina {
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  font-weight: 600;
-  margin-top: 15px;
-  transition: var(--transition);
+/* Tabla más tipo "resumen de nómina" */
+.employee-detail-section {
+  border-left: 6px solid var(--color-accent);
 }
 
-.btn-submit-nomina:hover {
-  background-color: #356d3c;
-  transform: translateY(-2px);
-}
-
-/* Tabla de resultados */
-.table-responsive-nomina {
-  overflow-x: auto;
-  margin-top: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
-}
-
-.table-nomina {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  min-width: 900px;
-}
-
-.table-nomina thead {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.table-nomina th,
-.table-nomina td {
-  padding: 12px;
-  border: 1px solid #dee2e6;
-  text-align: center;
-}
-
-.table-nomina th {
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.table-nomina tbody tr:hover {
-  background-color: rgba(69, 129, 77, 0.06);
-}
-
-/* Badges internos de la tabla */
-.table-nomina .badge {
+.employee-detail-section .table-clientes th {
   font-size: 0.75rem;
+  letter-spacing: 1px;
+}
+
+.employee-detail-section .badge {
+  font-size: 0.8rem;
   padding: 6px 10px;
 }
 
-/* Resumen visual */
-.alert-info,
-.alert-success {
-  border-radius: 10px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+/* Fila total más visual */
+.total-row {
+  background: #fff8d6 !important;
+  border-top: 3px solid var(--color-accent);
+  font-size: 1.1rem;
+}
+
+/* Bloques de resumen */
+.employee-detail-section .alert-info {
+  background: #eef7ff;
+  border-left: 5px solid #0d6efd;
+}
+
+.employee-detail-section .alert-success {
+  background: #edf9f0;
+  border-left: 5px solid #198754;
+}
+
+/* Botón principal más grande */
+.form-container-nomina .btn-primary {
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  width: auto;
+  min-width: 250px;
+}
+
+/* Espaciado elegante entre bloques */
+.employee-detail-section + .employee-detail-section {
+  margin-top: 30px;
+}
+
+/* Badge de ID más visible */
+.badge.bg-dark {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  padding: 6px 12px;
 }

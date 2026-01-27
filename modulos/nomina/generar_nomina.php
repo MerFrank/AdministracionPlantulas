@@ -235,9 +235,21 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <main>
     <div class="container-nomina-full">
-        <h1><?php echo $encabezado; ?></h1>
-        <p class="lead"><?php echo $subtitulo; ?></p>
+        <!-- FORMULARIO PARA SUBIR ARCHIVO -->
+        <div class="form-container-nomina">
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="form-group-nomina">
+                    <label for="asistencia_file">Seleccionar archivo Excel (.xls o .xlsx):</label>
+                    <input type="file" name="asistencia_file" id="asistencia_file" accept=".xls,.xlsx" required
+                    class="form-control">
+                </div>
+                
+                <button type="submit" name="procesar" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i> Procesar Archivo
+                </button>
 
+            </form>
+        </div>
         <!-- Mostrar mensajes de error/success -->
         <?php if (isset($_SESSION['error_message'])): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -265,31 +277,7 @@ require_once __DIR__ . '/../../includes/header.php';
             </div>
             <?php unset($_SESSION['success_message']); ?>
         <?php endif; ?>
-        <!-- FORMULARIO PARA SUBIR ARCHIVO -->
-        <div class="form-container-nomina">
-            <h3 class="section-title-nomina">Subir Archivo de Asistencia</h3>
-            <form method="POST" enctype="multipart/form-data" id="uploadForm">
-                <div class="form-group-nomina">
-                    <label for="asistencia_file">Seleccionar archivo Excel (.xls o .xlsx):</label>
-                    <input type="file" name="asistencia_file" id="asistencia_file" accept=".xls,.xlsx" required
-                        class="form-control">
-                    <small class="form-text text-muted">
-                        El archivo debe tener la etiqueta "ID" en la columna A y el número de ID en la columna C
-                    </small>
-                </div>
-
-                <button type="submit" name="procesar" class="btn btn-primary">
-                    <i class="fas fa-upload me-2"></i> Procesar Archivo
-                </button>
-
-                <?php if (!empty($registrosEmpleados)): ?>
-                    <button type="button" class="btn btn-success ms-2" onclick="exportarDatos()">
-                        <i class="fas fa-download me-2"></i> Exportar Datos
-                    </button>
-                <?php endif; ?>
-            </form>
-        </div>
-
+        
         <!-- TABLA PARA MOSTRAR RESULTADOS -->
         <?php if (!empty($registrosEmpleados)): ?>
             <div class="employee-detail-section mt-4">
@@ -298,8 +286,8 @@ require_once __DIR__ . '/../../includes/header.php';
                     <span class="badge bg-primary"><?php echo count($registrosEmpleados); ?></span>
                 </h3>
 
-                <div class="table-responsive-nomina">
-                    <table class="table-nomina">
+                <div class="table-container">
+                    <table class="table-clientes">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -406,11 +394,7 @@ require_once __DIR__ . '/../../includes/header.php';
         label.innerHTML = `Archivo seleccionado: <strong>${fileName}</strong>`;
     });
 
-    function exportarDatos() {
-        // Función para exportar datos a Excel/CSV
-        alert('Función de exportación - Implementar según necesidad');
-        // window.location.href = 'exportar.php?tipo=excel';
-    }
+
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
