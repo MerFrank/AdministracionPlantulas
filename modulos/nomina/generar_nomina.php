@@ -166,8 +166,12 @@ function procesarArchivo()
                     $infoEmpleado = obtenerInformacionEmpleado($id_checador, $pdo);
 
                     if ($infoEmpleado) {
+                        $diasTrabajados = contarDiasTrabajados($data, $numeroFila, $id_checador);
+                        
                         $infoEmpleado['id_checador'] = $id_checador;
                         $infoEmpleado['fila_excel'] = $numeroFila;
+                        $infoEmpleado['dias_trabajados'] = $diasTrabajados;
+                        $infoEmpleado['dias_original'] = $diasTrabajados;
                         $registrosEmpleados[] = $infoEmpleado;
                         $idsEncontrados++;
                         error_log("✓ Empleado encontrado en BD: " . $infoEmpleado['nombre_completo']);
@@ -178,11 +182,6 @@ function procesarArchivo()
                 }
             }
 
-            // DEPURACIÓN: Resumen
-            error_log("=== RESUMEN ===");
-            error_log("IDs encontrados en Excel: " . ($idsEncontrados + $idsNoEnBD));
-            error_log("IDs encontrados en BD: $idsEncontrados");
-            error_log("IDs NO en BD: $idsNoEnBD");
 
             if ($idsEncontrados > 0) {
                 $_SESSION['success_message'] = "Archivo procesado. $idsEncontrados empleados encontrados.";
@@ -218,8 +217,50 @@ function procesarArchivo()
     }
 }
 
+
+function contarDiasTrabajados($data, $filaId, $idChecador) {
+    $dias = 0;
+    
+    // La fila DESPUÉS del ID tiene los registros de la semana
+    $filaRegistros = $filaId + 1;
+    
+    if (isset($data[$filaRegistros])) {
+        $row = $data[$filaRegistros];
+        
+        // Contar celdas con datos en las columnas A-G
+        // Cada celda con datos es 1 día trabajado
+        for ($col = 'A'; $col <= 'G'; $col++) {
+            if (isset($row[$col]) && !empty(trim($row[$col]))) {
+                $valor = trim($row[$col]);
+                // Si tiene cualquier texto (incluso si es "07:3011:4712:2916:31"), cuenta como día
+                if (!empty($valor)) {
+                    $dias++;
+                }
+            }
+        }
+    }
+    
+    return $dias;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar']) && isset($_FILES['asistencia_file'])) {
     procesarArchivo();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
+    if (isset($_POST['dias_trabajados']) && is_array($_POST['dias_trabajados'])) {
+        foreach ($_POST['dias_trabajados'] as $index => $dias) {
+            if (isset($registrosEmpleados[$index])) {
+                $dias = intval($dias);
+                // Validar que esté entre el valor original y 7
+                $original = $registrosEmpleados[$index]['dias_original'] ?? 0;
+                if ($dias >= $original && $dias <= 7) {
+                    $registrosEmpleados[$index]['dias_trabajados'] = $dias;
+                }
+            }
+        }
+        $_SESSION['update_message'] = "Días trabajados actualizados correctamente.";
+    }
 }
 
 $titulo = "Generar Nómina";
@@ -277,6 +318,15 @@ require_once __DIR__ . '/../../includes/header.php';
             </div>
             <?php unset($_SESSION['success_message']); ?>
         <?php endif; ?>
+
+        <?php if (isset($_SESSION['update_message'])): ?>
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-check me-2"></i>
+                <?php echo $_SESSION['update_message']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['update_message']); ?>
+        <?php endif; ?>
         
         <!-- TABLA PARA MOSTRAR RESULTADOS -->
         <?php if (!empty($registrosEmpleados)): ?>
@@ -285,7 +335,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     Empleados Encontrados
                     <span class="badge bg-primary"><?php echo count($registrosEmpleados); ?></span>
                 </h3>
-
+            <form method="POST" id="formDiasTrabajados"  class="form-nomina">
                 <div class="table-container">
                     <table class="table-clientes">
                         <thead>
@@ -296,10 +346,15 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>Puesto</th>
                                 <th>Nivel Jerárquico</th>
                                 <th>Sueldo Diario</th>
+                                <th>Días Trabajados</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($registrosEmpleados as $index => $empleado): ?>
+                            <?php foreach ($registrosEmpleados as $index => $empleado):
+                                 $diasTrabajados = $empleado['dias_trabajados'] ?? 0;
+                                 $diasOriginal = $empleado['dias_original'] ?? $diasTrabajados; 
+                                ?>
+                                
                                 <tr>
                                     <td class="fw-bold"><?php echo $index + 1; ?></td>
                                     <td>
@@ -317,6 +372,28 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <td class="fw-bold text-primary">
                                         $<?php echo number_format($empleado['sueldo_diario'] ?? 0, 2); ?>
                                     </td>
+                                    <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" name="dias_trabajados[<?php echo $index; ?>]"
+                                                    value="<?php echo $diasTrabajados; ?>" min="<?php echo $diasOriginal; ?>"
+                                                    max="7" class="form-control form-control-sm text-center dias-input"
+                                                    data-index="<?php echo $index; ?>"
+                                                    data-original="<?php echo $diasOriginal; ?>">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar"
+                                                    data-index="<?php echo $index; ?>" title="Restaurar valor original">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted d-block mt-1">
+                                                Original: <?php echo $diasOriginal; ?>
+                                                día<?php echo $diasOriginal != 1 ? 's' : ''; ?>
+                                                <?php if ($diasTrabajados != $diasOriginal): ?>
+                                                    <span class="text-warning ms-2">
+                                                        <i class="fas fa-pencil-alt"></i> Modificado
+                                                    </span>
+                                                <?php endif; ?>
+                                            </small>
+                                        </td>
                                 </tr>
                             <?php endforeach; ?>
                             
@@ -330,7 +407,15 @@ require_once __DIR__ . '/../../includes/header.php';
                         </tbody>
                     </table>
                 </div>
-
+                <div class="mt-3">
+                    <button type="submit" name="guardar_dias" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i> Guardar Días Trabajados
+                    </button>
+                    <button type="button" id="btnRestaurarTodos" class="btn btn-outline-warning ms-2">
+                        <i class="fas fa-undo-alt me-2"></i> Restaurar Todos
+                    </button>
+                </div>
+            </form> 
                 <!-- RESUMEN -->
                 <div class="row mt-3">
                     <div class="col-md-6">
@@ -392,6 +477,124 @@ require_once __DIR__ . '/../../includes/header.php';
         const fileName = e.target.files[0]?.name || 'No seleccionado';
         const label = this.previousElementSibling;
         label.innerHTML = `Archivo seleccionado: <strong>${fileName}</strong>`;
+    });
+
+        // Restaurar valor original de un campo
+    document.querySelectorAll('.btn-restaurar').forEach(button => {
+        button.addEventListener('click', function () {
+            const index = this.dataset.index;
+            const input = document.querySelector(`.dias-input[data-index="${index}"]`);
+            const original = input.dataset.original;
+
+            if (input && original) {
+                input.value = original;
+                input.min = original;
+                actualizarEstadoModificado(input);
+            }
+        });
+    });
+
+    // Restaurar todos los campos
+    document.getElementById('btnRestaurarTodos')?.addEventListener('click', function () {
+        document.querySelectorAll('.dias-input').forEach(input => {
+            const original = input.dataset.original;
+            if (original) {
+                input.value = original;
+                input.min = original;
+                actualizarEstadoModificado(input);
+            }
+        });
+
+        // Mostrar mensaje temporal
+        showTempMessage('Todos los valores restaurados a los originales', 'info');
+    });
+
+    // Actualizar estado "Modificado"
+    function actualizarEstadoModificado(input) {
+        const index = input.dataset.index;
+        const original = parseInt(input.dataset.original);
+        const actual = parseInt(input.value);
+
+        const row = input.closest('tr');
+        const estadoSpan = row.querySelector('.text-warning');
+
+        if (actual !== original) {
+            if (!estadoSpan) {
+                const small = row.querySelector('small.text-muted');
+                const span = document.createElement('span');
+                span.className = 'text-warning ms-2';
+                span.innerHTML = '<i class="fas fa-pencil-alt"></i> Modificado';
+                small.appendChild(span);
+            }
+        } else {
+            if (estadoSpan) {
+                estadoSpan.remove();
+            }
+        }
+    }
+
+    // Mostrar mensaje temporal
+    function showTempMessage(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-2`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'info' ? 'info-circle' : 'check'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        const container = document.querySelector('.employee-detail-section');
+        container.insertBefore(alertDiv, container.firstChild);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+
+    // Evento para detectar cambios en inputs
+    document.querySelectorAll('.dias-input').forEach(input => {
+        input.addEventListener('change', function () {
+            actualizarEstadoModificado(this);
+        });
+
+        input.addEventListener('input', function () {
+            const original = parseInt(this.dataset.original);
+            const value = parseInt(this.value) || original;
+
+            if (value < original) {
+                this.value = original;
+                showTempMessage('No se puede reducir los días del valor original', 'warning');
+            }
+
+            if (value > 7) {
+                this.value = 7;
+                showTempMessage('Máximo 7 días permitidos', 'warning');
+            }
+        });
+    });
+
+    // Validar formulario antes de enviar
+    document.getElementById('formDiasTrabajados')?.addEventListener('submit', function (e) {
+        let valid = true;
+
+        document.querySelectorAll('.dias-input').forEach(input => {
+            const value = parseInt(input.value);
+            const original = parseInt(input.dataset.original);
+            const min = parseInt(input.min);
+            const max = parseInt(input.max);
+
+            if (isNaN(value) || value < min || value > max) {
+                input.classList.add('is-invalid');
+                valid = false;
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        if (!valid) {
+            e.preventDefault();
+            showTempMessage('Por favor, corrige los valores inválidos', 'danger');
+        }
     });
 
 
