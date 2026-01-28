@@ -243,24 +243,40 @@ function contarDiasTrabajados($data, $filaId, $idChecador) {
     return $dias;
 }
 
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar']) && isset($_FILES['asistencia_file'])) {
     procesarArchivo();
 }
 
+
+// Obtener actividades extras activas
+$actividades_extras = obtenerActividadesExtras($pdo);
+
+// Guardar cambios en días trabajados y actividades
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
     if (isset($_POST['dias_trabajados']) && is_array($_POST['dias_trabajados'])) {
         foreach ($_POST['dias_trabajados'] as $index => $dias) {
             if (isset($registrosEmpleados[$index])) {
                 $dias = intval($dias);
-                // Validar que esté entre el valor original y 7
                 $original = $registrosEmpleados[$index]['dias_original'] ?? 0;
                 if ($dias >= $original && $dias <= 7) {
                     $registrosEmpleados[$index]['dias_trabajados'] = $dias;
                 }
             }
         }
-        $_SESSION['update_message'] = "Días trabajados actualizados correctamente.";
     }
+    
+    // Guardar actividades seleccionadas
+    if (isset($_POST['actividades']) && is_array($_POST['actividades'])) {
+        foreach ($_POST['actividades'] as $index => $actividadesEmpleado) {
+            if (isset($registrosEmpleados[$index])) {
+                $registrosEmpleados[$index]['actividades_seleccionadas'] = $actividadesEmpleado;
+            }
+        }
+    }
+    
+    $_SESSION['update_message'] = "Cambios guardados correctamente.";
 }
 
 $titulo = "Generar Nómina";
@@ -347,12 +363,14 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>Nivel Jerárquico</th>
                                 <th>Sueldo Diario</th>
                                 <th>Días Trabajados</th>
+                                <th>Actividades Extras</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($registrosEmpleados as $index => $empleado):
                                  $diasTrabajados = $empleado['dias_trabajados'] ?? 0;
-                                 $diasOriginal = $empleado['dias_original'] ?? $diasTrabajados; 
+                                 $diasOriginal = $empleado['dias_original'] ?? $diasTrabajados;
+                                 $actividadesSeleccionadas = $empleado['actividades_seleccionadas'] ?? []; 
                                 ?>
                                 
                                 <tr>
@@ -373,27 +391,60 @@ require_once __DIR__ . '/../../includes/header.php';
                                         $<?php echo number_format($empleado['sueldo_diario'] ?? 0, 2); ?>
                                     </td>
                                     <td>
-                                            <div class="input-group input-group-sm">
-                                                <input type="number" name="dias_trabajados[<?php echo $index; ?>]"
-                                                    value="<?php echo $diasTrabajados; ?>" min="<?php echo $diasOriginal; ?>"
-                                                    max="7" class="form-control form-control-sm text-center dias-input"
+                                        <!-- Input de días trabajados -->
+                                        <div class="input-group input-group-sm" style="width: 150px;">
+                                            <input type="number" 
+                                                name="dias_trabajados[<?php echo $index; ?>]" 
+                                                value="<?php echo $diasTrabajados; ?>"
+                                                min="<?php echo $diasOriginal; ?>" 
+                                                max="7"
+                                                class="form-control form-control-sm text-center dias-input"
+                                                data-index="<?php echo $index; ?>"
+                                                data-original="<?php echo $diasOriginal; ?>">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar" 
                                                     data-index="<?php echo $index; ?>"
-                                                    data-original="<?php echo $diasOriginal; ?>">
-                                                <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar"
-                                                    data-index="<?php echo $index; ?>" title="Restaurar valor original">
-                                                    <i class="fas fa-undo"></i>
-                                                </button>
-                                            </div>
-                                            <small class="text-muted d-block mt-1">
-                                                Original: <?php echo $diasOriginal; ?>
-                                                día<?php echo $diasOriginal != 1 ? 's' : ''; ?>
-                                                <?php if ($diasTrabajados != $diasOriginal): ?>
-                                                    <span class="text-warning ms-2">
-                                                        <i class="fas fa-pencil-alt"></i> Modificado
-                                                    </span>
-                                                <?php endif; ?>
-                                            </small>
-                                        </td>
+                                                    title="Restaurar valor original">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">
+                                            Original: <?php echo $diasOriginal; ?> día<?php echo $diasOriginal != 1 ? 's' : ''; ?>
+                                            <?php if ($diasTrabajados != $diasOriginal): ?>
+                                                <span class="text-warning ms-2">
+                                                    <i class="fas fa-pencil-alt"></i> Modificado
+                                                </span>
+                                            <?php endif; ?>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <!-- Actividades extras -->
+                                        <div class="actividades-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; 
+                                        border-radius: 5px; padding: 10px; background: white;">
+                                            <?php if (!empty($actividades_extras)): ?>
+                                                <?php foreach ($actividades_extras as $actividad): 
+                                                    $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadas) ? 'checked' : '';
+                                                ?>
+                                                    <div class="actividad-item" style="margin-bottom: 8px; padding: 5px; border-radius: 3px; transition: background 0.2s ease;">
+                                                        <input type="checkbox" 
+                                                            name="actividades[<?php echo $index; ?>][<?php echo $actividad['id_actividad']; ?>]"
+                                                            value="<?php echo $actividad['id_actividad']; ?>"
+                                                            id="act_<?php echo $index; ?>_<?php echo $actividad['id_actividad']; ?>"
+                                                            data-valor="<?php echo $actividad['pago_extra']; ?>"
+                                                            data-nombre="<?php echo htmlspecialchars($actividad['nombre']); ?>"
+                                                            class="actividad-checkbox"
+                                                            <?php echo $checked; ?>>
+                                                        <label for="act_<?php echo $index; ?>_<?php echo $actividad['id_actividad']; ?>" 
+                                                            style="font-size: 12px; margin-bottom: 0; cursor: pointer;">
+                                                            <?php echo htmlspecialchars($actividad['nombre']); ?> - 
+                                                            $<?php echo number_format($actividad['pago_extra'], 2); ?>
+                                                        </label>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <p class="text-muted mb-0" style="font-size: 12px;">No hay actividades extras disponibles</p>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                             
@@ -406,14 +457,6 @@ require_once __DIR__ . '/../../includes/header.php';
                             </tr>
                         </tbody>
                     </table>
-                </div>
-                <div class="mt-3">
-                    <button type="submit" name="guardar_dias" class="btn btn-success">
-                        <i class="fas fa-save me-2"></i> Guardar Días Trabajados
-                    </button>
-                    <button type="button" id="btnRestaurarTodos" class="btn btn-outline-warning ms-2">
-                        <i class="fas fa-undo-alt me-2"></i> Restaurar Todos
-                    </button>
                 </div>
             </form> 
                 <!-- RESUMEN -->
@@ -479,7 +522,7 @@ require_once __DIR__ . '/../../includes/header.php';
         label.innerHTML = `Archivo seleccionado: <strong>${fileName}</strong>`;
     });
 
-        // Restaurar valor original de un campo
+    // Restaurar valor original de un campo
     document.querySelectorAll('.btn-restaurar').forEach(button => {
         button.addEventListener('click', function () {
             const index = this.dataset.index;
@@ -492,21 +535,6 @@ require_once __DIR__ . '/../../includes/header.php';
                 actualizarEstadoModificado(input);
             }
         });
-    });
-
-    // Restaurar todos los campos
-    document.getElementById('btnRestaurarTodos')?.addEventListener('click', function () {
-        document.querySelectorAll('.dias-input').forEach(input => {
-            const original = input.dataset.original;
-            if (original) {
-                input.value = original;
-                input.min = original;
-                actualizarEstadoModificado(input);
-            }
-        });
-
-        // Mostrar mensaje temporal
-        showTempMessage('Todos los valores restaurados a los originales', 'info');
     });
 
     // Actualizar estado "Modificado"
@@ -596,8 +624,6 @@ require_once __DIR__ . '/../../includes/header.php';
             showTempMessage('Por favor, corrige los valores inválidos', 'danger');
         }
     });
-
-
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
