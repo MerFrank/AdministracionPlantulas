@@ -167,14 +167,24 @@ function procesarArchivo()
 
                     if ($infoEmpleado) {
                         $diasTrabajados = contarDiasTrabajados($data, $numeroFila, $id_checador);
+
+                        $diasIncompletos = contarDiasIncompletos($data, $numeroFila);
+                        $descuentoIncompletos = $diasIncompletos * 25; // $25 por día incompleto
+
                         
                         $infoEmpleado['id_checador'] = $id_checador;
                         $infoEmpleado['fila_excel'] = $numeroFila;
                         $infoEmpleado['dias_trabajados'] = $diasTrabajados;
                         $infoEmpleado['dias_original'] = $diasTrabajados;
+                        
+                        $infoEmpleado['dias_incompletos'] = $diasIncompletos;
+                        $infoEmpleado['dias_incompletos_original'] = $diasIncompletos;
+                        $infoEmpleado['descuento_incompletos'] = $descuentoIncompletos;
+                        $infoEmpleado['descuento_incompletos_original'] = $descuentoIncompletos;
+                        
                         $registrosEmpleados[] = $infoEmpleado;
                         $idsEncontrados++;
-                        error_log("✓ Empleado encontrado en BD: " . $infoEmpleado['nombre_completo']);
+                        // error_log("✓ Empleado encontrado en BD: " . $infoEmpleado['nombre_completo']);
                     } else {
                         error_log("✗ ID $id_checador NO encontrado en BD");
                         $idsNoEnBD++;
@@ -243,6 +253,28 @@ function contarDiasTrabajados($data, $filaId, $idChecador) {
     return $dias;
 }
 
+function contarDiasIncompletos($data, $filaId) {
+    $diasIncompletos = 0;
+    $filaRegistros = $filaId + 1;
+    
+    if (isset($data[$filaRegistros])) {
+        $row = $data[$filaRegistros];
+        
+        for ($col = 'A'; $col <= 'G'; $col++) {
+            if (isset($row[$col]) && !empty(trim($row[$col]))) {
+                $valor = trim($row[$col]);
+                // Contar cuántos timestamps tiene (cada timestamp es HH:MM)
+                $timestampCount = preg_match_all('/\d{1,2}:\d{2}/', $valor);
+                if ($timestampCount > 0 && $timestampCount < 4) {
+                    $diasIncompletos++;
+                }
+            }
+        }
+    }
+    
+    return $diasIncompletos;
+}
+
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar']) && isset($_FILES['asistencia_file'])) {
@@ -275,9 +307,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
             }
         }
     }
+
+    if (isset($_POST['dias_incompletos']) && is_array($_POST['dias_incompletos'])) {
+    foreach ($_POST['dias_incompletos'] as $index => $dias) {
+        if (isset($registrosEmpleados[$index])) {
+            $dias = intval($dias);
+            $original = $registrosEmpleados[$index]['dias_incompletos_original'] ?? 0;
+            // Solo se puede reducir, no aumentar
+            if ($dias >= 0 && $dias <= $original) {
+                $registrosEmpleados[$index]['dias_incompletos'] = $dias;
+                $registrosEmpleados[$index]['descuento_incompletos'] = $dias * 25;
+            }
+        }
+    }
+}
     
     $_SESSION['update_message'] = "Cambios guardados correctamente.";
 }
+
+
 
 $titulo = "Generar Nómina";
 $encabezado = "Generar Nómina";
@@ -364,6 +412,8 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>Sueldo Diario</th>
                                 <th>Días Trabajados</th>
                                 <th>Actividades Extras</th>
+                                <th>Días Incompletos</th>
+                                <th>Descuento por Incompletos</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -445,6 +495,29 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <?php endif; ?>
                                         </div>
                                     </td>
+
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 150px;">
+                                            <input type="number" 
+                                                name="dias_incompletos[<?php echo $index; ?>]" 
+                                                value="<?php echo $empleado['dias_incompletos'] ?? 0; ?>"
+                                                min="0" 
+                                                max="<?php echo $empleado['dias_incompletos_original'] ?? 0; ?>"
+                                                class="form-control form-control-sm text-center dias-incompletos-input"
+                                                data-index="<?php echo $index; ?>"
+                                                data-original="<?php echo $empleado['dias_incompletos_original'] ?? 0; ?>"
+                                                data-precio="25">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar-incompletos" 
+                                                    data-index="<?php echo $index; ?>"
+                                                    title="Restaurar valor original">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold text-danger" id="descuento-incompletos-<?php echo $index; ?>">
+                                        $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
+                                    </td>
+                                    
                                 </tr>
                             <?php endforeach; ?>
                             
@@ -624,6 +697,60 @@ require_once __DIR__ . '/../../includes/header.php';
             showTempMessage('Por favor, corrige los valores inválidos', 'danger');
         }
     });
+
+
+ 
+    
+    function calcularDescuentoIncompletos(dias, precio) {
+        return dias * precio;
+    }
+
+    // Evento para inputs de días incompletos
+    document.querySelectorAll('.dias-incompletos-input').forEach(input => {
+        input.addEventListener('input', function() {
+            const index = this.dataset.index;
+            const dias = parseInt(this.value) || 0;
+            const original = parseInt(this.dataset.original);
+            const precio = parseInt(this.dataset.precio);
+            
+            // Validar que no sea mayor al original
+            if (dias > original) {
+                this.value = original;
+                showTempMessage('No puede exceder los días originales', 'warning');
+                return;
+            }
+            
+            // Calcular nuevo descuento
+            const descuento = calcularDescuentoIncompletos(dias, precio);
+            
+            // Actualizar display
+            const descuentoElement = document.getElementById(`descuento-incompletos-${index}`);
+            if (descuentoElement) {
+                descuentoElement.textContent = `$${descuento.toFixed(2)}`;
+            }
+        });
+    });
+
+    // Botón restaurar para incompletos
+    document.querySelectorAll('.btn-restaurar-incompletos').forEach(button => {
+        button.addEventListener('click', function() {
+            const index = this.dataset.index;
+            const input = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
+            const original = input.dataset.original;
+            const precio = input.dataset.precio;
+            
+            if (input && original) {
+                input.value = original;
+                const descuento = calcularDescuentoIncompletos(original, precio);
+                
+                const descuentoElement = document.getElementById(`descuento-incompletos-${index}`);
+                if (descuentoElement) {
+                    descuentoElement.textContent = `$${descuento.toFixed(2)}`;
+                }
+            }
+        }); 
+    });
+
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
