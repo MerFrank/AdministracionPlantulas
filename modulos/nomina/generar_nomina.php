@@ -119,6 +119,7 @@ try {
 function procesarArchivo()
 {
     try {
+        unset($_SESSION['registros_empleados']);
         global $pdo;
         global $registrosEmpleados;
 
@@ -194,6 +195,7 @@ function procesarArchivo()
 
 
             if ($idsEncontrados > 0) {
+                $_SESSION['registros_empleados'] = $registrosEmpleados;
                 $_SESSION['success_message'] = "Archivo procesado. $idsEncontrados empleados encontrados.";
                 if ($idsNoEnBD > 0) {
                     $_SESSION['warning_message'] = "$idsNoEnBD IDs no se encontraron en la base de datos.";
@@ -412,8 +414,10 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>Sueldo Diario</th>
                                 <th>Días Trabajados</th>
                                 <th>Actividades Extras</th>
-                                <th>Días Incompletos</th>
-                                <th>Descuento por Incompletos</th>
+                                <th>Descuentos</th>
+                                <th>Sueldo Base</th>
+                                <th>Total Descuento</th>
+                                <th>Total a Pagar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -450,7 +454,9 @@ require_once __DIR__ . '/../../includes/header.php';
                                                 max="7"
                                                 class="form-control form-control-sm text-center dias-input"
                                                 data-index="<?php echo $index; ?>"
-                                                data-original="<?php echo $diasOriginal; ?>">
+                                                data-original="<?php echo $diasOriginal; ?>"
+                                                data-sueldo-diario="<?php echo $empleado['sueldo_diario'] ?? 0; ?>"> 
+                                                
                                             <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar" 
                                                     data-index="<?php echo $index; ?>"
                                                     title="Restaurar valor original">
@@ -466,13 +472,19 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <?php endif; ?>
                                         </small>
                                     </td>
+                                    
+                                    <!-- Actividades extras -->
                                     <td>
-                                        <!-- Actividades extras -->
                                         <div class="actividades-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; 
                                         border-radius: 5px; padding: 10px; background: white;">
                                             <?php if (!empty($actividades_extras)): ?>
-                                                <?php foreach ($actividades_extras as $actividad): 
+                                                <?php 
+                                                $totalActividades = 0;
+                                                foreach ($actividades_extras as $actividad): 
                                                     $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadas) ? 'checked' : '';
+                                                    if ($checked) {
+                                                        $totalActividades += $actividad['pago_extra'];
+                                                    }
                                                 ?>
                                                     <div class="actividad-item" style="margin-bottom: 8px; padding: 5px; border-radius: 3px; transition: background 0.2s ease;">
                                                         <input type="checkbox" 
@@ -482,6 +494,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                                             data-valor="<?php echo $actividad['pago_extra']; ?>"
                                                             data-nombre="<?php echo htmlspecialchars($actividad['nombre']); ?>"
                                                             class="actividad-checkbox"
+                                                            data-index="<?php echo $index; ?>"
                                                             <?php echo $checked; ?>>
                                                         <label for="act_<?php echo $index; ?>_<?php echo $actividad['id_actividad']; ?>" 
                                                             style="font-size: 12px; margin-bottom: 0; cursor: pointer;">
@@ -494,8 +507,15 @@ require_once __DIR__ . '/../../includes/header.php';
                                                 <p class="text-muted mb-0" style="font-size: 12px;">No hay actividades extras disponibles</p>
                                             <?php endif; ?>
                                         </div>
+                                        <!-- Total Actividades -->
+                                        <div class="mt-2 text-center">
+                                            <small class="fw-bold text-success" id="total-actividades-<?php echo $index; ?>">
+                                                Total: $<?php echo number_format($totalActividades, 2); ?>
+                                            </small>
+                                        </div>
                                     </td>
-
+                                    
+                                    <!-- Descuentos-->
                                     <td>
                                         <div class="input-group input-group-sm" style="width: 150px;">
                                             <input type="number" 
@@ -513,12 +533,38 @@ require_once __DIR__ . '/../../includes/header.php';
                                                 <i class="fas fa-undo"></i>
                                             </button>
                                         </div>
+                                        <!-- Total Descuentos -->
+                                        <div class="mt-2 text-center">
+                                            <small class="fw-bold text-danger" id="descuento-incompletos-<?php echo $index; ?>">
+                                                Descuento: $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">Original: <?php echo $empleado['dias_incompletos_original'] ?? 0; ?> día(s)</small>
+                                        </div>
                                     </td>
+                                    
+                                    <!-- Sueldo Base -->
+                                    <td class="fw-bold text-primary" id="sueldo-base-<?php echo $index; ?>">
+                                        $<?php 
+                                            $sueldoBase = ($empleado['sueldo_diario'] ?? 0) * ($empleado['dias_trabajados'] ?? 0);
+                                            echo number_format($sueldoBase, 2); 
+                                        ?>
+                                    </td>
+                                    
+                                    <!-- Total Descuento -->
                                     <td class="fw-bold text-danger" id="descuento-incompletos-<?php echo $index; ?>">
                                         $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
                                     </td>
                                     
+                                    <!-- Total a Pagar -->
+                                    <td class="fw-bold" style="background-color: #e8f5e8;" id="total-pagar-<?php echo $index; ?>">
+                                        $<?php 
+                                            $totalPagar = $sueldoBase + $totalActividades - ($empleado['descuento_incompletos'] ?? 0);
+                                            echo number_format($totalPagar, 2); 
+                                        ?>
+                                    </td>
                                 </tr>
+                                
                             <?php endforeach; ?>
                             
                             <!-- FILA DE TOTALES -->
@@ -595,20 +641,62 @@ require_once __DIR__ . '/../../includes/header.php';
         label.innerHTML = `Archivo seleccionado: <strong>${fileName}</strong>`;
     });
 
-    // Restaurar valor original de un campo
-    document.querySelectorAll('.btn-restaurar').forEach(button => {
-        button.addEventListener('click', function () {
-            const index = this.dataset.index;
-            const input = document.querySelector(`.dias-input[data-index="${index}"]`);
-            const original = input.dataset.original;
-
-            if (input && original) {
-                input.value = original;
-                input.min = original;
-                actualizarEstadoModificado(input);
-            }
+    // Función para calcular totales
+    function calcularTotales(index) {
+        const diasInput = document.querySelector(`.dias-input[data-index="${index}"]`);
+        const incompletosInput = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
+        
+        // Obtener valores
+        const sueldoDiario = parseFloat(diasInput?.dataset.sueldoDiario) || 0;
+        const diasTrabajados = parseInt(diasInput?.value) || 0;
+        const diasIncompletos = parseInt(incompletosInput?.value) || 0;
+        const precioIncompleto = parseInt(incompletosInput?.dataset.precio) || 25;
+        
+        // Calcular sueldo base
+        const sueldoBase = sueldoDiario * diasTrabajados;
+        
+        // Calcular total actividades
+        let totalActividades = 0;
+        document.querySelectorAll(`.actividad-checkbox[data-index="${index}"]:checked`).forEach(checkbox => {
+            totalActividades += parseFloat(checkbox.dataset.valor) || 0;
         });
-    });
+        
+        // Calcular descuento por incompletos
+        const descuentoIncompletos = diasIncompletos * precioIncompleto;
+        
+        // Calcular total a pagar
+        const totalPagar = sueldoBase + totalActividades - descuentoIncompletos;
+        
+        // Actualizar displays - Asegurarte de que todos los elementos existen
+        const elements = {
+            'sueldo-base': sueldoBase,
+            'total-actividades': totalActividades,
+            'descuento-incompletos': descuentoIncompletos,
+            'total-pagar': totalPagar
+        };
+        
+        for (const [id, value] of Object.entries(elements)) {
+            const element = document.getElementById(`${id}-${index}`);
+            if (element) {
+                if (id === 'total-actividades') {
+                    element.textContent = `Total: $${value.toFixed(2)}`;
+                } else if (id === 'descuento-incompletos') {
+                    // Puede haber dos elementos con este id, actualizar ambos
+                    document.querySelectorAll(`[id^="descuento-incompletos-${index}"]`).forEach(el => {
+                        if (el.classList.contains('fw-bold')) {
+                            el.textContent = `$${value.toFixed(2)}`;
+                        } else {
+                            el.textContent = `Descuento: $${value.toFixed(2)}`;
+                        }
+                    });
+                } else if (id === 'sueldo-base') {
+                    element.textContent = `$${value.toFixed(2)}`;
+                } else {
+                    element.textContent = `$${value.toFixed(2)}`;
+                }
+            }
+        }
+    }
 
     // Actualizar estado "Modificado"
     function actualizarEstadoModificado(input) {
@@ -652,7 +740,7 @@ require_once __DIR__ . '/../../includes/header.php';
         }, 3000);
     }
 
-    // Evento para detectar cambios en inputs
+    // Evento para cambios en días trabajados
     document.querySelectorAll('.dias-input').forEach(input => {
         input.addEventListener('change', function () {
             actualizarEstadoModificado(this);
@@ -671,7 +759,65 @@ require_once __DIR__ . '/../../includes/header.php';
                 this.value = 7;
                 showTempMessage('Máximo 7 días permitidos', 'warning');
             }
+            
+            // Calcular totales
+            const index = this.dataset.index;
+            calcularTotales(index);
         });
+    });
+
+    // Evento para cambios en actividades
+    document.querySelectorAll('.actividad-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const index = this.dataset.index;
+            calcularTotales(index);
+        });
+    });
+
+    // Evento para cambios en días incompletos
+    document.querySelectorAll('.dias-incompletos-input').forEach(input => {
+        input.addEventListener('input', function() {
+            const index = this.dataset.index;
+            const dias = parseInt(this.value) || 0;
+            const original = parseInt(this.dataset.original);
+            
+            if (dias > original) {
+                this.value = original;
+                showTempMessage('No puede exceder los días originales', 'warning');
+            }
+            
+            calcularTotales(index);
+        });
+    });
+
+    // Botón restaurar para días trabajados
+    document.querySelectorAll('.btn-restaurar').forEach(button => {
+        button.addEventListener('click', function () {
+            const index = this.dataset.index;
+            const input = document.querySelector(`.dias-input[data-index="${index}"]`);
+            const original = input.dataset.original;
+
+            if (input && original) {
+                input.value = original;
+                input.min = original;
+                actualizarEstadoModificado(input);
+                calcularTotales(index);
+            }
+        });
+    });
+
+    // Botón restaurar para incompletos
+    document.querySelectorAll('.btn-restaurar-incompletos').forEach(button => {
+        button.addEventListener('click', function() {
+            const index = this.dataset.index;
+            const input = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
+            const original = input.dataset.original;
+            
+            if (input && original) {
+                input.value = original;
+                calcularTotales(index);
+            }
+        }); 
     });
 
     // Validar formulario antes de enviar
@@ -698,59 +844,13 @@ require_once __DIR__ . '/../../includes/header.php';
         }
     });
 
-
- 
-    
-    function calcularDescuentoIncompletos(dias, precio) {
-        return dias * precio;
-    }
-
-    // Evento para inputs de días incompletos
-    document.querySelectorAll('.dias-incompletos-input').forEach(input => {
-        input.addEventListener('input', function() {
-            const index = this.dataset.index;
-            const dias = parseInt(this.value) || 0;
-            const original = parseInt(this.dataset.original);
-            const precio = parseInt(this.dataset.precio);
-            
-            // Validar que no sea mayor al original
-            if (dias > original) {
-                this.value = original;
-                showTempMessage('No puede exceder los días originales', 'warning');
-                return;
-            }
-            
-            // Calcular nuevo descuento
-            const descuento = calcularDescuentoIncompletos(dias, precio);
-            
-            // Actualizar display
-            const descuentoElement = document.getElementById(`descuento-incompletos-${index}`);
-            if (descuentoElement) {
-                descuentoElement.textContent = `$${descuento.toFixed(2)}`;
-            }
+    // Inicializar cálculos al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.dias-input').forEach(input => {
+            const index = input.dataset.index;
+            calcularTotales(index);
         });
     });
-
-    // Botón restaurar para incompletos
-    document.querySelectorAll('.btn-restaurar-incompletos').forEach(button => {
-        button.addEventListener('click', function() {
-            const index = this.dataset.index;
-            const input = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
-            const original = input.dataset.original;
-            const precio = input.dataset.precio;
-            
-            if (input && original) {
-                input.value = original;
-                const descuento = calcularDescuentoIncompletos(original, precio);
-                
-                const descuentoElement = document.getElementById(`descuento-incompletos-${index}`);
-                if (descuentoElement) {
-                    descuentoElement.textContent = `$${descuento.toFixed(2)}`;
-                }
-            }
-        }); 
-    });
-
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
