@@ -168,31 +168,54 @@ function procesarArchivo()
 
                     if ($infoEmpleado) {
                         $diasTrabajados = contarDiasTrabajados($data, $numeroFila, $id_checador);
-
                         $diasIncompletos = contarDiasIncompletos($data, $numeroFila);
                         $descuentoIncompletos = $diasIncompletos * 25; // $25 por día incompleto
-
                         
+                        // Calcular valores directamente
+                        $sueldoBase = ($infoEmpleado['sueldo_diario'] ?? 0) * $diasTrabajados;
+                        $totalActividades = $infoEmpleado['pago_actividades'] ?? 0;
+                        $totalDescuentos = $descuentoIncompletos;
+                        $totalPagar = $sueldoBase + $totalActividades - $totalDescuentos;
+                        
+                        // Almacenar toda la información requerida
                         $infoEmpleado['id_checador'] = $id_checador;
                         $infoEmpleado['fila_excel'] = $numeroFila;
+                        
+                        // DÍAS TRABAJADOS
                         $infoEmpleado['dias_trabajados'] = $diasTrabajados;
                         $infoEmpleado['dias_original'] = $diasTrabajados;
                         
+                        // ACTIVIDADES EXTRAS
+                        $infoEmpleado['total_actividades_extras'] = $totalActividades;
+                        $infoEmpleado['total_actividades_original'] = $totalActividades;
+                        
+                        // DESCUENTOS
                         $infoEmpleado['dias_incompletos'] = $diasIncompletos;
                         $infoEmpleado['dias_incompletos_original'] = $diasIncompletos;
                         $infoEmpleado['descuento_incompletos'] = $descuentoIncompletos;
                         $infoEmpleado['descuento_incompletos_original'] = $descuentoIncompletos;
+                        $infoEmpleado['total_descuentos'] = $totalDescuentos;
+                        $infoEmpleado['total_descuentos_original'] = $totalDescuentos;
+                        
+                        // SUELDO BASE
+                        $infoEmpleado['sueldo_base'] = $sueldoBase;
+                        $infoEmpleado['sueldo_base_original'] = $sueldoBase;
+                        
+                        // TOTAL A PAGAR
+                        $infoEmpleado['total_pagar'] = $totalPagar;
+                        $infoEmpleado['total_pagar_original'] = $totalPagar;
+                        
+                        // Información adicional para cálculos
+                        $infoEmpleado['actividades_seleccionadas'] = [];
                         
                         $registrosEmpleados[] = $infoEmpleado;
                         $idsEncontrados++;
-                        // error_log("✓ Empleado encontrado en BD: " . $infoEmpleado['nombre_completo']);
                     } else {
                         error_log("✗ ID $id_checador NO encontrado en BD");
                         $idsNoEnBD++;
                     }
                 }
             }
-
 
             if ($idsEncontrados > 0) {
                 $_SESSION['registros_empleados'] = $registrosEmpleados;
@@ -228,7 +251,6 @@ function procesarArchivo()
         exit();
     }
 }
-
 
 function contarDiasTrabajados($data, $filaId, $idChecador) {
     $dias = 0;
@@ -296,6 +318,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
                 $original = $registrosEmpleados[$index]['dias_original'] ?? 0;
                 if ($dias >= $original && $dias <= 7) {
                     $registrosEmpleados[$index]['dias_trabajados'] = $dias;
+                    $sueldoDiario = $registrosEmpleados[$index]['sueldo_diario'] ?? 0;
+                    $registrosEmpleados[$index]['sueldo_base'] = $sueldoDiario * $dias;
+                    $totalActividades = $registrosEmpleados[$index]['total_actividades_extras'] ?? 0;
+                    $totalDescuentos = $registrosEmpleados[$index]['total_descuentos'] ?? 0;
+                    $registrosEmpleados[$index]['total_pagar'] = 
+                        ($sueldoDiario * $dias) + $totalActividades - $totalDescuentos;
                 }
             }
         }
@@ -306,6 +334,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
         foreach ($_POST['actividades'] as $index => $actividadesEmpleado) {
             if (isset($registrosEmpleados[$index])) {
                 $registrosEmpleados[$index]['actividades_seleccionadas'] = $actividadesEmpleado;
+                $totalActividades = 0;
+                if (!empty($actividades_extras)) {
+                    foreach ($actividades_extras as $actividad) {
+                        if (in_array($actividad['id_actividad'], $actividadesEmpleado)) {
+                            $totalActividades += $actividad['pago_extra'];
+                        }
+                    }
+                }
+                
+                $registrosEmpleados[$index]['total_actividades_extras'] = $totalActividades;
+
+                 // Recalcular total a pagar
+                $sueldoBase = $registrosEmpleados[$index]['sueldo_base'] ?? 0;
+                $totalDescuentos = $registrosEmpleados[$index]['total_descuentos'] ?? 0;
+                $registrosEmpleados[$index]['total_pagar'] = 
+                    $sueldoBase + $totalActividades - $totalDescuentos;
+
             }
         }
     }
@@ -319,11 +364,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
             if ($dias >= 0 && $dias <= $original) {
                 $registrosEmpleados[$index]['dias_incompletos'] = $dias;
                 $registrosEmpleados[$index]['descuento_incompletos'] = $dias * 25;
+                $registrosEmpleados[$index]['total_descuentos'] = $dias * 25;
+
+                // Recalcular total a pagar
+                $sueldoBase = $registrosEmpleados[$index]['sueldo_base'] ?? 0;
+                $totalActividades = $registrosEmpleados[$index]['total_actividades_extras'] ?? 0;
+
+                $registrosEmpleados[$index]['total_pagar'] = 
+                        $sueldoBase + $totalActividades - ($dias * 25);
             }
         }
     }
 }
     
+    $_SESSION['registros_empleados'] = $registrosEmpleados; 
     $_SESSION['update_message'] = "Cambios guardados correctamente.";
 }
 
@@ -508,14 +562,16 @@ require_once __DIR__ . '/../../includes/header.php';
                                                 <p class="text-muted mb-0" style="font-size: 12px;">No hay actividades extras disponibles</p>
                                             <?php endif; ?>
                                         </div>
+                                        
+                                        <!-- REEMPLAZA ESTA PARTE: -->
                                         <!-- Total Actividades -->
                                         <div class="mt-2 text-center">
                                             <small class="fw-bold text-success" id="total-actividades-<?php echo $index; ?>">
-                                                Total: $<?php echo number_format($totalActividades, 2); ?>
+                                                Total: $<?php echo number_format($empleado['total_actividades_extras'] ?? 0, 2); ?>
                                             </small>
                                         </div>
                                     </td>
-                                    
+
                                     <!-- Descuentos-->
                                     <td>
                                         <div class="input-group input-group-sm" style="width: 150px;">
@@ -536,7 +592,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                         </div>
                                         <!-- Total Descuentos -->
                                         <div class="mt-2 text-center">
-                                            <small class="fw-bold text-danger" id="descuento-incompletos-<?php echo $index; ?>">
+                                            <small class="fw-bold text-danger" id="total-descuentos-<?php echo $index; ?>">
                                                 Descuento: $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
                                             </small>
                                             <br>
@@ -546,23 +602,17 @@ require_once __DIR__ . '/../../includes/header.php';
                                     
                                     <!-- Sueldo Base -->
                                     <td class="fw-bold text-primary" id="sueldo-base-<?php echo $index; ?>">
-                                        $<?php 
-                                            $sueldoBase = ($empleado['sueldo_diario'] ?? 0) * ($empleado['dias_trabajados'] ?? 0);
-                                            echo number_format($sueldoBase, 2); 
-                                        ?>
-                                    </td>
+                                        $<?php echo number_format($empleado['sueldo_base'] ?? 0, 2); ?>
+                                    </td>   
                                     
                                     <!-- Total Descuento -->
-                                    <td class="fw-bold text-danger" id="descuento-incompletos-<?php echo $index; ?>">
-                                        $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
+                                    <td class="fw-bold text-danger" id="total-descuentos-<?php echo $index; ?>">
+                                        $<?php echo number_format($empleado['total_descuentos'] ?? 0, 2); ?>
                                     </td>
                                     
                                     <!-- Total a Pagar -->
                                     <td class="fw-bold" style="background-color: #e8f5e8;" id="total-pagar-<?php echo $index; ?>">
-                                        $<?php 
-                                            $totalPagar = $sueldoBase + $totalActividades - ($empleado['descuento_incompletos'] ?? 0);
-                                            echo number_format($totalPagar, 2); 
-                                        ?>
+                                        $<?php echo number_format($empleado['total_pagar'] ?? 0, 2); ?>
                                     </td>
                                 </tr>
                                 
@@ -653,7 +703,7 @@ require_once __DIR__ . '/../../includes/header.php';
         const diasIncompletos = parseInt(incompletosInput?.value) || 0;
         const precioIncompleto = parseInt(incompletosInput?.dataset.precio) || 25;
         
-        // Calcular sueldo base
+        // Calcular sueldo base 
         const sueldoBase = sueldoDiario * diasTrabajados;
         
         // Calcular total actividades
@@ -663,40 +713,30 @@ require_once __DIR__ . '/../../includes/header.php';
         });
         
         // Calcular descuento por incompletos
-        const descuentoIncompletos = diasIncompletos * precioIncompleto;
+        const totalDescuentos = diasIncompletos * precioIncompleto;
         
         // Calcular total a pagar
-        const totalPagar = sueldoBase + totalActividades - descuentoIncompletos;
+        const totalPagar = sueldoBase + totalActividades - totalDescuentos;
         
-        // Actualizar displays - Asegurarte de que todos los elementos existen
-        const elements = {
-            'sueldo-base': sueldoBase,
-            'total-actividades': totalActividades,
-            'descuento-incompletos': descuentoIncompletos,
-            'total-pagar': totalPagar
-        };
+        // Actualizar displays
+        document.getElementById(`sueldo-base-${index}`).textContent = `$${sueldoBase.toFixed(2)}`;
+        document.getElementById(`total-actividades-${index}`).textContent = `Total: $${totalActividades.toFixed(2)}`;
         
-        for (const [id, value] of Object.entries(elements)) {
-            const element = document.getElementById(`${id}-${index}`);
-            if (element) {
-                if (id === 'total-actividades') {
-                    element.textContent = `Total: $${value.toFixed(2)}`;
-                } else if (id === 'descuento-incompletos') {
-                    // Puede haber dos elementos con este id, actualizar ambos
-                    document.querySelectorAll(`[id^="descuento-incompletos-${index}"]`).forEach(el => {
-                        if (el.classList.contains('fw-bold')) {
-                            el.textContent = `$${value.toFixed(2)}`;
-                        } else {
-                            el.textContent = `Descuento: $${value.toFixed(2)}`;
-                        }
-                    });
-                } else if (id === 'sueldo-base') {
-                    element.textContent = `$${value.toFixed(2)}`;
-                } else {
-                    element.textContent = `$${value.toFixed(2)}`;
-                }
+        // Actualizar todos los elementos de descuento
+        document.querySelectorAll(`[id^="descuento-incompletos-${index}"]`).forEach(el => {
+            if (el.classList.contains('fw-bold')) {
+                el.textContent = `$${totalDescuentos.toFixed(2)}`;
             }
+        });
+        
+        // Actualizar total descuentos
+        const totalDescuentosElement = document.getElementById(`total-descuentos-${index}`);
+        if (totalDescuentosElement) {
+            totalDescuentosElement.textContent = `$${totalDescuentos.toFixed(2)}`;
         }
+        
+        // Actualizar total a pagar
+        document.getElementById(`total-pagar-${index}`).textContent = `$${totalPagar.toFixed(2)}`;
     }
 
     // Actualizar estado "Modificado"
