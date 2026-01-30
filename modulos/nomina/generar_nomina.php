@@ -402,7 +402,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <span class="badge bg-primary"><?php echo count($registrosEmpleados); ?></span>
                 </h3>
             <form method="POST" id="formDiasTrabajados"  class="form-nomina">
-                <div class="table-container">
+                <div class="table-responsive-nomina nomina-fit">
                     <table class="table-clientes">
                         <thead>
                             <tr>
