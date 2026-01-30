@@ -410,7 +410,6 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>ID Checador</th>
                                 <th>Nombre Completo</th>
                                 <th>Puesto</th>
-                                <th>Nivel Jerárquico</th>
                                 <th>Sueldo Diario</th>
                                 <th>Días Trabajados</th>
                                 <th>Actividades Extras</th>
@@ -434,13 +433,15 @@ require_once __DIR__ . '/../../includes/header.php';
                                             <?php echo htmlspecialchars($empleado['id_checador'] ?? 'N/A'); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($empleado['nombre_completo'] ?? 'No encontrado'); ?></td>
-                                    <td><?php echo htmlspecialchars($empleado['puesto'] ?? 'N/A'); ?></td>
                                     <td>
-                                        <span class="badge bg-info">
-                                            <?php echo htmlspecialchars($empleado['nivel_jerarquico'] ?? 'N/A'); ?>
-                                        </span>
+                                        <?php echo htmlspecialchars($empleado['nombre_completo'] ?? 'No encontrado'); ?>
+                                        <div class="mt-2 text-center">
+                                            <small class="badge bg-info">
+                                                <?php echo htmlspecialchars($empleado['nivel_jerarquico'] ?? 'N/A'); ?>
+                                            </small>
+                                        </div>
                                     </td>
+                                    <td><?php echo htmlspecialchars($empleado['puesto'] ?? 'N/A'); ?></td>
                                     <td class="fw-bold text-primary">
                                         $<?php echo number_format($empleado['sueldo_diario'] ?? 0, 2); ?>
                                     </td>
