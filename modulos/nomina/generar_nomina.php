@@ -585,7 +585,9 @@ require_once __DIR__ . '/../../includes/header.php';
 
                                         <!-- Total Actividades -->
                                         <div class="mt-2 text-center">
-                                            <small class="fw-bold text-success" id="total-actividades-<?php echo $index; ?>">
+                                            <small class="fw-bold text-success"
+                                                id="total-actividades-<?php echo $index; ?>"
+                                                data-value="<?php echo $empleado['total_actividades_extras'] ?? 0; ?>">
                                                 Total: $<?php echo number_format($empleado['total_actividades_extras'] ?? 0, 2); ?>
                                             </small>
                                         </div>
@@ -620,17 +622,24 @@ require_once __DIR__ . '/../../includes/header.php';
                                     </td>
                                     
                                     <!-- Sueldo Base -->
-                                    <td class="fw-bold text-primary" id="sueldo-base-<?php echo $index; ?>">
+                                    <td class="fw-bold text-primary"
+                                        id="sueldo-base-<?php echo $index; ?>"
+                                        data-value="<?php echo $empleado['sueldo_base'] ?? 0; ?>">
                                         $<?php echo number_format($empleado['sueldo_base'] ?? 0, 2); ?>
                                     </td>   
                                     
                                     <!-- Total Descuento -->
-                                    <td class="fw-bold text-danger" id="total-descuentos-<?php echo $index; ?>">
+                                    <td class="fw-bold text-danger"
+                                        id="total-descuentos-<?php echo $index; ?>"
+                                        data-value="<?php echo $empleado['total_descuentos'] ?? 0; ?>">
                                         $<?php echo number_format($empleado['total_descuentos'] ?? 0, 2); ?>
                                     </td>
                                     
                                     <!-- Total a Pagar -->
-                                    <td class="fw-bold" style="background-color: #e8f5e8;" id="total-pagar-<?php echo $index; ?>">
+                                    <td class="fw-bold"
+                                        style="background-color: #e8f5e8;"
+                                        id="total-pagar-<?php echo $index; ?>"
+                                        data-value="<?php echo $empleado['total_pagar'] ?? 0; ?>">
                                         $<?php echo number_format($empleado['total_pagar'] ?? 0, 2); ?>
                                     </td>
                                 </tr>
@@ -773,11 +782,14 @@ require_once __DIR__ . '/../../includes/header.php';
             const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
             if (sueldoBaseElement) {
                 sueldoBaseElement.textContent = `$${sueldoBase.toFixed(2)}`;
+                sueldoBaseElement.dataset.value = sueldoBase;
+
             }
             
             const totalActividadesElement = document.getElementById(`total-actividades-${index}`);
             if (totalActividadesElement) {
                 totalActividadesElement.textContent = `Total: $${totalActividades.toFixed(2)}`;
+                totalActividadesElement.dataset.value = totalActividades;
             }
             
             // Actualizar descuento incompletos
@@ -790,12 +802,14 @@ require_once __DIR__ . '/../../includes/header.php';
             const totalDescuentosElement = document.getElementById(`total-descuentos-${index}`);
             if (totalDescuentosElement) {
                 totalDescuentosElement.textContent = `$${totalDescuentos.toFixed(2)}`;
+                totalDescuentosElement.dataset.value = totalDescuentos;
             }
             
             // Actualizar total a pagar
             const totalPagarElement = document.getElementById(`total-pagar-${index}`);
             if (totalPagarElement) {
                 totalPagarElement.textContent = `$${totalPagar.toFixed(2)}`;
+                totalPagarElement.dataset.value = totalPagar;
             }
             
             // Solo actualizar totales generales si no se está saltando
@@ -881,67 +895,32 @@ require_once __DIR__ . '/../../includes/header.php';
 
     // Función para actualizar TOTALES GENERALES
     function actualizarTotalesGenerales() {
-        if (isCalculating) return;
-        
         let totalDias = 0;
         let totalActividades = 0;
         let totalDescuentos = 0;
         let totalSueldoBase = 0;
         let totalPagar = 0;
-        
-        // Obtener todos los índices de empleados
-        const diasInputs = document.querySelectorAll('.dias-input');
-        const totalEmpleados = diasInputs.length;
-        
-        // Recorrer todos los empleados por índice
-        for (let index = 0; index < totalEmpleados; index++) {
-            // Obtener días trabajados
-            const diasInput = document.querySelector(`.dias-input[data-index="${index}"]`);
-            if (diasInput) {
-                totalDias += parseInt(diasInput.value) || 0;
-            }
-            
-            // Obtener sueldo base (ya calculado en el elemento)
-            const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
-            if (sueldoBaseElement) {
-                totalSueldoBase += obtenerValorMoneda(sueldoBaseElement);
-            }
-            
-            // Obtener total actividades extras
-            const totalActividadesElement = document.getElementById(`total-actividades-${index}`);
-            if (totalActividadesElement) {
-                // Extraer el valor numérico del texto "Total: $XXX.XX"
-                totalActividades += obtenerValorMoneda(totalActividadesElement);
-            }
-            
-            // Obtener total descuentos
-            const totalDescuentosElement = document.getElementById(`total-descuentos-${index}`);
-            if (totalDescuentosElement) {
-                totalDescuentos += obtenerValorMoneda(totalDescuentosElement);
-            }
-            
-            // Obtener total a pagar
-            const totalPagarElement = document.getElementById(`total-pagar-${index}`);
-            if (totalPagarElement) {
-                totalPagar += obtenerValorMoneda(totalPagarElement);
-            }
-        }
-        
-        // Actualizar elementos de totales generales
-        const totalDiasElement = document.getElementById('total-general-dias');
-        const totalActividadesElement = document.getElementById('total-general-actividades');
-        const totalDescuentosElement = document.getElementById('total-general-descuentos');
-        const totalSueldoBaseElement = document.getElementById('total-general-sueldo-base');
-        const totalDescuentos2Element = document.getElementById('total-general-descuentos-2');
-        const totalPagarElement = document.getElementById('total-general-total-pagar');
-        
-        if (totalDiasElement) totalDiasElement.textContent = `${totalDias} días`;
-        if (totalActividadesElement) totalActividadesElement.textContent = `$${totalActividades.toFixed(2)}`;
-        if (totalDescuentosElement) totalDescuentosElement.textContent = `$${totalDescuentos.toFixed(2)}`;
-        if (totalSueldoBaseElement) totalSueldoBaseElement.textContent = `$${totalSueldoBase.toFixed(2)}`;
-        if (totalDescuentos2Element) totalDescuentos2Element.textContent = `$${totalDescuentos.toFixed(2)}`;
-        if (totalPagarElement) totalPagarElement.textContent = `$${totalPagar.toFixed(2)}`;
+
+        document.querySelectorAll('.dias-input').forEach(input => {
+            const index = input.dataset.index;
+
+            totalDias += parseInt(input.value) || 0;
+
+            totalSueldoBase += parseFloat(document.getElementById(`sueldo-base-${index}`)?.dataset.value || 0);
+            totalActividades += parseFloat(document.getElementById(`total-actividades-${index}`)?.dataset.value || 0);
+            totalDescuentos += parseFloat(document.getElementById(`total-descuentos-${index}`)?.dataset.value || 0);
+            totalPagar += parseFloat(document.getElementById(`total-pagar-${index}`)?.dataset.value || 0);
+        });
+
+        document.getElementById('total-general-dias').textContent = `${totalDias} días`;
+        document.getElementById('total-general-actividades').textContent = `$${totalActividades.toFixed(2)}`;
+        document.getElementById('total-general-descuentos').textContent = `$${totalDescuentos.toFixed(2)}`;
+        document.getElementById('total-general-sueldo-base').textContent = `$${totalSueldoBase.toFixed(2)}`;
+        document.getElementById('total-general-descuentos-2').textContent = `$${totalDescuentos.toFixed(2)}`;
+        document.getElementById('total-general-total-pagar').textContent = `$${totalPagar.toFixed(2)}`;
     }
+
+
 
     // Evento para cambios en días trabajados
     document.querySelectorAll('.dias-input').forEach(input => {
