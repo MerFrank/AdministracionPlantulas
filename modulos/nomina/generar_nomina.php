@@ -508,7 +508,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     Empleados Encontrados
                     <span class="badge bg-primary"><?php echo count($registrosEmpleados); ?></span>
                 </h3>
-            <form method="POST" id="formDiasTrabajados"  class="form-nomina">
+            <form method="POST" action="guardar_nomina.php" id="formGuardarNomina" class="form-nomina">
                 <div class="table-responsive-nomina nomina-fit">
                     <table class="table-clientes">
                         <thead>
@@ -716,47 +716,79 @@ require_once __DIR__ . '/../../includes/header.php';
                         </tbody>
                     </table>
                 </div>
-            </form> 
-                <!-- RESUMEN -->
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <div class="alert alert-info">
-                            <h5><i class="fas fa-info-circle me-2"></i>Resumen</h5>
-                            <p class="mb-1">• Empleados procesados: <?php echo count($registrosEmpleados); ?></p>
-                            <p class="mb-1">• Pago total actividades: $<?php 
-                                $totalPago = 0;
-                                foreach ($registrosEmpleados as $emp) {
-                                    $totalPago += $emp['pago_actividades'] ?? 0;
-                                }
-                                echo number_format($totalPago, 2); 
-                            ?></p>
-                            <p class="mb-0">• Archivo: <?php 
-                                echo htmlspecialchars(
-                                    isset($_FILES['asistencia_file']['name']) ? 
-                                    $_FILES['asistencia_file']['name'] : 
-                                    'No procesado'
-                                ); 
-                            ?></p>
+
+                <!-- === Cuenta Bancaria === -->
+                <div class="form-group-nomina" style="background-color: #fff; padding:15px; border:1px solid #ddd; border-radius:5px; margin-top:20px;">
+                    <label style="font-weight:bold;">Cuenta bancaria desde donde se pagará la nómina:</label>
+
+                    <select name="id_cuenta" class="form-control" required style="margin-top:10px;">
+                        <option value="">-- Selecciona una cuenta --</option>
+                        <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                            <option value="<?= $cuenta['id_cuenta'] ?>">
+                                <?= $cuenta['banco'] ?> - <?= $cuenta['numero'] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <!-- === Guardar Nomina === -->
+
+                <div class="form-group-nomina" style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-top:20px;">
+                    <h4 style="margin-top: 0; color: #333;">Resumen de Nómina a Guardar:</h4>
+
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;">
+                        <div style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 5px; border: 2px solid #2e7d32;">
+                            <div style="font-size: 24px; font-weight: bold; color: #2e7d32;">
+                                <?php echo count($registrosEmpleados); ?>
+                            </div>
+                            <div style="font-size: 14px; color: #555;">Empleados</div>
+                        </div>
+
+                        <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 5px; border: 2px solid #1565c0;">
+                            <div style="font-size: 24px; font-weight: bold; color: #1565c0;">
+                                $<span id="resumen-sueldos"><?php echo number_format($totalGeneralSueldoBase, 2); ?></span>
+                            </div>
+                            <div style="font-size: 14px; color: #555;">Sueldos Base</div>
+                        </div>
+
+                        <div style="text-align: center; padding: 15px; background: #f3e5f5; border-radius: 5px; border: 2px solid #7b1fa2;">
+                            <div style="font-size: 24px; font-weight: bold; color: #7b1fa2;">
+                                $<span id="resumen-actividades"><?php echo number_format($totalGeneralActividades, 2); ?></span>
+                            </div>
+                            <div style="font-size: 14px; color: #555;">Actividades</div>
+                        </div>
+
+                        <div style="text-align: center; padding: 15px; background: #ffebee; border-radius: 5px; border: 2px solid #c62828;">
+                            <div style="font-size: 24px; font-weight: bold; color: #c62828;">
+                                $<span id="resumen-deducciones"><?php echo number_format($totalGeneralDescuentos, 2); ?></span>
+                            </div>
+                            <div style="font-size: 14px; color: #555;">Deducciones</div>
+                        </div>
+
+                        <div style="text-align: center; padding: 20px; background: #e8f5e9; border-radius: 5px; border: 3px solid #1b5e20; grid-column: span 4;">
+                            <div style="font-size: 32px; font-weight: bold; color: #1b5e20;">
+                                $<span id="resumen-total"><?php echo number_format($totalGeneralTotalPagar, 2); ?></span>
+                            </div>
+                            <div style="font-size: 18px; color: #555; margin-top: 5px;">TOTAL A PAGAR</div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="alert alert-success">
-                            <h5><i class="fas fa-check-circle me-2"></i>Procesado exitosamente</h5>
-                            <p class="mb-0">
-                                <strong><?php echo count($registrosEmpleados); ?></strong> empleados listos para nómina.
-                                <?php if (isset($_SESSION['warning_message'])): ?>
-                                    <br><small class="text-warning">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        <?php 
-                                            echo $_SESSION['warning_message'];
-                                            unset($_SESSION['warning_message']);
-                                        ?>
-                                    </small>
-                                <?php endif; ?>
-                            </p>
-                        </div>
+
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+                        <i class="fas fa-calendar"></i> 
+                        Período: <?= date('d/m/Y', strtotime('monday this week')) ?> al <?= date('d/m/Y', strtotime('friday this week')) ?>
                     </div>
                 </div>
+
+                <!-- Contenedor para campos ocultos -->
+                <div id="campos-ocultos-container"></div>
+
+                <!-- Botón guardar -->
+                <div class="form-group-nomina" style="text-align: center; margin-top: 20px;">
+                    <button type="submit" class="btn-submit-nomina" style="background-color: #28a745;">
+                        <i class="fas fa-save"></i> Guardar Nómina en Base de Datos
+                    </button>
+                </div>
+
+            </form> 
             </div>
         <?php elseif (isset($_POST['procesar'])): ?>
             <div class="alert alert-warning mt-4">
@@ -955,6 +987,7 @@ require_once __DIR__ . '/../../includes/header.php';
         sueldoEl.textContent = `$${totalSueldoBase.toFixed(2)}`;
         desc2El.textContent = `$${totalDescuentos.toFixed(2)}`;
         pagarEl.textContent = `$${totalPagar.toFixed(2)}`;
+        actualizarResumenGuardar();
     }
 
 
@@ -1074,6 +1107,56 @@ require_once __DIR__ . '/../../includes/header.php';
         
         // Luego calcular totales generales
         actualizarTotalesGenerales();
+    });
+
+    document.getElementById('formGuardarNomina').addEventListener('submit', function (e) {
+
+        const container = document.getElementById('campos-ocultos-container');
+        container.innerHTML = '';
+
+        let totalSueldos = 0;
+        let totalActividades = 0;
+        let totalDeducciones = 0;
+        let totalPagar = 0;
+        let empleadosPagados = 0;
+
+        document.querySelectorAll('.dias-input').forEach(input => {
+            const index = input.dataset.index;
+
+            const idEmpleado = document.getElementById(`id-empleado-${index}`).value;
+            const dias = input.value;
+
+            const sueldoBase = parseFloat(document.getElementById(`sueldo-base-${index}`).dataset.value || 0);
+            const actividades = parseFloat(document.getElementById(`total-actividades-${index}`).dataset.value || 0);
+            const descuentos = parseFloat(document.getElementById(`total-descuentos-${index}`).dataset.value || 0);
+            const pagar = parseFloat(document.getElementById(`total-pagar-${index}`).dataset.value || 0);
+
+            totalSueldos += sueldoBase;
+            totalActividades += actividades;
+            totalDeducciones += descuentos;
+            totalPagar += pagar;
+            empleadosPagados++;
+
+            container.innerHTML += `
+                <input type="hidden" name="empleados[${index}][id_empleado]" value="${idEmpleado}">
+                <input type="hidden" name="empleados[${index}][dias]" value="${dias}">
+                <input type="hidden" name="empleados[${index}][sueldo_base]" value="${sueldoBase}">
+                <input type="hidden" name="empleados[${index}][actividades]" value="${actividades}">
+                <input type="hidden" name="empleados[${index}][descuentos]" value="${descuentos}">
+                <input type="hidden" name="empleados[${index}][total_pagar]" value="${pagar}">
+            `;
+        });
+
+        // Totales generales
+        container.innerHTML += `
+            <input type="hidden" name="total_sueldos" value="${totalSueldos}">
+            <input type="hidden" name="total_actividades" value="${totalActividades}">
+            <input type="hidden" name="total_deducciones" value="${totalDeducciones}">
+            <input type="hidden" name="total_pagar" value="${totalPagar}">
+            <input type="hidden" name="empleados_pagados" value="${empleadosPagados}">
+            <input type="hidden" name="fecha_inicio" value="<?= date('Y-m-d', strtotime('monday this week')) ?>">
+            <input type="hidden" name="fecha_fin" value="<?= date('Y-m-d', strtotime('friday this week')) ?>">
+        `;
     });
 </script>
 
