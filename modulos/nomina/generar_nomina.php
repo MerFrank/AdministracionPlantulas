@@ -395,6 +395,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
         }
     }
 }
+
+// Sincronizar totales reales calculados en JS
+if (isset($_POST['hidden_sueldo_base'])) {
+    foreach ($_POST['hidden_sueldo_base'] as $index => $valor) {
+        if (isset($registrosEmpleados[$index])) {
+            $registrosEmpleados[$index]['sueldo_base'] = floatval($valor);
+        }
+    }
+}
+
+if (isset($_POST['hidden_total_actividades'])) {
+    foreach ($_POST['hidden_total_actividades'] as $index => $valor) {
+        if (isset($registrosEmpleados[$index])) {
+            $registrosEmpleados[$index]['total_actividades_extras'] = floatval($valor);
+        }
+    }
+}
+
+if (isset($_POST['hidden_total_descuentos'])) {
+    foreach ($_POST['hidden_total_descuentos'] as $index => $valor) {
+        if (isset($registrosEmpleados[$index])) {
+            $registrosEmpleados[$index]['total_descuentos'] = floatval($valor);
+        }
+    }
+}
+
+if (isset($_POST['hidden_total_pagar'])) {
+    foreach ($_POST['hidden_total_pagar'] as $index => $valor) {
+        if (isset($registrosEmpleados[$index])) {
+            $registrosEmpleados[$index]['total_pagar'] = floatval($valor);
+        }
+    }
+}
+
     
     $_SESSION['registros_empleados'] = $registrosEmpleados; 
     $_SESSION['update_message'] = "Cambios guardados correctamente.";
@@ -642,6 +676,11 @@ require_once __DIR__ . '/../../includes/header.php';
                                         data-value="<?php echo $empleado['total_pagar'] ?? 0; ?>">
                                         $<?php echo number_format($empleado['total_pagar'] ?? 0, 2); ?>
                                     </td>
+
+                                    <input type="hidden" name="hidden_sueldo_base[<?php echo $index; ?>]" id="hidden-sueldo-base-<?php echo $index; ?>" value="<?php echo $empleado['sueldo_base']; ?>">
+                                    <input type="hidden" name="hidden_total_actividades[<?php echo $index; ?>]" id="hidden-total-actividades-<?php echo $index; ?>" value="<?php echo $empleado['total_actividades_extras']; ?>">
+                                    <input type="hidden" name="hidden_total_descuentos[<?php echo $index; ?>]" id="hidden-total-descuentos-<?php echo $index; ?>" value="<?php echo $empleado['total_descuentos']; ?>">
+                                    <input type="hidden" name="hidden_total_pagar[<?php echo $index; ?>]" id="hidden-total-pagar-<?php echo $index; ?>" value="<?php echo $empleado['total_pagar']; ?>">
                                 </tr>
                                 
                             <?php endforeach; ?>
@@ -749,85 +788,70 @@ require_once __DIR__ . '/../../includes/header.php';
     // Función para calcular totales INDIVIDUALES de cada empleado
     function calcularTotales(index, skipGeneralUpdate = false) {
         if (isCalculating) return null;
-        
+
+        isCalculating = true;
+
         try {
-            isCalculating = true;
-            
-            // Obtener elementos
             const diasInput = document.querySelector(`.dias-input[data-index="${index}"]`);
             const incompletosInput = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
-            
-            // Obtener valores
+
             const sueldoDiario = parseFloat(diasInput?.dataset.sueldoDiario) || 0;
             const diasTrabajados = parseInt(diasInput?.value) || 0;
             const diasIncompletos = parseInt(incompletosInput?.value) || 0;
             const precioIncompleto = parseFloat(incompletosInput?.dataset.precio) || 25;
-            
-            // Calcular sueldo base 
+
             const sueldoBase = sueldoDiario * diasTrabajados;
-            
-            // Calcular total actividades (de checkboxes)
+
             let totalActividades = 0;
             document.querySelectorAll(`.actividad-checkbox[data-index="${index}"]:checked`).forEach(checkbox => {
                 totalActividades += parseFloat(checkbox.dataset.valor) || 0;
             });
-            
-            // Calcular descuento por incompletos
+
             const totalDescuentos = diasIncompletos * precioIncompleto;
-            
-            // Calcular total a pagar
             const totalPagar = sueldoBase + totalActividades - totalDescuentos;
-            
-            // Actualizar displays INDIVIDUALES
+
             const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
             if (sueldoBaseElement) {
                 sueldoBaseElement.textContent = `$${sueldoBase.toFixed(2)}`;
                 sueldoBaseElement.dataset.value = sueldoBase;
-
+                document.getElementById(`hidden-sueldo-base-${index}`).value = sueldoBase;
             }
-            
+
             const totalActividadesElement = document.getElementById(`total-actividades-${index}`);
             if (totalActividadesElement) {
                 totalActividadesElement.textContent = `Total: $${totalActividades.toFixed(2)}`;
                 totalActividadesElement.dataset.value = totalActividades;
+                document.getElementById(`hidden-total-actividades-${index}`).value = totalActividades;
             }
-            
-            // Actualizar descuento incompletos
-            const descuentoSmallElement = document.getElementById(`descuento-incompletos-small-${index}`);
-            if (descuentoSmallElement) {
-                descuentoSmallElement.textContent = `Descuento: $${totalDescuentos.toFixed(2)}`;
-            }
-            
-            // Actualizar total descuentos
+
             const totalDescuentosElement = document.getElementById(`total-descuentos-${index}`);
             if (totalDescuentosElement) {
                 totalDescuentosElement.textContent = `$${totalDescuentos.toFixed(2)}`;
                 totalDescuentosElement.dataset.value = totalDescuentos;
+                document.getElementById(`hidden-total-descuentos-${index}`).value = totalDescuentos;
             }
-            
-            // Actualizar total a pagar
+
             const totalPagarElement = document.getElementById(`total-pagar-${index}`);
             if (totalPagarElement) {
                 totalPagarElement.textContent = `$${totalPagar.toFixed(2)}`;
                 totalPagarElement.dataset.value = totalPagar;
+                document.getElementById(`hidden-total-pagar-${index}`).value = totalPagar;
             }
-            
-            // Solo actualizar totales generales si no se está saltando
+
             if (!skipGeneralUpdate) {
                 actualizarTotalesGenerales();
             }
-            
-            return {
-                diasTrabajados,
-                sueldoBase,
-                totalActividades,
-                totalDescuentos,
-                totalPagar
-            };
+
+            return { diasTrabajados, sueldoBase, totalActividades, totalDescuentos, totalPagar };
+
+        } catch (e) {
+            console.error(e);
+            return null;
         } finally {
             isCalculating = false;
         }
     }
+
 
     // Actualizar estado "Modificado"
     function actualizarEstadoModificado(input) {
@@ -895,6 +919,19 @@ require_once __DIR__ . '/../../includes/header.php';
 
     // Función para actualizar TOTALES GENERALES
     function actualizarTotalesGenerales() {
+
+        const diasEl = document.getElementById('total-general-dias');
+        const actEl = document.getElementById('total-general-actividades');
+        const descEl = document.getElementById('total-general-descuentos');
+        const sueldoEl = document.getElementById('total-general-sueldo-base');
+        const desc2El = document.getElementById('total-general-descuentos-2');
+        const pagarEl = document.getElementById('total-general-total-pagar');
+
+        // 🚨 Si la fila no existe, salir sin romper nada
+        if (!diasEl || !actEl || !descEl || !sueldoEl || !desc2El || !pagarEl) {
+            return;
+        }
+
         let totalDias = 0;
         let totalActividades = 0;
         let totalDescuentos = 0;
@@ -912,14 +949,13 @@ require_once __DIR__ . '/../../includes/header.php';
             totalPagar += parseFloat(document.getElementById(`total-pagar-${index}`)?.dataset.value || 0);
         });
 
-        document.getElementById('total-general-dias').textContent = `${totalDias} días`;
-        document.getElementById('total-general-actividades').textContent = `$${totalActividades.toFixed(2)}`;
-        document.getElementById('total-general-descuentos').textContent = `$${totalDescuentos.toFixed(2)}`;
-        document.getElementById('total-general-sueldo-base').textContent = `$${totalSueldoBase.toFixed(2)}`;
-        document.getElementById('total-general-descuentos-2').textContent = `$${totalDescuentos.toFixed(2)}`;
-        document.getElementById('total-general-total-pagar').textContent = `$${totalPagar.toFixed(2)}`;
+        diasEl.textContent = `${totalDias} días`;
+        actEl.textContent = `$${totalActividades.toFixed(2)}`;
+        descEl.textContent = `$${totalDescuentos.toFixed(2)}`;
+        sueldoEl.textContent = `$${totalSueldoBase.toFixed(2)}`;
+        desc2El.textContent = `$${totalDescuentos.toFixed(2)}`;
+        pagarEl.textContent = `$${totalPagar.toFixed(2)}`;
     }
-
 
 
     // Evento para cambios en días trabajados
