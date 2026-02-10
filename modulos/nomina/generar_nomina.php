@@ -725,7 +725,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         <option value="">-- Selecciona una cuenta --</option>
                         <?php foreach ($cuentas_bancarias as $cuenta): ?>
                             <option value="<?= $cuenta['id_cuenta'] ?>">
-                                <?= $cuenta['banco'] ?> - <?= $cuenta['numero'] ?>
+                                <?= $cuenta['nombre'] ?> - <?= $cuenta['numero'] ?>
                             </option>
                         <?php endforeach; ?>
                     </select>

@@ -31,23 +31,39 @@ if ($idOperador == 0) {
 
 try {
 
-    //  VALIDACIONES REALES
-    if (
-        empty($_POST['empleados']) ||
-        !isset($_POST['total_sueldos']) ||
-        !isset($_POST['total_pagar']) ||
-        !isset($_POST['id_cuenta'])
-    ) {
-        throw new Exception("Datos incompletos recibidos desde el formulario.");
+    $camposRequeridos = [
+            'empleados',
+            'total_sueldos',
+            'total_pagar',
+            'id_cuenta',
+            'fecha_inicio',
+            'fecha_fin',
+            'total_actividades',
+            'total_deducciones',
+            'empleados_pagados'
+        ];
+        
+    $camposFaltantes = [];
+    foreach ($camposRequeridos as $campo) {
+        if (!isset($_POST[$campo]) || (empty($_POST[$campo]) && $_POST[$campo] !== '0')) {
+            $camposFaltantes[] = $campo;
+        }
+    }
+    
+    if (!empty($camposFaltantes)) {
+        throw new Exception("Datos incompletos. Campos faltantes: " . implode(', ', $camposFaltantes));
+    }
+    
+    // Validar específicamente que empleados sea un array no vacío
+    if (!is_array($_POST['empleados']) || count($_POST['empleados']) == 0) {
+        throw new Exception("La lista de empleados está vacía o no es válida.");
     }
 
     $pdo->beginTransaction();
 
     $empleados = $_POST['empleados'];
-
     $fechaInicio = $_POST['fecha_inicio'];
     $fechaFin = $_POST['fecha_fin'];
-
     $totalSueldos = $_POST['total_sueldos'];
     $totalActividades = $_POST['total_actividades'];
     $totalDeducciones = $_POST['total_deducciones'];
@@ -55,7 +71,7 @@ try {
     $empleadosPagados = $_POST['empleados_pagados'];
     $idCuenta = $_POST['id_cuenta'];
 
-    // ================= INSERT MAESTRO =================
+    // ================= INSERT nomina =================
     $sqlGeneral = "
         INSERT INTO nomina_general (
             fecha_inicio,
@@ -86,7 +102,7 @@ try {
 
     $idNominaGeneral = $pdo->lastInsertId();
 
-    // ================= INSERT DETALLE =================
+    // ================= INSERT detalles =================
     $sqlDetalle = "
         INSERT INTO nomina_detalle (
             id_nomina_general,
