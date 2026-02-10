@@ -508,288 +508,319 @@ require_once __DIR__ . '/../../includes/header.php';
                     Empleados Encontrados
                     <span class="badge bg-primary"><?php echo count($registrosEmpleados); ?></span>
                 </h3>
-            <form method="POST" action="guardar_nomina.php" id="formGuardarNomina" class="form-nomina">
-                <div class="table-responsive-nomina nomina-fit">
-                    <table class="table-clientes">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>ID Checador</th>
-                                <th>Nombre Completo</th>
-                                <th>Puesto</th>
-                                <th>Sueldo Diario</th>
-                                <th>Días Trabajados</th>
-                                <th>Actividades Extras</th>
-                                <th>Descuentos</th>
-                                <th>Sueldo Base</th>
-                                <th>Total Descuento</th>
-                                <th>Total a Pagar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($registrosEmpleados as $index => $empleado):
-                                 $diasTrabajados = $empleado['dias_trabajados'] ?? 0;
-                                 $diasOriginal = $empleado['dias_original'] ?? $diasTrabajados;
-                                 $actividadesSeleccionadas = $empleado['actividades_seleccionadas'] ?? []; 
-                                ?>
-                                
+                <form method="POST" action="guardar_nomina.php" id="formGuardarNomina" class="form-nomina">
+                    <div class="table-responsive-nomina nomina-fit">
+                        <table class="table-clientes">
+                            <thead>
                                 <tr>
-                                    <td class="fw-bold"><?php echo $index + 1; ?></td>
-                                    <td>
-                                        <span class="badge bg-dark">
-                                            <?php echo htmlspecialchars($empleado['id_checador'] ?? 'N/A'); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?php echo htmlspecialchars($empleado['nombre_completo'] ?? 'No encontrado'); ?>
-                                        <div class="mt-2 text-center">
-                                            <small class="badge bg-info">
-                                                <?php echo htmlspecialchars($empleado['nivel_jerarquico'] ?? 'N/A'); ?>
-                                            </small>
-                                        </div>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($empleado['puesto'] ?? 'N/A'); ?></td>
-                                    <td class="fw-bold text-primary">
-                                        $<?php echo number_format($empleado['sueldo_diario'] ?? 0, 2); ?>
-                                    </td>
-                                    <td>
-                                        <!-- Input de días trabajados -->
-                                        <div class="input-group input-group-sm" style="width: 150px;">
-                                            <input type="number" 
-                                                name="dias_trabajados[<?php echo $index; ?>]" 
-                                                value="<?php echo $diasTrabajados; ?>"
-                                                min="<?php echo $diasOriginal; ?>" 
-                                                max="7"
-                                                class="form-control form-control-sm text-center dias-input"
-                                                data-index="<?php echo $index; ?>"
-                                                data-original="<?php echo $diasOriginal; ?>"
-                                                data-sueldo-diario="<?php echo $empleado['sueldo_diario'] ?? 0; ?>"> 
-                                                
-                                            <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar" 
-                                                    data-index="<?php echo $index; ?>"
-                                                    title="Restaurar valor original">
-                                                <i class="fas fa-undo"></i>
-                                            </button>
-                                        </div>
-                                        <small class="text-muted d-block mt-1">
-                                            Original: <?php echo $diasOriginal; ?> día<?php echo $diasOriginal != 1 ? 's' : ''; ?>
-                                            <?php if ($diasTrabajados != $diasOriginal): ?>
-                                                <span class="text-warning ms-2">
-                                                    <i class="fas fa-pencil-alt"></i> Modificado
-                                                </span>
-                                            <?php endif; ?>
-                                        </small>
-                                    </td>
-                                    
-                                    <!-- Actividades extras -->
-                                    <td>
-                                        <div class="actividades-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; 
-                                        border-radius: 5px; padding: 10px; background: white;">
-                                            <?php if (!empty($actividades_extras)): ?>
-                                                <?php 
-                                                $totalActividades = 0;
-                                                foreach ($actividades_extras as $actividad): 
-                                                    $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadas) ? 'checked' : '';
-                                                    if ($checked) {
-                                                        $totalActividades += $actividad['pago_extra'];
-                                                    }
-                                                ?>
-                                                    <div class="actividad-item" style="margin-bottom: 8px; padding: 5px; border-radius: 3px; transition: background 0.2s ease;">
-                                                        <input type="checkbox" 
-                                                            name="actividades[<?php echo $index; ?>][<?php echo $actividad['id_actividad']; ?>]"
-                                                            value="<?php echo $actividad['id_actividad']; ?>"
-                                                            id="act_<?php echo $index; ?>_<?php echo $actividad['id_actividad']; ?>"
-                                                            data-valor="<?php echo $actividad['pago_extra']; ?>"
-                                                            data-nombre="<?php echo htmlspecialchars($actividad['nombre']); ?>"
-                                                            class="actividad-checkbox"
-                                                            data-index="<?php echo $index; ?>"
-                                                            <?php echo $checked; ?>>
-                                                        <label for="act_<?php echo $index; ?>_<?php echo $actividad['id_actividad']; ?>" 
-                                                            style="font-size: 12px; margin-bottom: 0; cursor: pointer;">
-                                                            <?php echo htmlspecialchars($actividad['nombre']); ?> - 
-                                                            $<?php echo number_format($actividad['pago_extra'], 2); ?>
-                                                        </label>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <p class="text-muted mb-0" style="font-size: 12px;">No hay actividades extras disponibles</p>
-                                            <?php endif; ?>
-                                        </div>
-                                        
-
-                                        <!-- Total Actividades -->
-                                        <div class="mt-2 text-center">
-                                            <small class="fw-bold text-success"
-                                                id="total-actividades-<?php echo $index; ?>"
-                                                data-value="<?php echo $empleado['total_actividades_extras'] ?? 0; ?>">
-                                                Total: $<?php echo number_format($empleado['total_actividades_extras'] ?? 0, 2); ?>
-                                            </small>
-                                        </div>
-                                    </td>
-
-                                    <!-- Descuentos-->
-                                    <td>
-                                        <div class="input-group input-group-sm" style="width: 150px;">
-                                            <input type="number" 
-                                                name="dias_incompletos[<?php echo $index; ?>]" 
-                                                value="<?php echo $empleado['dias_incompletos'] ?? 0; ?>"
-                                                min="0" 
-                                                max="<?php echo $empleado['dias_incompletos_original'] ?? 0; ?>"
-                                                class="form-control form-control-sm text-center dias-incompletos-input"
-                                                data-index="<?php echo $index; ?>"
-                                                data-original="<?php echo $empleado['dias_incompletos_original'] ?? 0; ?>"
-                                                data-precio="25">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar-incompletos" 
-                                                    data-index="<?php echo $index; ?>"
-                                                    title="Restaurar valor original">
-                                                <i class="fas fa-undo"></i>
-                                            </button>
-                                        </div>
-                                        <!-- Total Descuentos -->
-                                        <div class="mt-2 text-center">
-                                            <small class="fw-bold text-danger" id="descuento-incompletos-small-<?php echo $index; ?>">
-                                                Descuento: $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
-                                            </small>
-                                            <br>
-                                            <small class="text-muted">Original: <?php echo $empleado['dias_incompletos_original'] ?? 0; ?> día(s)</small>
-                                        </div>
-                                    </td>
-                                    
-                                    <!-- Sueldo Base -->
-                                    <td class="fw-bold text-primary"
-                                        id="sueldo-base-<?php echo $index; ?>"
-                                        data-value="<?php echo $empleado['sueldo_base'] ?? 0; ?>">
-                                        $<?php echo number_format($empleado['sueldo_base'] ?? 0, 2); ?>
-                                    </td>   
-                                    
-                                    <!-- Total Descuento -->
-                                    <td class="fw-bold text-danger"
-                                        id="total-descuentos-<?php echo $index; ?>"
-                                        data-value="<?php echo $empleado['total_descuentos'] ?? 0; ?>">
-                                        $<?php echo number_format($empleado['total_descuentos'] ?? 0, 2); ?>
-                                    </td>
-                                    
-                                    <!-- Total a Pagar -->
-                                    <td class="fw-bold"
-                                        style="background-color: #e8f5e8;"
-                                        id="total-pagar-<?php echo $index; ?>"
-                                        data-value="<?php echo $empleado['total_pagar'] ?? 0; ?>">
-                                        $<?php echo number_format($empleado['total_pagar'] ?? 0, 2); ?>
-                                    </td>
-
-                                    <input type="hidden" name="hidden_sueldo_base[<?php echo $index; ?>]" id="hidden-sueldo-base-<?php echo $index; ?>" value="<?php echo $empleado['sueldo_base']; ?>">
-                                    <input type="hidden" name="hidden_total_actividades[<?php echo $index; ?>]" id="hidden-total-actividades-<?php echo $index; ?>" value="<?php echo $empleado['total_actividades_extras']; ?>">
-                                    <input type="hidden" name="hidden_total_descuentos[<?php echo $index; ?>]" id="hidden-total-descuentos-<?php echo $index; ?>" value="<?php echo $empleado['total_descuentos']; ?>">
-                                    <input type="hidden" name="hidden_total_pagar[<?php echo $index; ?>]" id="hidden-total-pagar-<?php echo $index; ?>" value="<?php echo $empleado['total_pagar']; ?>">
+                                    <th>#</th>
+                                    <th>ID Checador</th>
+                                    <th>Nombre Completo</th>
+                                    <th>Puesto</th>
+                                    <th>Sueldo Diario</th>
+                                    <th>Días Trabajados</th>
+                                    <th>Actividades Extras</th>
+                                    <th>Descuentos</th>
+                                    <th>Sueldo Base</th>
+                                    <th>Total Descuento</th>
+                                    <th>Total a Pagar</th>
                                 </tr>
-                                
-                            <?php endforeach; ?>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($registrosEmpleados as $index => $empleado):
+                                    $diasTrabajados = $empleado['dias_trabajados'] ?? 0;
+                                    $diasOriginal = $empleado['dias_original'] ?? $diasTrabajados;
+                                    $actividadesSeleccionadas = $empleado['actividades_seleccionadas'] ?? []; 
+                                    ?>
+                                    
+                                    <tr>
+                                        <td class="fw-bold"><?php echo $index + 1; ?></td>
+                                        <td>
+                                            <span class="badge bg-dark">
+                                                <?php echo htmlspecialchars($empleado['id_checador'] ?? 'N/A'); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php echo htmlspecialchars($empleado['nombre_completo'] ?? 'No encontrado'); ?>
+                                            <div class="mt-2 text-center">
+                                                <small class="badge bg-info">
+                                                    <?php echo htmlspecialchars($empleado['nivel_jerarquico'] ?? 'N/A'); ?>
+                                                </small>
+                                            </div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($empleado['puesto'] ?? 'N/A'); ?></td>
+                                        <td class="fw-bold text-primary">
+                                            $<?php echo number_format($empleado['sueldo_diario'] ?? 0, 2); ?>
+                                        </td>
+                                        <td>
+                                            <!-- Input de días trabajados -->
+                                            <div class="input-group input-group-sm" style="width: 150px;">
+                                                <input type="number" 
+                                                    name="dias_trabajados[<?php echo $index; ?>]" 
+                                                    value="<?php echo $diasTrabajados; ?>"
+                                                    min="<?php echo $diasOriginal; ?>" 
+                                                    max="7"
+                                                    class="form-control form-control-sm text-center dias-input"
+                                                    data-index="<?php echo $index; ?>"
+                                                    data-original="<?php echo $diasOriginal; ?>"
+                                                    data-sueldo-diario="<?php echo $empleado['sueldo_diario'] ?? 0; ?>"> 
+                                                    
+                                                <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar" 
+                                                        data-index="<?php echo $index; ?>"
+                                                        title="Restaurar valor original">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted d-block mt-1">
+                                                Original: <?php echo $diasOriginal; ?> día<?php echo $diasOriginal != 1 ? 's' : ''; ?>
+                                                <?php if ($diasTrabajados != $diasOriginal): ?>
+                                                    <span class="text-warning ms-2">
+                                                        <i class="fas fa-pencil-alt"></i> Modificado
+                                                    </span>
+                                                <?php endif; ?>
+                                            </small>
+                                        </td>
+                                        
+                                        <!-- Actividades extras -->
+                                        <td>
+                                            <div class="actividades-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; 
+                                            border-radius: 5px; padding: 10px; background: white;">
+                                                <?php if (!empty($actividades_extras)): ?>
+                                                    <?php 
+                                                    $totalActividades = 0;
+                                                    foreach ($actividades_extras as $actividad): 
+                                                        $checked = in_array($actividad['id_actividad'], $actividadesSeleccionadas) ? 'checked' : '';
+                                                        if ($checked) {
+                                                            $totalActividades += $actividad['pago_extra'];
+                                                        }
+                                                    ?>
+                                                        <div class="actividad-item" style="margin-bottom: 8px; padding: 5px; border-radius: 3px; transition: background 0.2s ease;">
+                                                            <input type="checkbox" 
+                                                                name="actividades[<?php echo $index; ?>][<?php echo $actividad['id_actividad']; ?>]"
+                                                                value="<?php echo $actividad['id_actividad']; ?>"
+                                                                id="act_<?php echo $index; ?>_<?php echo $actividad['id_actividad']; ?>"
+                                                                data-valor="<?php echo $actividad['pago_extra']; ?>"
+                                                                data-nombre="<?php echo htmlspecialchars($actividad['nombre']); ?>"
+                                                                class="actividad-checkbox"
+                                                                data-index="<?php echo $index; ?>"
+                                                                <?php echo $checked; ?>>
+                                                            <label for="act_<?php echo $index; ?>_<?php echo $actividad['id_actividad']; ?>" 
+                                                                style="font-size: 12px; margin-bottom: 0; cursor: pointer;">
+                                                                <?php echo htmlspecialchars($actividad['nombre']); ?> - 
+                                                                $<?php echo number_format($actividad['pago_extra'], 2); ?>
+                                                            </label>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <p class="text-muted mb-0" style="font-size: 12px;">No hay actividades extras disponibles</p>
+                                                <?php endif; ?>
+                                            </div>
+                                            
 
-                            <?php
-                            // Calcular totales generales
-                            $totalGeneralDiasTrabajados = 0;
-                            $totalGeneralActividades = 0;
-                            $totalGeneralDescuentos = 0;
-                            $totalGeneralSueldoBase = 0;
-                            $totalGeneralTotalPagar = 0;
+                                            <!-- Total Actividades -->
+                                            <div class="mt-2 text-center">
+                                                <small class="fw-bold text-success"
+                                                    id="total-actividades-<?php echo $index; ?>"
+                                                    data-value="<?php echo $empleado['total_actividades_extras'] ?? 0; ?>">
+                                                    Total: $<?php echo number_format($empleado['total_actividades_extras'] ?? 0, 2); ?>
+                                                </small>
+                                            </div>
+                                        </td>
 
-                            foreach ($registrosEmpleados as $empleado) {
-                                $totalGeneralDiasTrabajados += $empleado['dias_trabajados'] ?? 0;
-                                $totalGeneralActividades += $empleado['total_actividades_extras'] ?? 0;
-                                $totalGeneralDescuentos += $empleado['total_descuentos'] ?? 0;
-                                $totalGeneralSueldoBase += $empleado['sueldo_base'] ?? 0;
-                                $totalGeneralTotalPagar += $empleado['total_pagar'] ?? 0;
-                            }
-                            ?>
-                            <tr class="table-secondary fw-bold" style="background-color: #f8f9fa !important;">
-                                <td colspan="5" class="text-end">TOTALES GENERALES:</td>
-                                <td class="text-primary" id="total-general-dias"><?php echo $totalGeneralDiasTrabajados; ?> días</td>
-                                <td class="text-success" id="total-general-actividades">$<?php echo number_format($totalGeneralActividades, 2); ?></td>
-                                <td class="text-danger" id="total-general-descuentos">$<?php echo number_format($totalGeneralDescuentos, 2); ?></td>
-                                <td class="text-primary" id="total-general-sueldo-base">$<?php echo number_format($totalGeneralSueldoBase, 2); ?></td>
-                                <td class="text-danger" id="total-general-descuentos-2">$<?php echo number_format($totalGeneralDescuentos, 2); ?></td>
-                                <td class="text-success" style="background-color: #d4edda !important;" id="total-general-total-pagar">
-                                    $<?php echo number_format($totalGeneralTotalPagar, 2); ?>
-                                </td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
+                                        <!-- Descuentos-->
+                                        <td>
+                                            <div class="input-group input-group-sm" style="width: 150px;">
+                                                <input type="number" 
+                                                    name="dias_incompletos[<?php echo $index; ?>]" 
+                                                    value="<?php echo $empleado['dias_incompletos'] ?? 0; ?>"
+                                                    min="0" 
+                                                    max="<?php echo $empleado['dias_incompletos_original'] ?? 0; ?>"
+                                                    class="form-control form-control-sm text-center dias-incompletos-input"
+                                                    data-index="<?php echo $index; ?>"
+                                                    data-original="<?php echo $empleado['dias_incompletos_original'] ?? 0; ?>"
+                                                    data-precio="25">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm btn-restaurar-incompletos" 
+                                                        data-index="<?php echo $index; ?>"
+                                                        title="Restaurar valor original">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                            </div>
+                                            <!-- Total Descuentos -->
+                                            <div class="mt-2 text-center">
+                                                <small class="fw-bold text-danger" id="descuento-incompletos-small-<?php echo $index; ?>">
+                                                    Descuento: $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
+                                                </small>
+                                                <br>
+                                                <small class="text-muted">Original: <?php echo $empleado['dias_incompletos_original'] ?? 0; ?> día(s)</small>
+                                            </div>
+                                        </td>
+                                        
+                                        <!-- Sueldo Base -->
+                                        <td class="fw-bold text-primary"
+                                            id="sueldo-base-<?php echo $index; ?>"
+                                            data-value="<?php echo $empleado['sueldo_base'] ?? 0; ?>">
+                                            $<?php echo number_format($empleado['sueldo_base'] ?? 0, 2); ?>
+                                        </td>   
+                                        
+                                        <!-- Total Descuento -->
+                                        <td class="fw-bold text-danger"
+                                            id="total-descuentos-<?php echo $index; ?>"
+                                            data-value="<?php echo $empleado['total_descuentos'] ?? 0; ?>">
+                                            $<?php echo number_format($empleado['total_descuentos'] ?? 0, 2); ?>
+                                        </td>
+                                        
+                                        <!-- Total a Pagar -->
+                                        <td class="fw-bold"
+                                            style="background-color: #e8f5e8;"
+                                            id="total-pagar-<?php echo $index; ?>"
+                                            data-value="<?php echo $empleado['total_pagar'] ?? 0; ?>">
+                                            $<?php echo number_format($empleado['total_pagar'] ?? 0, 2); ?>
+                                        </td>
 
-                <!-- === Cuenta Bancaria === -->
-                <div class="form-group-nomina" style="background-color: #fff; padding:15px; border:1px solid #ddd; border-radius:5px; margin-top:20px;">
-                    <label style="font-weight:bold;">Cuenta bancaria desde donde se pagará la nómina:</label>
+                                        <input type="hidden" name="hidden_sueldo_base[<?php echo $index; ?>]" id="hidden-sueldo-base-<?php echo $index; ?>" value="<?php echo $empleado['sueldo_base']; ?>">
+                                        <input type="hidden" name="hidden_total_actividades[<?php echo $index; ?>]" id="hidden-total-actividades-<?php echo $index; ?>" value="<?php echo $empleado['total_actividades_extras']; ?>">
+                                        <input type="hidden" name="hidden_total_descuentos[<?php echo $index; ?>]" id="hidden-total-descuentos-<?php echo $index; ?>" value="<?php echo $empleado['total_descuentos']; ?>">
+                                        <input type="hidden" name="hidden_total_pagar[<?php echo $index; ?>]" id="hidden-total-pagar-<?php echo $index; ?>" value="<?php echo $empleado['total_pagar']; ?>">
+                                    </tr>
+                                    
+                                <?php endforeach; ?>
 
-                    <select name="id_cuenta" class="form-control" required style="margin-top:10px;">
-                        <option value="">-- Selecciona una cuenta --</option>
-                        <?php foreach ($cuentas_bancarias as $cuenta): ?>
-                            <option value="<?= $cuenta['id_cuenta'] ?>">
-                                <?= $cuenta['nombre'] ?> - <?= $cuenta['numero'] ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <!-- === Guardar Nomina === -->
+                                <?php
+                                // Calcular totales generales
+                                $totalGeneralDiasTrabajados = 0;
+                                $totalGeneralActividades = 0;
+                                $totalGeneralDescuentos = 0;
+                                $totalGeneralSueldoBase = 0;
+                                $totalGeneralTotalPagar = 0;
 
-                <div class="form-group-nomina" style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-top:20px;">
-                    <h4 style="margin-top: 0; color: #333;">Resumen de Nómina a Guardar:</h4>
-
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;">
-                        <div style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 5px; border: 2px solid #2e7d32;">
-                            <div style="font-size: 24px; font-weight: bold; color: #2e7d32;">
-                                <?php echo count($registrosEmpleados); ?>
-                            </div>
-                            <div style="font-size: 14px; color: #555;">Empleados</div>
-                        </div>
-
-                        <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 5px; border: 2px solid #1565c0;">
-                            <div style="font-size: 24px; font-weight: bold; color: #1565c0;">
-                                $<span id="resumen-sueldos"><?php echo number_format($totalGeneralSueldoBase, 2); ?></span>
-                            </div>
-                            <div style="font-size: 14px; color: #555;">Sueldos Base</div>
-                        </div>
-
-                        <div style="text-align: center; padding: 15px; background: #f3e5f5; border-radius: 5px; border: 2px solid #7b1fa2;">
-                            <div style="font-size: 24px; font-weight: bold; color: #7b1fa2;">
-                                $<span id="resumen-actividades"><?php echo number_format($totalGeneralActividades, 2); ?></span>
-                            </div>
-                            <div style="font-size: 14px; color: #555;">Actividades</div>
-                        </div>
-
-                        <div style="text-align: center; padding: 15px; background: #ffebee; border-radius: 5px; border: 2px solid #c62828;">
-                            <div style="font-size: 24px; font-weight: bold; color: #c62828;">
-                                $<span id="resumen-deducciones"><?php echo number_format($totalGeneralDescuentos, 2); ?></span>
-                            </div>
-                            <div style="font-size: 14px; color: #555;">Deducciones</div>
-                        </div>
-
-                        <div style="text-align: center; padding: 20px; background: #e8f5e9; border-radius: 5px; border: 3px solid #1b5e20; grid-column: span 4;">
-                            <div style="font-size: 32px; font-weight: bold; color: #1b5e20;">
-                                $<span id="resumen-total"><?php echo number_format($totalGeneralTotalPagar, 2); ?></span>
-                            </div>
-                            <div style="font-size: 18px; color: #555; margin-top: 5px;">TOTAL A PAGAR</div>
-                        </div>
+                                foreach ($registrosEmpleados as $empleado) {
+                                    $totalGeneralDiasTrabajados += $empleado['dias_trabajados'] ?? 0;
+                                    $totalGeneralActividades += $empleado['total_actividades_extras'] ?? 0;
+                                    $totalGeneralDescuentos += $empleado['total_descuentos'] ?? 0;
+                                    $totalGeneralSueldoBase += $empleado['sueldo_base'] ?? 0;
+                                    $totalGeneralTotalPagar += $empleado['total_pagar'] ?? 0;
+                                }
+                                ?>
+                                <tr class="table-secondary fw-bold" style="background-color: #f8f9fa !important;">
+                                    <td colspan="5" class="text-end">TOTALES GENERALES:</td>
+                                    <td class="text-primary" id="total-general-dias"><?php echo $totalGeneralDiasTrabajados; ?> días</td>
+                                    <td class="text-success" id="total-general-actividades">$<?php echo number_format($totalGeneralActividades, 2); ?></td>
+                                    <td class="text-danger" id="total-general-descuentos">$<?php echo number_format($totalGeneralDescuentos, 2); ?></td>
+                                    <td class="text-primary" id="total-general-sueldo-base">$<?php echo number_format($totalGeneralSueldoBase, 2); ?></td>
+                                    <td class="text-danger" id="total-general-descuentos-2">$<?php echo number_format($totalGeneralDescuentos, 2); ?></td>
+                                    <td class="text-success" style="background-color: #d4edda !important;" id="total-general-total-pagar">
+                                        $<?php echo number_format($totalGeneralTotalPagar, 2); ?>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-
-                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
-                        <i class="fas fa-calendar"></i> 
-                        Período: <?= date('d/m/Y', strtotime('monday this week')) ?> al <?= date('d/m/Y', strtotime('friday this week')) ?>
-                    </div>
-                </div>
-
-                <!-- Contenedor para campos ocultos -->
-                <div id="campos-ocultos-container"></div>
-
-                <!-- Botón guardar -->
-                <div class="form-group-nomina" style="text-align: center; margin-top: 20px;">
-                    <button type="submit" class="btn-submit-nomina" style="background-color: #28a745;">
-                        <i class="fas fa-save"></i> Guardar Nómina en Base de Datos
-                    </button>
-                </div>
-
-            </form> 
+                </form> 
             </div>
+            
+            <div class="form-container-nomina" style="margin-top: 30px; background-color: #f0f8ff;">
+                <h2 class="section-title-nomina">Guardar Nómina en Base de Datos</h2>
+
+                <form id="formGuardarNomina" action="guardar_nomina.php" method="post">
+                    <!-- Período de la nómina -->
+                    <div class="form-group-nomina" style="display: flex; gap: 20px;">
+                        <div style="flex: 1;">
+                            <label for="fecha_inicio">Fecha Inicio de Período (DD/MM/AAAA):</label>
+                            <input type="text" name="fecha_inicio" id="fecha_inicio" placeholder="DD/MM/AAAA"
+                                value="<?= date('d/m/Y', strtotime('monday this week')) ?>" class="form-control" required
+                                pattern="\d{2}/\d{2}/\d{4}">
+                            <small style="color: #666;">Formato: DD/MM/AAAA</small>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="fecha_fin">Fecha Fin de Período (DD/MM/AAAA):</label>
+                            <input type="text" name="fecha_fin" id="fecha_fin" placeholder="DD/MM/AAAA"
+                                value="<?= date('d/m/Y', strtotime('friday this week')) ?>" class="form-control" required
+                                pattern="\d{2}/\d{2}/\d{4}">
+                            <small style="color: #666;">Formato: DD/MM/AAAA</small>
+                        </div>
+                    </div>
+
+                    <!-- Información de la cuenta -->
+                    <div class="form-group-nomina">
+                        <label for="id_cuenta">Cuenta de Pago:</label>
+                        <select name="general[id_cuenta]" id="id_cuenta" class="form-control-nomina" required>
+                            <option value="">-- Seleccionar Cuenta --</option>
+                            <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                <option value="<?= $cuenta['id_cuenta'] ?>">
+                                    <?= htmlspecialchars($cuenta['banco'] . ' - ' . $cuenta['nombre'] . ' (' . $cuenta['numero'] . ')') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Resumen de la nómina -->
+                    <div class="form-group-nomina"
+                        style="background-color: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
+                        <h4 style="margin-top: 0; color: #333;">Resumen de Nómina a Guardar:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;">
+                            <!-- N° empleados -->
+                            <div
+                                style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 5px; border: 2px solid #2e7d32;">
+                                <div style="font-size: 24px; font-weight: bold; color: #2e7d32;">
+                                    <?= isset($registrosEmpleados) ? count($registrosEmpleados) : 0 ?></div>
+                                <div style="font-size: 14px; color: #555;">Empleados</div>
+                            </div>
+                            <!-- Total Sueldos -->
+                            <div
+                                style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 5px; border: 2px solid #1565c0;">
+                                <div style="font-size: 24px; font-weight: bold; color: #1565c0;">$<span
+                                        id="resumen-sueldos">$<?php echo number_format($totalGeneralSueldoBase, 2); ?></span></div>
+                                <div style="font-size: 14px; color: #555;">Sueldos Base</div>
+                            </div>
+                            <!-- Total Actividades Extras -->
+                            <div
+                                style="text-align: center; padding: 15px; background: #f3e5f5; border-radius: 5px; border: 2px solid #7b1fa2;">
+                                <div style="font-size: 24px; font-weight: bold; color: #7b1fa2;">$<span
+                                        id="resumen-actividades">$<?php echo number_format($totalGeneralActividades, 2); ?></span>
+                                </div>
+                                <div style="font-size: 14px; color: #555;">Actividades</div>
+                            </div>
+                            <!-- Total Descuentos -->
+                            <div
+                                style="text-align: center; padding: 15px; background: #ffebee; border-radius: 5px; border: 2px solid #c62828;">
+                                <div style="font-size: 24px; font-weight: bold; color: #c62828;">$<span
+                                        id="resumen-deducciones">$<?php echo number_format($totalGeneralDescuentos, 2); ?></span>
+                                </div>
+                                <div style="font-size: 14px; color: #555;">Deducciones</div>
+                            </div>
+                            <!-- Total General -->
+                            <div
+                                style="text-align: center; padding: 20px; background: #e8f5e9; border-radius: 5px; border: 3px solid #1b5e20; grid-column: span 4;">
+                                <div style="font-size: 32px; font-weight: bold; color: #1b5e20;">$<span
+                                        id="resumen-total">$<?php echo number_format($totalGeneralTotalPagar, 2); ?></span></div>
+                                <div style="font-size: 18px; color: #555; margin-top: 5px;">TOTAL A PAGAR</div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+                            <i class="fas fa-calendar"></i>
+                            Período: <?= date('d/m/Y', strtotime('monday this week')) ?> al
+                            <?= date('d/m/Y', strtotime('friday this week')) ?> |
+                            <i class="fas fa-clock"></i> Cálculo: <?= date('d/m/Y H:i:s') ?>
+                        </div>
+                    </div>
+
+                    <!-- Contenedor para campos ocultos -->
+                    <div id="campos-ocultos-container">
+                    </div>
+
+                    <!-- Botón para guardar -->
+                    <div class="form-group-nomina" style="text-align: center; margin-top: 20px;">
+                        <button type="submit" class="btn-submit-nomina" style="background-color: #28a745;">
+                            <i class="fas fa-save"></i> Guardar Nómina en Base de Datos
+                        </button>
+                        <div id="mensaje-validacion" style="margin-top: 10px; display: none;"></div>
+                    </div>
+                </form>
+            </div>
+
+
         <?php elseif (isset($_POST['procesar'])): ?>
             <div class="alert alert-warning mt-4">
                 <h5><i class="fas fa-exclamation-triangle me-2"></i>Sin resultados</h5>
@@ -798,6 +829,8 @@ require_once __DIR__ . '/../../includes/header.php';
         <?php endif; ?>
     </div>
 </main>
+
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
 
 <script>
     // Evitar reenvío del formulario al recargar
@@ -1158,6 +1191,32 @@ require_once __DIR__ . '/../../includes/header.php';
             <input type="hidden" name="fecha_fin" value="<?= date('Y-m-d', strtotime('friday this week')) ?>">
         `;
     });
-</script>
 
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+    function actualizarResumenGuardar() {
+        // Solo actualizar si los elementos existen
+        const resumenSueldos = document.getElementById('resumen-sueldos');
+        const resumenActividades = document.getElementById('resumen-actividades');
+        const resumenDeducciones = document.getElementById('resumen-deducciones');
+        const resumenTotal = document.getElementById('resumen-total');
+        
+        if (resumenSueldos && resumenActividades && resumenDeducciones && resumenTotal) {
+            // Obtener valores de los totales generales
+            const sueldoBaseEl = document.getElementById('total-general-sueldo-base');
+            const actividadesEl = document.getElementById('total-general-actividades');
+            const descuentosEl = document.getElementById('total-general-descuentos');
+            const totalPagarEl = document.getElementById('total-general-total-pagar');
+            
+            if (sueldoBaseEl && actividadesEl && descuentosEl && totalPagarEl) {
+                const sueldoBase = obtenerValorMoneda(sueldoBaseEl);
+                const actividades = obtenerValorMoneda(actividadesEl);
+                const descuentos = obtenerValorMoneda(descuentosEl);
+                const totalPagar = obtenerValorMoneda(totalPagarEl);
+                
+                resumenSueldos.textContent = sueldoBase.toFixed(2);
+                resumenActividades.textContent = actividades.toFixed(2);
+                resumenDeducciones.textContent = descuentos.toFixed(2);
+                resumenTotal.textContent = totalPagar.toFixed(2);
+            }
+        }
+    }
+</script>
