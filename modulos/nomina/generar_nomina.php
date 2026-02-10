@@ -833,19 +833,24 @@ require_once __DIR__ . '/../../includes/header.php';
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    
     // Evitar reenvío del formulario al recargar
     if (window.history.replaceState) {
         window.history.replaceState(null, null, window.location.href);
     }
 
-    // Mostrar nombre del archivo seleccionado
-    document.getElementById('asistencia_file')?.addEventListener('change', function (e) {
-        const fileName = e.target.files[0]?.name || 'No seleccionado';
-        const label = this.previousElementSibling;
-        if (label) {
-            label.innerHTML = `Archivo seleccionado: <strong>${fileName}</strong>`;
-        }
-    });
+    // Mostrar nombre del archivo seleccionado - ¡AHORA EL ELEMENTO SÍ EXISTE!
+    const asistenciaFileInput = document.getElementById('asistencia_file');
+    if (asistenciaFileInput) {
+        asistenciaFileInput.addEventListener('change', function (e) {
+            const fileName = e.target.files[0]?.name || 'No seleccionado';
+            const label = this.previousElementSibling;
+            if (label) {
+                label.innerHTML = `Archivo seleccionado: <strong>${fileName}</strong>`;
+            }
+        });
+    }
 
     // Variable para prevenir recursión
     let isCalculating = false;
@@ -879,28 +884,32 @@ require_once __DIR__ . '/../../includes/header.php';
             if (sueldoBaseElement) {
                 sueldoBaseElement.textContent = `$${sueldoBase.toFixed(2)}`;
                 sueldoBaseElement.dataset.value = sueldoBase;
-                document.getElementById(`hidden-sueldo-base-${index}`).value = sueldoBase;
+                const hiddenSueldoBase = document.getElementById(`hidden-sueldo-base-${index}`);
+                if (hiddenSueldoBase) hiddenSueldoBase.value = sueldoBase;
             }
 
             const totalActividadesElement = document.getElementById(`total-actividades-${index}`);
             if (totalActividadesElement) {
                 totalActividadesElement.textContent = `Total: $${totalActividades.toFixed(2)}`;
                 totalActividadesElement.dataset.value = totalActividades;
-                document.getElementById(`hidden-total-actividades-${index}`).value = totalActividades;
+                const hiddenTotalActividades = document.getElementById(`hidden-total-actividades-${index}`);
+                if (hiddenTotalActividades) hiddenTotalActividades.value = totalActividades;
             }
 
             const totalDescuentosElement = document.getElementById(`total-descuentos-${index}`);
             if (totalDescuentosElement) {
                 totalDescuentosElement.textContent = `$${totalDescuentos.toFixed(2)}`;
                 totalDescuentosElement.dataset.value = totalDescuentos;
-                document.getElementById(`hidden-total-descuentos-${index}`).value = totalDescuentos;
+                const hiddenTotalDescuentos = document.getElementById(`hidden-total-descuentos-${index}`);
+                if (hiddenTotalDescuentos) hiddenTotalDescuentos.value = totalDescuentos;
             }
 
             const totalPagarElement = document.getElementById(`total-pagar-${index}`);
             if (totalPagarElement) {
                 totalPagarElement.textContent = `$${totalPagar.toFixed(2)}`;
                 totalPagarElement.dataset.value = totalPagar;
-                document.getElementById(`hidden-total-pagar-${index}`).value = totalPagar;
+                const hiddenTotalPagar = document.getElementById(`hidden-total-pagar-${index}`);
+                if (hiddenTotalPagar) hiddenTotalPagar.value = totalPagar;
             }
 
             if (!skipGeneralUpdate) {
@@ -916,7 +925,6 @@ require_once __DIR__ . '/../../includes/header.php';
             isCalculating = false;
         }
     }
-
 
     // Actualizar estado "Modificado"
     function actualizarEstadoModificado(input) {
@@ -984,7 +992,6 @@ require_once __DIR__ . '/../../includes/header.php';
 
     // Función para actualizar TOTALES GENERALES
     function actualizarTotalesGenerales() {
-
         const diasEl = document.getElementById('total-general-dias');
         const actEl = document.getElementById('total-general-actividades');
         const descEl = document.getElementById('total-general-descuentos');
@@ -992,7 +999,7 @@ require_once __DIR__ . '/../../includes/header.php';
         const desc2El = document.getElementById('total-general-descuentos-2');
         const pagarEl = document.getElementById('total-general-total-pagar');
 
-        // 🚨 Si la fila no existe, salir sin romper nada
+        // Si la fila no existe, salir sin romper nada
         if (!diasEl || !actEl || !descEl || !sueldoEl || !desc2El || !pagarEl) {
             return;
         }
@@ -1008,10 +1015,15 @@ require_once __DIR__ . '/../../includes/header.php';
 
             totalDias += parseInt(input.value) || 0;
 
-            totalSueldoBase += parseFloat(document.getElementById(`sueldo-base-${index}`)?.dataset.value || 0);
-            totalActividades += parseFloat(document.getElementById(`total-actividades-${index}`)?.dataset.value || 0);
-            totalDescuentos += parseFloat(document.getElementById(`total-descuentos-${index}`)?.dataset.value || 0);
-            totalPagar += parseFloat(document.getElementById(`total-pagar-${index}`)?.dataset.value || 0);
+            const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
+            const actividadesElement = document.getElementById(`total-actividades-${index}`);
+            const descuentosElement = document.getElementById(`total-descuentos-${index}`);
+            const pagarElement = document.getElementById(`total-pagar-${index}`);
+
+            totalSueldoBase += sueldoBaseElement ? parseFloat(sueldoBaseElement.dataset.value || 0) : 0;
+            totalActividades += actividadesElement ? parseFloat(actividadesElement.dataset.value || 0) : 0;
+            totalDescuentos += descuentosElement ? parseFloat(descuentosElement.dataset.value || 0) : 0;
+            totalPagar += pagarElement ? parseFloat(pagarElement.dataset.value || 0) : 0;
         });
 
         diasEl.textContent = `${totalDias} días`;
@@ -1023,184 +1035,14 @@ require_once __DIR__ . '/../../includes/header.php';
         actualizarResumenGuardar();
     }
 
-
-    // Evento para cambios en días trabajados
-    document.querySelectorAll('.dias-input').forEach(input => {
-        input.addEventListener('change', function () {
-            actualizarEstadoModificado(this);
-            calcularTotales(this.dataset.index);
-        });
-
-        input.addEventListener('input', function () {
-            const original = parseInt(this.dataset.original);
-            const value = parseInt(this.value) || original;
-
-            if (value < original) {
-                this.value = original;
-                showTempMessage('No se puede reducir los días del valor original', 'warning');
-            }
-
-            if (value > 7) {
-                this.value = 7;
-                showTempMessage('Máximo 7 días permitidos', 'warning');
-            }
-            
-            // Calcular totales
-            calcularTotales(this.dataset.index);
-        });
-    });
-
-    // Evento para cambios en actividades
-    document.querySelectorAll('.actividad-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            calcularTotales(this.dataset.index);
-        });
-    });
-
-    // Evento para cambios en días incompletos (DESCUENTOS)
-    document.querySelectorAll('.dias-incompletos-input').forEach(input => {
-        input.addEventListener('input', function() {
-            const dias = parseInt(this.value) || 0;
-            const original = parseInt(this.dataset.original);
-            
-            if (dias > original) {
-                this.value = original;
-                showTempMessage('No puede exceder los días originales', 'warning');
-            }
-            
-            calcularTotales(this.dataset.index);
-        });
-        
-        // Asegurarnos de que también se captura el evento change
-        input.addEventListener('change', function() {
-            calcularTotales(this.dataset.index);
-        });
-    });
-
-    // Botón restaurar para días trabajados
-    document.querySelectorAll('.btn-restaurar').forEach(button => {
-        button.addEventListener('click', function () {
-            const index = this.dataset.index;
-            const input = document.querySelector(`.dias-input[data-index="${index}"]`);
-            
-            if (input) {
-                const original = input.dataset.original;
-                input.value = original;
-                actualizarEstadoModificado(input);
-                calcularTotales(index);
-            }
-        });
-    });
-
-    // Botón restaurar para incompletos
-    document.querySelectorAll('.btn-restaurar-incompletos').forEach(button => {
-        button.addEventListener('click', function() {
-            const index = this.dataset.index;
-            const input = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
-            
-            if (input) {
-                const original = input.dataset.original;
-                input.value = original;
-                calcularTotales(index);
-            }
-        }); 
-    });
-
-    // Validar formulario antes de enviar
-    document.getElementById('formDiasTrabajados')?.addEventListener('submit', function (e) {
-        let valid = true;
-
-        document.querySelectorAll('.dias-input').forEach(input => {
-            const value = parseInt(input.value);
-            const original = parseInt(input.dataset.original);
-            const min = parseInt(input.min);
-            const max = parseInt(input.max);
-
-            if (isNaN(value) || value < min || value > max) {
-                input.classList.add('is-invalid');
-                valid = false;
-            } else {
-                input.classList.remove('is-invalid');
-            }
-        });
-
-        if (!valid) {
-            e.preventDefault();
-            showTempMessage('Por favor, corrige los valores inválidos', 'danger');
-        }
-    });
-
-    // Inicializar cálculos al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
-        // Primero calcular todos los totales individuales
-        document.querySelectorAll('.dias-input').forEach(input => {
-            const index = input.dataset.index;
-            calcularTotales(index, true); // true para saltar actualización general
-        });
-        
-        // Luego calcular totales generales
-        actualizarTotalesGenerales();
-    });
-
-    document.getElementById('formGuardarNomina').addEventListener('submit', function (e) {
-
-        const container = document.getElementById('campos-ocultos-container');
-        container.innerHTML = '';
-
-        let totalSueldos = 0;
-        let totalActividades = 0;
-        let totalDeducciones = 0;
-        let totalPagar = 0;
-        let empleadosPagados = 0;
-
-        document.querySelectorAll('.dias-input').forEach(input => {
-            const index = input.dataset.index;
-
-            const idEmpleado = document.getElementById(`id-empleado-${index}`).value;
-            const dias = input.value;
-
-            const sueldoBase = parseFloat(document.getElementById(`sueldo-base-${index}`).dataset.value || 0);
-            const actividades = parseFloat(document.getElementById(`total-actividades-${index}`).dataset.value || 0);
-            const descuentos = parseFloat(document.getElementById(`total-descuentos-${index}`).dataset.value || 0);
-            const pagar = parseFloat(document.getElementById(`total-pagar-${index}`).dataset.value || 0);
-
-            totalSueldos += sueldoBase;
-            totalActividades += actividades;
-            totalDeducciones += descuentos;
-            totalPagar += pagar;
-            empleadosPagados++;
-
-            container.innerHTML += `
-                <input type="hidden" name="empleados[${index}][id_empleado]" value="${idEmpleado}">
-                <input type="hidden" name="empleados[${index}][dias]" value="${dias}">
-                <input type="hidden" name="empleados[${index}][sueldo_base]" value="${sueldoBase}">
-                <input type="hidden" name="empleados[${index}][actividades]" value="${actividades}">
-                <input type="hidden" name="empleados[${index}][descuentos]" value="${descuentos}">
-                <input type="hidden" name="empleados[${index}][total_pagar]" value="${pagar}">
-            `;
-        });
-
-        // Totales generales
-        container.innerHTML += `
-            <input type="hidden" name="total_sueldos" value="${totalSueldos}">
-            <input type="hidden" name="total_actividades" value="${totalActividades}">
-            <input type="hidden" name="total_deducciones" value="${totalDeducciones}">
-            <input type="hidden" name="total_pagar" value="${totalPagar}">
-            <input type="hidden" name="empleados_pagados" value="${empleadosPagados}">
-            <input type="hidden" name="fecha_inicio" value="<?= date('Y-m-d', strtotime('monday this week')) ?>">
-            <input type="hidden" name="fecha_fin" value="<?= date('Y-m-d', strtotime('friday this week')) ?>">
-        `;
-    });
-
+    // Función para actualizar resumen en el formulario de guardar
     function actualizarResumenGuardar() {
-        // Solo actualizar si los elementos existen
         const resumenSueldos = document.getElementById('resumen-sueldos');
         const resumenActividades = document.getElementById('resumen-actividades');
         const resumenDeducciones = document.getElementById('resumen-deducciones');
         const resumenTotal = document.getElementById('resumen-total');
         
         if (resumenSueldos && resumenActividades && resumenDeducciones && resumenTotal) {
-            // Obtener valores de los totales generales
             const sueldoBaseEl = document.getElementById('total-general-sueldo-base');
             const actividadesEl = document.getElementById('total-general-actividades');
             const descuentosEl = document.getElementById('total-general-descuentos');
@@ -1219,4 +1061,162 @@ require_once __DIR__ . '/../../includes/header.php';
             }
         }
     }
+
+    // Configurar eventos para los elementos que existen en la página
+    function configurarEventos() {
+        // Evento para cambios en días trabajados
+        document.querySelectorAll('.dias-input').forEach(input => {
+            input.addEventListener('change', function () {
+                actualizarEstadoModificado(this);
+                calcularTotales(this.dataset.index);
+            });
+
+            input.addEventListener('input', function () {
+                const original = parseInt(this.dataset.original);
+                const value = parseInt(this.value) || original;
+
+                if (value < original) {
+                    this.value = original;
+                    showTempMessage('No se puede reducir los días del valor original', 'warning');
+                }
+
+                if (value > 7) {
+                    this.value = 7;
+                    showTempMessage('Máximo 7 días permitidos', 'warning');
+                }
+                
+                calcularTotales(this.dataset.index);
+            });
+        });
+
+        // Evento para cambios en actividades
+        document.querySelectorAll('.actividad-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                calcularTotales(this.dataset.index);
+            });
+        });
+
+        // Evento para cambios en días incompletos (DESCUENTOS)
+        document.querySelectorAll('.dias-incompletos-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const dias = parseInt(this.value) || 0;
+                const original = parseInt(this.dataset.original);
+                
+                if (dias > original) {
+                    this.value = original;
+                    showTempMessage('No puede exceder los días originales', 'warning');
+                }
+                
+                calcularTotales(this.dataset.index);
+            });
+            
+            input.addEventListener('change', function() {
+                calcularTotales(this.dataset.index);
+            });
+        });
+
+        // Botón restaurar para días trabajados
+        document.querySelectorAll('.btn-restaurar').forEach(button => {
+            button.addEventListener('click', function () {
+                const index = this.dataset.index;
+                const input = document.querySelector(`.dias-input[data-index="${index}"]`);
+                
+                if (input) {
+                    const original = input.dataset.original;
+                    input.value = original;
+                    actualizarEstadoModificado(input);
+                    calcularTotales(index);
+                }
+            });
+        });
+
+        // Botón restaurar para incompletos
+        document.querySelectorAll('.btn-restaurar-incompletos').forEach(button => {
+            button.addEventListener('click', function() {
+                const index = this.dataset.index;
+                const input = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
+                
+                if (input) {
+                    const original = input.dataset.original;
+                    input.value = original;
+                    calcularTotales(index);
+                }
+            }); 
+        });
+
+        // Configurar el formulario de guardar nómina
+        const formGuardarNomina = document.getElementById('formGuardarNomina');
+        if (formGuardarNomina) {
+            formGuardarNomina.addEventListener('submit', function (e) {
+                const container = document.getElementById('campos-ocultos-container');
+                if (container) {
+                    container.innerHTML = '';
+
+                    let totalSueldos = 0;
+                    let totalActividades = 0;
+                    let totalDeducciones = 0;
+                    let totalPagar = 0;
+                    let empleadosPagados = 0;
+
+                    document.querySelectorAll('.dias-input').forEach(input => {
+                        const index = input.dataset.index;
+
+                        const idEmpleado = document.getElementById(`id-empleado-${index}`);
+                        if (!idEmpleado) return;
+
+                        const dias = input.value;
+
+                        const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
+                        const actividadesElement = document.getElementById(`total-actividades-${index}`);
+                        const descuentosElement = document.getElementById(`total-descuentos-${index}`);
+                        const pagarElement = document.getElementById(`total-pagar-${index}`);
+
+                        const sueldoBase = sueldoBaseElement ? parseFloat(sueldoBaseElement.dataset.value || 0) : 0;
+                        const actividades = actividadesElement ? parseFloat(actividadesElement.dataset.value || 0) : 0;
+                        const descuentos = descuentosElement ? parseFloat(descuentosElement.dataset.value || 0) : 0;
+                        const pagar = pagarElement ? parseFloat(pagarElement.dataset.value || 0) : 0;
+
+                        totalSueldos += sueldoBase;
+                        totalActividades += actividades;
+                        totalDeducciones += descuentos;
+                        totalPagar += pagar;
+                        empleadosPagados++;
+
+                        container.innerHTML += `
+                            <input type="hidden" name="empleados[${index}][id_empleado]" value="${idEmpleado.value}">
+                            <input type="hidden" name="empleados[${index}][dias]" value="${dias}">
+                            <input type="hidden" name="empleados[${index}][sueldo_base]" value="${sueldoBase}">
+                            <input type="hidden" name="empleados[${index}][actividades]" value="${actividades}">
+                            <input type="hidden" name="empleados[${index}][descuentos]" value="${descuentos}">
+                            <input type="hidden" name="empleados[${index}][total_pagar]" value="${pagar}">
+                        `;
+                    });
+
+                    // Totales generales
+                    container.innerHTML += `
+                        <input type="hidden" name="total_sueldos" value="${totalSueldos}">
+                        <input type="hidden" name="total_actividades" value="${totalActividades}">
+                        <input type="hidden" name="total_deducciones" value="${totalDeducciones}">
+                        <input type="hidden" name="total_pagar" value="${totalPagar}">
+                        <input type="hidden" name="empleados_pagados" value="${empleadosPagados}">
+                        <input type="hidden" name="fecha_inicio" value="<?= date('Y-m-d', strtotime('monday this week')) ?>">
+                        <input type="hidden" name="fecha_fin" value="<?= date('Y-m-d', strtotime('friday this week')) ?>">
+                    `;
+                }
+            });
+        }
+    }
+
+    // Inicializar cálculos y configurar eventos cuando el DOM esté listo
+    configurarEventos();
+    
+    // Calcular totales iniciales
+    document.querySelectorAll('.dias-input').forEach(input => {
+        const index = input.dataset.index;
+        calcularTotales(index, true);
+    });
+    
+    actualizarTotalesGenerales();
+    
+}); 
 </script>
