@@ -733,6 +733,170 @@ footer {
 
 
 
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: linear-gradient(135deg, #e0f2f7 0%, #c8e6c9 100%);
+    overflow: hidden;
+}
+
+/* --- ELEMENTOS DE FONDO --- */
+.background-elements {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.leaf-left, .leaf-right {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background-color: #81c784;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.5;
+    animation: floatLeaf 8s infinite ease-in-out;
+}
+
+.leaf-left { top: -5%; left: -5%; }
+.leaf-right { bottom: -5%; right: -5%; animation-delay: 4s; }
+
+/* --- TARJETA --- */
+.login-card {
+    position: relative;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    padding: 40px;
+    border-radius: 30px;
+    width: 90%;
+    max-width: 380px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.8s ease-out;
+    overflow: hidden; 
+}
+
+
+.form-control, 
+input[type="text"], 
+input[type="password"] {
+  
+    cursor: default !important; 
+    
+    background-color: rgba(232, 245, 233, 0.5) !important; 
+    border: 1px solid #a5d6a7 !important;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    
+    background-color: #ffffff !important;
+    border-color: #2e7d32 !important;
+    box-shadow: 0 0 8px rgba(46, 125, 50, 0.4) !important;
+    cursor: text !important;
+}
+
+/* --- BOTÓN --- */
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer !important; 
+    margin-top: 10px;
+}
+
+.btn-login:hover {
+    background: #1b5e20;
+}
+
+/* --- LOGO Y OTROS --- */
+.login-title {
+    color: #1b5e20;
+    text-align: center;
+    font-size: 1.6rem;
+    margin-bottom: 25px;
+    font-weight: 800;
+}
+
+.logo-3d {
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.cube {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: rotateCube 12s infinite linear;
+}
+
+.face {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: rgba(46, 125, 50, 0.9);
+    border: 1px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 8px;
+}
+
+.front  { transform: translateZ(20px); }
+.back   { transform: rotateY(180deg) translateZ(20px); }
+.right  { transform: rotateY(90deg) translateZ(20px); }
+.left   { transform: rotateY(-90deg) translateZ(20px); }
+.top    { transform: rotateX(90deg) translateZ(20px); }
+.bottom { transform: rotateX(-90deg) translateZ(20px); }
+
+@keyframes rotateCube {
+    from { transform: rotateX(0deg) rotateY(0deg); }
+    to { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+@keyframes floatLeaf {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(20px, 20px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Switch */
+.switch { position: relative; width: 34px; height: 20px; display: inline-block; cursor: pointer; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: #2e7d32; }
+input:checked + .slider:before { transform: translateX(14px); }
+
+
+
+
 /* =========================
    MEDIA QUERIES
    ========================= */
