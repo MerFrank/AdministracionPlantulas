@@ -65,11 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             'nombre_Empresa' => isset($_POST['nombre_Empresa']) ? htmlspecialchars(trim($_POST['nombre_Empresa']), ENT_QUOTES, 'UTF-8') : null,
             'nombre_contacto' => isset($_POST['nombre_contacto']) ? htmlspecialchars(trim($_POST['nombre_contacto']), ENT_QUOTES, 'UTF-8') : '',
             'telefono' => isset($_POST['telefono']) ? preg_replace('/[^0-9]/', '', $_POST['telefono']) : '',
-            'email' => filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL),
-            'rfc' => ($_POST['opcion'] === 'si' && isset($_POST['rfc'])) ?
-                strtoupper(preg_replace('/[^A-ZÑ&0-9]/', '', $_POST['rfc'])) : null,
-            'domicilio_fiscal' => ($_POST['opcion'] === 'si' && isset($_POST['domicilio_fiscal'])) ?
-                htmlspecialchars(trim($_POST['domicilio_fiscal']), ENT_QUOTES, 'UTF-8') : null
+            'email' => !empty($_POST['email']) ? filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL) : null,
+            'rfc' => ($_POST['opcion'] === 'si' && isset($_POST['rfc'])) ? strtoupper(preg_replace('/[^A-ZÑ&0-9]/', '', $_POST['rfc'])) : null,
+            'domicilio_fiscal' => ($_POST['opcion'] === 'si' && isset($_POST['domicilio_fiscal'])) ? htmlspecialchars(trim($_POST['domicilio_fiscal']), ENT_QUOTES, 'UTF-8') : null
         ];
 
         // Validaciones
@@ -85,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             throw new Exception("Teléfono no válido. Debe contener entre 10 y 15 dígitos");
         }
 
-        if (!$datos['email']) {
+        if (!$datos['email'] === false) {
             throw new Exception("Correo electrónico no válido");
         }
 
@@ -202,7 +200,7 @@ require('../../includes/header.php');
 
                         <div class="mb-3">
                             <label for="email" class="form-label ">Correo Electrónico</label>
-                            <input type="email" class="form-control" id="email" name="email" required
+                            <input type="email" class="form-control" id="email" name="email" 
                                 value="<?= htmlspecialchars($cliente['email']) ?>">
                         </div>
                     </div>
