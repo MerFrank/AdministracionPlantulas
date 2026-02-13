@@ -177,19 +177,46 @@ function procesarArchivo()
                             continue; // Saltar este empleado
                         }
                         
+                        // Obtener días trabajados (necesario para todos)
                         $diasTrabajados = contarDiasTrabajados($data, $numeroFila, $id_checador);
-                        $diasIncompletos = contarDiasIncompletos($data, $numeroFila);
-                        $descuentoIncompletos = $diasIncompletos * 25; // $25 por día incompleto
                         
-                        // Calcular valores directamente
-                        $sueldoBase = $sueldoDiario * $diasTrabajados;
-                        $totalActividades = $infoEmpleado['pago_actividades'] ?? 0;
-                        $totalDescuentos = $descuentoIncompletos;
-                        $totalPagar = $sueldoBase + $totalActividades - $totalDescuentos;
+                        // Verificar si es gerente por nivel jerárquico
+                        $nivelJerarquico = $infoEmpleado['nivel_jerarquico'] ?? '';
+                        $esGerente = in_array($nivelJerarquico, ['gerente_general', 'sub_gerente']);
                         
-                        // Almacenar toda la información requerida
+                        if ($esGerente) {
+                            // GERENTES: Sin descuentos por días incompletos
+                            $diasIncompletos = 0;
+                            $descuentoIncompletos = 0;
+                            $diasLaborales = $infoEmpleado['dias_laborales'] ;
+                            
+                            if (!empty($diasLaborales)){
+                                $arrayDias = explode(',', $diasLaborales);
+                                $diasTrabajados = count($arrayDias); 
+                            }
+
+                            $sueldoBase = $sueldoDiario * $diasTrabajados;
+                            $totalActividades = $infoEmpleado['pago_actividades'] ?? 0;
+                            $totalDescuentos = 0;
+                            $totalPagar = $sueldoBase + $totalActividades;
+                            
+                        } else {
+                            // EMPLEADOS REGULARES: Con descuentos por días incompletos
+
+                            $diasIncompletos = contarDiasIncompletos($data, $numeroFila);
+                            $diasIncompletos = contarDiasIncompletos($data, $numeroFila);
+                            $descuentoIncompletos = $diasIncompletos * 25; // $25 por día incompleto
+                            
+                            $sueldoBase = $sueldoDiario * $diasTrabajados;
+                            $totalActividades = $infoEmpleado['pago_actividades'] ?? 0;
+                            $totalDescuentos = $descuentoIncompletos;
+                            $totalPagar = $sueldoBase + $totalActividades - $totalDescuentos;
+                        }
+                        
+                        // Almacenar toda la información requerida (común para todos)
                         $infoEmpleado['id_checador'] = $id_checador;
                         $infoEmpleado['fila_excel'] = $numeroFila;
+                        $infoEmpleado['es_gerente'] = $esGerente;
                         
                         // DÍAS TRABAJADOS
                         $infoEmpleado['dias_trabajados'] = $diasTrabajados;
@@ -199,11 +226,11 @@ function procesarArchivo()
                         $infoEmpleado['total_actividades_extras'] = $totalActividades;
                         $infoEmpleado['total_actividades_original'] = $totalActividades;
                         
-                        // DESCUENTOS
-                        $infoEmpleado['dias_incompletos'] = $diasIncompletos;
-                        $infoEmpleado['dias_incompletos_original'] = $diasIncompletos;
-                        $infoEmpleado['descuento_incompletos'] = $descuentoIncompletos;
-                        $infoEmpleado['descuento_incompletos_original'] = $descuentoIncompletos;
+                        // DESCUENTOS (solo aplican para no-gerentes)
+                        $infoEmpleado['dias_incompletos'] = $diasIncompletos ?? 0;
+                        $infoEmpleado['dias_incompletos_original'] = $diasIncompletos ?? 0;
+                        $infoEmpleado['descuento_incompletos'] = $descuentoIncompletos ?? 0;
+                        $infoEmpleado['descuento_incompletos_original'] = $descuentoIncompletos ?? 0;
                         $infoEmpleado['total_descuentos'] = $totalDescuentos;
                         $infoEmpleado['total_descuentos_original'] = $totalDescuentos;
                         
@@ -221,6 +248,7 @@ function procesarArchivo()
                         
                         $registrosEmpleados[] = $infoEmpleado;
                         $idsEncontrados++;
+
                     } else {
                         error_log("✗ ID $id_checador NO encontrado en BD");
                         $idsNoEnBD++;
@@ -837,7 +865,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
 
-    <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         
         // Evitar reenvío del formulario al recargar
