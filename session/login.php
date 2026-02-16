@@ -12,9 +12,12 @@ error_reporting(E_ALL);
 if (isset($_SESSION['ID_Operador'])) {
     if (isset($_SESSION['Rol'])) {
         $rutas = [
-            1 => 'http://localhost/control_administrativo/public/configuracion',
-            2 => 'http://localhost/control_administrativo/public/bitacora',
-            3 => 'http://localhost/control_administrativo/public/mi-rendimiento',
+            1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
+            2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
+            3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
+            4 => 'http://localhost/control_administrativo/public/configuracion',
+            5 => 'http://localhost/control_administrativo/public/bitacora',
+            6 => 'http://localhost/control_administrativo/public/mi-rendimiento',
         ];
         if (isset($rutas[$_SESSION['Rol']])) {
             header('Location: ' . $rutas[$_SESSION['Rol']]);
@@ -87,9 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // Redirigir según rol
                     $rutas = [
-                        1 => 'http://localhost/control_administrativo/public/configuracion',
-                        2 => 'http://localhost/control_administrativo/public/bitacora',
-                        3 => 'http://localhost/control_administrativo/public/mi-rendimiento',
+                        1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
+                        2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
+                        3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
+                        4 => 'http://localhost/control_administrativo/public/configuracion',
+                        5 => 'http://localhost/control_administrativo/public/bitacora',
+                        6 => 'http://localhost/control_administrativo/public/mi-rendimiento',
                     ];
 
                     // Importante: Usamos el ID_Rol que viene de la base de datos ($operador)
