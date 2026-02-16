@@ -160,6 +160,25 @@ require_once(__DIR__ . '/../includes/header.php');
                 </div>
             </div>
 
+            <!-- Módulo de Nomina -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded me-3">
+                                <i class="bi bi-currency-dollar text-warning fs-2"></i>
+                            </div>
+                            <h3 class="h5 mb-0">Nomina</h3>
+                        </div>
+                        <p class="card-text">Gestión de pagos de nomina.</p>
+                        <a href="<?php echo BASE_URL; ?>/modulos/nomina/dashboard_nomina.php" 
+                        class="btn btn-outline-warning stretched-link">
+                            Acceder <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Módulo de Cuentas -->
             <div class="col-md-6 col-lg-4">
