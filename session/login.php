@@ -15,9 +15,9 @@ if (isset($_SESSION['ID_Operador'])) {
             1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
             2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
             3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
-            4 => 'http://localhost/control_administrativo/public/configuracion',
-            5 => 'http://localhost/control_administrativo/public/bitacora',
-            6 => 'http://localhost/control_administrativo/public/mi-rendimiento',
+            4 => 'http://localhost/control_administrativo/public/AdministracionControl',
+            5 => 'http://localhost/control_administrativo/public/SecretariaControl',
+            6   => 'http://localhost/control_administrativo/public/AuxiliarControl',
         ];
         if (isset($rutas[$_SESSION['Rol']])) {
             header('Location: ' . $rutas[$_SESSION['Rol']]);
@@ -93,9 +93,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
                         2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
                         3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
-                        4 => 'http://localhost/control_administrativo/public/configuracion',
-                        5 => 'http://localhost/control_administrativo/public/bitacora',
-                        6 => 'http://localhost/control_administrativo/public/mi-rendimiento',
+                        4 => 'http://localhost/control_administrativo/public/AdministracionControl',
+                        5 => 'http://localhost/control_administrativo/public/SecretariaControl',
+                        6 => 'http://localhost/control_administrativo/public/AuxiliarControl',
                     ];
 
                     // Importante: Usamos el ID_Rol que viene de la base de datos ($operador)
@@ -118,7 +118,7 @@ $subtitulo = "Panel de inicio de sesión";
 // Incluir la cabecera (ruta relativa al archivo actual)
 
 $titulo = "Login - Agrodex";
-require(__DIR__ . '/../includes/header.php'); 
+require(__DIR__ . '/../includes/header.php');
 ?>
 
 <main class="login-container">
@@ -129,7 +129,7 @@ require(__DIR__ . '/../includes/header.php');
 
     <form class="login-card" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-        
+
         <div class="logo-3d">
             <div class="cube">
                 <div class="face front">Agrodex</div>
@@ -159,7 +159,7 @@ require(__DIR__ . '/../includes/header.php');
             <input type="password" id="contrasena" name="contrasena" class="form-control" required>
         </div>
 
-       
+
         <button type="submit" class="btn-login">INGRESAR AL PANEL</button>
     </form>
 </main>
@@ -169,8 +169,8 @@ require(__DIR__ . '/../includes/header.php');
         const input = document.getElementById("contrasena");
         input.type = input.type === "password" ? "text" : "password";
     }
-
 </script>
 
 </body>
+
 </html>
