@@ -465,9 +465,10 @@ require_once __DIR__ . '/../../includes/header.php';
                     <a href="generar_nomina.php" class="btn-nav btn-next">
                         ➕ Generar Nueva Nómina
                     </a>
-                    <button onclick="window.print()" class="btn-nav" style="background: #28a745; color: white; margin-left: 10px;">
-                        🖨️ Imprimir Reporte
-                    </button>
+                    <a href="imprimir_nomina.php?semana=<?= $inicio_semana ?>" target="_blank" class="btn-nav"
+                        style="background:#dc3545; color:white;">
+                        📄 Generar PDF
+                    </a>
                 </div>
             <?php endif; ?>
         </div>
