@@ -1,175 +1,224 @@
 <?php
-// Iniciar sesión ANTES de cualquier otra operación
+// ==========================
+// INICIAR SESIÓN
+// ==========================
 session_start();
 
-// Configuración de errores (después de session_start)
+// Configuración de errores (solo en desarrollo)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Verificar si ya está logueado (ahora sí podrá detectar la sesión)
-// Si tienes información de rol en la sesión, puedes redirigir según el rol
+// ==========================
+// REDIRECCIÓN SI YA LOGUEADO
+// ==========================
 if (isset($_SESSION['ID_Operador'])) {
-    if (isset($_SESSION['Rol'])) {
-        $rutas = [
-            1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
-            2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
-            3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
-            4 => 'http://localhost/control_administrativo/public/AdministracionControl',
-            5 => 'http://localhost/control_administrativo/public/SecretariaControl',
-            6   => 'http://localhost/control_administrativo/public/AuxiliarControl',
-        ];
-        if (isset($rutas[$_SESSION['Rol']])) {
-            header('Location: ' . $rutas[$_SESSION['Rol']]);
-            exit;
-        }
+
+    $rutas = [
+        1 => '/modulos/dashboard_adminGeneral.php',
+        2 => '/modulos/dashboard_secre.php',
+        3 => '/modulos/dashboard_auxAdmin.php',
+        4 => '/control_administrativo/public/AdministracionControl',
+        5 => '/control_administrativo/public/SecretariaControl',
+        6 => '/control_administrativo/public/AuxiliarControl',
+    ];
+
+    if (isset($_SESSION['Rol']) && isset($rutas[$_SESSION['Rol']])) {
+        header('Location: ' . $rutas[$_SESSION['Rol']]);
+        exit;
     }
-    exit;
 }
 
-
-
+// ==========================
+// CONEXIÓN
+// ==========================
 require_once __DIR__ . '/../includes/config.php';
-//require_once __DIR__ . '/../session/session_manager.php';
 
 $error = '';
 $usuario = '';
 
-// Generar token CSRF solo una vez
+// ==========================
+// GENERAR TOKEN CSRF
+// ==========================
 if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = function_exists('random_bytes')
-        ? bin2hex(random_bytes(32))
-        : md5(uniqid(mt_rand(), true));
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Procesar formulario
+// ==========================
+// PROCESAR LOGIN
+// ==========================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verificar CSRF
-    if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $error = 'Token CSRF inválido. Por favor recarga la página e intenta nuevamente.';
+
+    // Verificar token CSRF
+    if (
+        empty($_POST['csrf_token']) ||
+        !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+    ) {
+        $error = 'Token CSRF inválido. Recarga la página.';
     } else {
+
         $usuario = trim($_POST['usuario'] ?? '');
         $contrasena = $_POST['contrasena'] ?? '';
 
-        if (empty($usuario)) {
-            $error = 'El usuario es requerido';
-        } elseif (empty($contrasena)) {
-            $error = 'La contraseña es requerida';
+        if (empty($usuario) || empty($contrasena)) {
+            $error = 'Todos los campos son obligatorios.';
         } else {
+
             try {
                 $db = new Database();
                 $con = $db->conectar();
 
-                $sql = "SELECT `ID_Operador`, `Contrasena_Hash`, `ID_Rol`, `Nombre` 
-                        FROM `operadores` 
-                        WHERE LOWER(TRIM(`Usuario`)) = LOWER(?) AND `Activo` = 1 LIMIT 1";
+                $sql = "SELECT ID_Operador, Contrasena_Hash, ID_Rol, Nombre
+                        FROM operadores
+                        WHERE LOWER(TRIM(Usuario)) = LOWER(?)
+                        AND Activo = 1
+                        LIMIT 1";
+
                 $stmt = $con->prepare($sql);
                 $stmt->execute([$usuario]);
-                $operador = $stmt->fetch();
+                $operador = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if (!$operador) {
-                    $error = 'Usuario no encontrado o inactivo';
+                    $error = 'Usuario no encontrado.';
                 } elseif (!password_verify($contrasena, $operador['Contrasena_Hash'])) {
-                    $error = 'Contraseña incorrecta';
+                    $error = 'Contraseña incorrecta.';
                 } else {
-                    // Autenticación exitosa
+
+                    // ==========================
+                    // LOGIN EXITOSO
+                    // ==========================
                     session_regenerate_id(true);
 
                     $_SESSION['ID_Operador'] = $operador['ID_Operador'];
                     $_SESSION['Rol'] = $operador['ID_Rol'];
                     $_SESSION['Nombre'] = $operador['Nombre'];
 
-                    // Actualizar BD
+                    // Actualizar sesión en BD
                     $sid = session_id();
-                    $upd = $con->prepare("UPDATE `operadores` 
-                                         SET `current_session_id` = ?,
-                                             `last_activity` = NOW(),
-                                             `Ultimo_Acceso` = NOW()
-                                         WHERE `ID_Operador` = ?");
+                    $upd = $con->prepare("
+                        UPDATE operadores
+                        SET current_session_id = ?,
+                            last_activity = NOW(),
+                            Ultimo_Acceso = NOW()
+                        WHERE ID_Operador = ?
+                    ");
                     $upd->execute([$sid, $operador['ID_Operador']]);
 
                     // Redirigir según rol
                     $rutas = [
-                        1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
-                        2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
-                        3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
-                        4 => 'http://localhost/control_administrativo/public/AdministracionControl',
-                        5 => 'http://localhost/control_administrativo/public/SecretariaControl',
-                        6 => 'http://localhost/control_administrativo/public/AuxiliarControl',
+                        1 => '/modulos/dashboard_adminGeneral.php',
+                        2 => '/modulos/dashboard_secre.php',
+                        3 => '/modulos/dashboard_auxAdmin.php',
+                        4 => '/control_administrativo/public/AdministracionControl',
+                        5 => '/control_administrativo/public/SecretariaControl',
+                        6 => '/control_administrativo/public/AuxiliarControl',
                     ];
 
-                    // Importante: Usamos el ID_Rol que viene de la base de datos ($operador)
                     header('Location: ' . ($rutas[$operador['ID_Rol']] ?? 'panel.php'));
                     exit;
                 }
+
             } catch (PDOException $e) {
-                $error = 'Error en el sistema. Por favor intente más tarde.';
-                error_log("Error de login: " . $e->getMessage());
+                $error = 'Error interno del sistema.';
+                error_log("Error login: " . $e->getMessage());
             }
         }
     }
 }
-
-// Variables para el encabezado
-$titulo = "Login";
-$encabezado = "Login";
-$subtitulo = "Panel de inicio de sesión";
-
-// Incluir la cabecera (ruta relativa al archivo actual)
-
-$titulo = "Login - Agrodex";
-require(__DIR__ . '/../includes/header.php');
 ?>
 
-<main class="login-container">
-    <div class="background-elements">
-        <div class="leaf-left"></div>
-        <div class="leaf-right"></div>
-    </div>
+<!DOCTYPE html>
+<html lang="es">
 
-    <form class="login-card" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>">
-        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Plántulas Agrodex</title>
 
-        <div class="logo-3d">
-            <div class="cube">
-                <div class="face front">Agrodex</div>
-                <div class="face back"></div>
-                <div class="face right"></div>
-                <div class="face left"></div>
-                <div class="face top"></div>
-                <div class="face bottom"></div>
-            </div>
-        </div>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #e8f5e9, #a5d6a7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            width: 350px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-title {
+            text-align: center;
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #c8e6c9;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #43a047, #2e7d32);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <form class="login-card" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off">
 
         <h1 class="login-title">Plántulas Agrodex</h1>
 
         <?php if (!empty($error)): ?>
-            <div class="alert alert-danger py-2" style="font-size: 0.85rem;">
-                <i class="bi bi-exclamation-triangle"></i> <?= htmlspecialchars($error) ?>
-            </div>
+            <div class="error"><?= htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <div class="mb-3">
-            <label class="form-label fw-bold text-success">Usuario</label>
-            <input type="text" name="usuario" class="form-control" required autofocus oninput="this.value = this.value.toLowerCase();">
-        </div>
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']; ?>">
 
-        <div class="mb-3">
-            <label class="form-label fw-bold text-success">Contraseña</label>
-            <input type="password" id="contrasena" name="contrasena" class="form-control" required>
-        </div>
+        <label>Usuario</label>
+        <input type="text" name="usuario" class="form-control" required value="<?= htmlspecialchars($usuario); ?>"
+            autocomplete="username">
 
+        <label>Contraseña</label>
+        <input type="password" name="contrasena" class="form-control" required autocomplete="current-password">
 
-        <button type="submit" class="btn-login">INGRESAR AL PANEL</button>
+        <button type="submit" class="btn-login">
+            INGRESAR AL PANEL
+        </button>
+
     </form>
-</main>
-
-<script>
-    function togglePassword() {
-        const input = document.getElementById("contrasena");
-        input.type = input.type === "password" ? "text" : "password";
-    }
-</script>
 
 </body>
 
