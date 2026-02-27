@@ -24,6 +24,13 @@ require('../../includes/header.php');
       <p>Consulte el listado completo de empleados registrados en el sistema.</p>
       <a href="lista_empleados.php">Ver detalles</a>
     </div>
+
+    <div class="card">
+      <h2>💰 Prestamos Empleados</h2>
+      <p>Consulte el listado  de empleados con prestamos en el sistema.</p>
+      <a href="lista_empleadosDeuda.php">Ver detalles</a>
+    </div>
+    
   </section>
 </main>
 
