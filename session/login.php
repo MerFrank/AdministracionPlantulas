@@ -79,9 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $operador = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if (!$operador) {
-                    $error = 'Usuario no encontrado.';
+                    $error = 'Credenciales Incorrectas.';
                 } elseif (!password_verify($contrasena, $operador['Contrasena_Hash'])) {
-                    $error = 'Contraseña incorrecta.';
+                    $error = 'Credenciales Incorrectas.';
                 } else {
 
                     // ==========================
@@ -147,6 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             height: 100vh;
             background: linear-gradient(135deg, #e8f5e9, #a5d6a7);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
@@ -192,6 +193,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 15px;
             font-size: 0.9rem;
         }
+        
+        footer {
+           text-align: center;
+           padding: 20px;
+        }
+
     </style>
 </head>
 
@@ -219,7 +226,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </button>
 
     </form>
+    
+    <footer class="text-center mt-4">
+    <p>&copy; <?php echo date('Y'); ?> PLANTAS AGRODEX. Todos los derechos reservados.</p>
+    <p>Prohibido cualquier acceso no autorizado</p>
+    </footer>
 
 </body>
+
 
 </html>
