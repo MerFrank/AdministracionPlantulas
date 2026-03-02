@@ -70,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       throw new Exception("Ingrese un monto válido");
     }
 
+    if (empty($_POST['id_cuenta'])) {
+      throw new Exception("Seleccione una cuenta bancaria");
+    }
+
     $empleadoSelect = $_POST['id_empleado'];
     $empleado = array_filter($lista_empleados, fn($e) => $e['id_empleado'] == $empleadoSelect);
 
@@ -86,17 +90,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       throw new Exception("El descuento no puede ser mayor a la mitad del sueldo semanal ");
     }
 
-    if (empty($_POST['id_cuenta'])) {
-      throw new Exception("Seleccione una cuenta bancaria");
-    }
-
-
     $ID_Operador = $_SESSION['ID_Operador'] ?? 0;
     $id_cuenta = (int) $_POST['id_cuenta'];
     $montoPrestamo = (float) $_POST['monto_presta'];
     $montoDescuento = (float) $_POST['monto_descuento'];
     $comentarios = $_POST['comentarios'] ?? '';
 
+    $stmt_cuenta = $pdo->prepare("
+      SELECT saldo_actual
+      FROM cuentas_bancarias
+      WHERE id_cuenta = :id_cuenta
+    ");
+
+    $stmt_cuenta->execute([
+      ':id_cuenta' => $id_cuenta
+    ]);
+
+    $monto_cuenta = $stmt_cuenta->fetch(PDO::FETCH_ASSOC);
+
+    $saldoCuenta = (float) $monto_cuenta['saldo_actual'] ;
+
+    if ( $saldoCuenta == 0 || $montoPrestamo > $saldoCuenta ) {
+      throw new Exception("La cuenta no cuenta con saldo suficiente");
+    }
 
     $stmt = $pdo->prepare("
             INSERT INTO prestamos_empleados (
@@ -113,6 +129,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $montoDescuento,
       $comentarios,
       $ID_Operador
+    ]);
+
+    $stmt_update_cuenta = $pdo->prepare("
+      UPDATE cuentas_bancarias 
+      SET saldo_actual = saldo_actual - :monto 
+      WHERE id_cuenta = :id_cuenta
+    ");
+
+    $stmt_update_cuenta->execute([
+      ':monto' => $montoPrestamo,
+      ':id_cuenta' => $id_cuenta
     ]);
 
     $pdo->commit();
