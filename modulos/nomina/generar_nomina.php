@@ -937,6 +937,11 @@ require_once __DIR__ . '/../../includes/header.php';
                     if (hiddenTotalDescuentos) hiddenTotalDescuentos.value = totalDescuentos;
                 }
 
+                const descuentoSmall = document.getElementById(`descuento-incompletos-small-${index}`);
+                if (descuentoSmall) {
+                    descuentoSmall.textContent = `Descuento: $${totalDescuentos.toFixed(2)}`;
+                }
+
                 const totalPagarElement = document.getElementById(`total-pagar-${index}`);
                 if (totalPagarElement) {
                     totalPagarElement.textContent = `$${totalPagar.toFixed(2)}`;
