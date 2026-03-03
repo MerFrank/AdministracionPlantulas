@@ -34,7 +34,6 @@ $registrosEmpleados = [];
 function obtenerInformacionEmpleado($id_checador, $pdo)
 {
     try {
-
         $stmt = $pdo->prepare("
             SELECT 
                 e.id_empleado,
@@ -45,13 +44,19 @@ function obtenerInformacionEmpleado($id_checador, $pdo)
                 ep.dias_laborales,
                 p.nombre as puesto,
                 p.nivel_jerarquico,
-                COALESCE(SUM(ea.pago_calculado), 0) as pago_actividades
+                COALESCE(SUM(ea.pago_calculado), 0) as pago_actividades,
+                pe.montoDescuento
             FROM empleados e
             LEFT JOIN empleado_puesto ep ON e.id_empleado = ep.id_empleado AND ep.fecha_fin IS NULL
             LEFT JOIN puestos p ON ep.id_puesto = p.id_puesto
             LEFT JOIN empleado_actividades ea ON ep.id_asignacion = ea.id_asignacion
+            LEFT JOIN (
+                SELECT id_empleado, montoDescuento 
+                FROM prestamos_empleados
+                WHERE activo = 1
+            ) pe ON pe.id_empleado = e.id_empleado
             WHERE e.id_checador = ?
-            GROUP BY e.id_empleado, ep.id_asignacion
+            GROUP BY e.id_empleado, ep.id_asignacion, pe.montoDescuento
             LIMIT 1
         ");
 
@@ -179,6 +184,8 @@ function procesarArchivo()
                         
                         // Obtener días trabajados (necesario para todos)
                         $diasTrabajados = contarDiasTrabajados($data, $numeroFila, $id_checador);
+
+                        $montoDescuentoPrestamo = isset($infoEmpleado['montoDescuento']) ? floatval($infoEmpleado['montoDescuento']) : 0;
                         
                         // Verificar si es gerente por nivel jerárquico
                         $nivelJerarquico = $infoEmpleado['nivel_jerarquico'] ?? '';
@@ -204,12 +211,11 @@ function procesarArchivo()
                             // EMPLEADOS REGULARES: Con descuentos por días incompletos
 
                             $diasIncompletos = contarDiasIncompletos($data, $numeroFila);
-                            $diasIncompletos = contarDiasIncompletos($data, $numeroFila);
                             $descuentoIncompletos = $diasIncompletos * 25; // $25 por día incompleto
                             
                             $sueldoBase = $sueldoDiario * $diasTrabajados;
                             $totalActividades = $infoEmpleado['pago_actividades'] ?? 0;
-                            $totalDescuentos = $descuentoIncompletos;
+                            $totalDescuentos = $descuentoIncompletos  + $montoDescuentoPrestamo ;
                             $totalPagar = $sueldoBase + $totalActividades - $totalDescuentos;
                         }
                         
@@ -217,6 +223,7 @@ function procesarArchivo()
                         $infoEmpleado['id_checador'] = $id_checador;
                         $infoEmpleado['fila_excel'] = $numeroFila;
                         $infoEmpleado['es_gerente'] = $esGerente;
+                        $infoEmpleado['monto_descuento_prestamo'] = $montoDescuentoPrestamo;
                         
                         // DÍAS TRABAJADOS
                         $infoEmpleado['dias_trabajados'] = $diasTrabajados;
@@ -231,6 +238,7 @@ function procesarArchivo()
                         $infoEmpleado['dias_incompletos_original'] = $diasIncompletos ?? 0;
                         $infoEmpleado['descuento_incompletos'] = $descuentoIncompletos ?? 0;
                         $infoEmpleado['descuento_incompletos_original'] = $descuentoIncompletos ?? 0;
+                        $infoEmpleado['descuento_prestamo'] = $montoDescuentoPrestamo;
                         $infoEmpleado['total_descuentos'] = $totalDescuentos;
                         $infoEmpleado['total_descuentos_original'] = $totalDescuentos;
                         
@@ -550,7 +558,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <th>Actividades Extras</th>
                                     <th>Descuentos</th>
                                     <th>Sueldo Base</th>
-                                    <th>Total Descuento</th>
+                                    <th>Prestamos</th>
                                     <th>Total a Pagar</th>
                                 </tr>
                             </thead>
@@ -695,11 +703,16 @@ require_once __DIR__ . '/../../includes/header.php';
                                             $<?php echo number_format($empleado['sueldo_base'] ?? 0, 2); ?>
                                         </td>   
                                         
-                                        <!-- Total Descuento -->
-                                        <td class="fw-bold text-danger"
-                                            id="total-descuentos-<?php echo $index; ?>"
-                                            data-value="<?php echo $empleado['total_descuentos'] ?? 0; ?>">
-                                            $<?php echo number_format($empleado['total_descuentos'] ?? 0, 2); ?>
+                                        <!-- Prestamos -->
+                                        <td class="text-center">
+                                            <span class="badge bg-danger" style="font-size: 14px;" 
+                                                id="descuento-prestamo-<?php echo $index; ?>"
+                                                data-value="<?php echo $empleado['descuento_prestamo'] ?? 0; ?>">
+                                                $<?php echo number_format($empleado['descuento_prestamo'] ?? 0, 2); ?>
+                                            </span>
+                                            <input type="hidden" name="descuento_prestamo[<?php echo $index; ?>]" 
+                                                id="hidden-descuento-prestamo-<?php echo $index; ?>"
+                                                value="<?php echo $empleado['descuento_prestamo'] ?? 0; ?>">
                                         </td>
                                         
                                         <!-- Total a Pagar -->
@@ -910,9 +923,15 @@ require_once __DIR__ . '/../../includes/header.php';
                     totalActividades += parseFloat(checkbox.dataset.valor) || 0;
                 });
 
-                const totalDescuentos = diasIncompletos * precioIncompleto;
+                // Obtener descuento del préstamo (del hidden input)
+                const descuentoPrestamoInput = document.getElementById(`hidden-descuento-prestamo-${index}`);
+                const descuentoPrestamo = descuentoPrestamoInput ? parseFloat(descuentoPrestamoInput.value) || 0 : 0;
+
+                const descuentoIncompletos = diasIncompletos * precioIncompleto;
+                const totalDescuentos = descuentoIncompletos + descuentoPrestamo;
                 const totalPagar = sueldoBase + totalActividades - totalDescuentos;
 
+                // ACTUALIZAR SUELDO BASE
                 const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
                 if (sueldoBaseElement) {
                     sueldoBaseElement.textContent = `$${sueldoBase.toFixed(2)}`;
@@ -921,6 +940,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     if (hiddenSueldoBase) hiddenSueldoBase.value = sueldoBase;
                 }
 
+                // ACTUALIZAR TOTAL ACTIVIDADES
                 const totalActividadesElement = document.getElementById(`total-actividades-${index}`);
                 if (totalActividadesElement) {
                     totalActividadesElement.textContent = `Total: $${totalActividades.toFixed(2)}`;
@@ -929,6 +949,13 @@ require_once __DIR__ . '/../../includes/header.php';
                     if (hiddenTotalActividades) hiddenTotalActividades.value = totalActividades;
                 }
 
+                // ACTUALIZAR CAMPO DE DESCUENTOS POR DÍAS
+                const descuentoSmall = document.getElementById(`descuento-incompletos-small-${index}`);
+                if (descuentoSmall) {
+                    descuentoSmall.textContent = `Descuento: $${descuentoIncompletos.toFixed(2)}`;
+                }
+
+                // ACTUALIZAR TOTAL DESCUENTOS (columna grande)
                 const totalDescuentosElement = document.getElementById(`total-descuentos-${index}`);
                 if (totalDescuentosElement) {
                     totalDescuentosElement.textContent = `$${totalDescuentos.toFixed(2)}`;
@@ -937,11 +964,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     if (hiddenTotalDescuentos) hiddenTotalDescuentos.value = totalDescuentos;
                 }
 
-                const descuentoSmall = document.getElementById(`descuento-incompletos-small-${index}`);
-                if (descuentoSmall) {
-                    descuentoSmall.textContent = `Descuento: $${totalDescuentos.toFixed(2)}`;
-                }
-
+                // ACTUALIZAR TOTAL A PAGAR
                 const totalPagarElement = document.getElementById(`total-pagar-${index}`);
                 if (totalPagarElement) {
                     totalPagarElement.textContent = `$${totalPagar.toFixed(2)}`;
@@ -1246,6 +1269,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             sueldo_base: sueldoBase,
                             actividades: actividades,
                             descuentos: descuentos,
+                            descuento_prestamo: parseFloat(document.getElementById(`hidden-descuento-prestamo-${index}`)?.value || 0),
                             total_pagar: pagar
                         });
                     });
@@ -1266,6 +1290,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             <input type="hidden" name="empleados[${idx}][sueldo_base]" value="${emp.sueldo_base}">
                             <input type="hidden" name="empleados[${idx}][actividades]" value="${emp.actividades}">
                             <input type="hidden" name="empleados[${idx}][descuentos]" value="${emp.descuentos}">
+                            <input type="hidden" name="empleados[${idx}][descuento_prestamo]" value="${emp.descuento_prestamo}"> 
                             <input type="hidden" name="empleados[${idx}][total_pagar]" value="${emp.total_pagar}">
                         `;
                     });
