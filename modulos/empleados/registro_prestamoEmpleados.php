@@ -142,6 +142,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ':id_cuenta' => $id_cuenta
     ]);
 
+    $stmt_egresos = $pdo->prepare("
+            INSERT INTO egresos (
+                fecha, id_tipo_egreso, id_sucursal, id_cuenta, monto, concepto, 
+                metodo_pago, fecha_creacion
+            ) VALUE (
+                NOW(), 8, 4, ?, ?, 'Prestamo a empleado', 'Efectivo', NOW()
+              )
+        ");
+
+    $stmt_egresos->execute([
+      $id_cuenta,
+      $montoPrestamo
+    ]);
+
     $pdo->commit();
 
     $success = "Prestamo registrado correctamente. ";
