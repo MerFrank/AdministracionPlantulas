@@ -417,6 +417,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>Sueldos</th>
                                 <th>Actividades Extras</th>
                                 <th>Descuentos</th>
+                                <th>Prestamos</th>
                                 <th>Total a Pagar</th>
                                 <th>Cuenta</th>
                                 <th>Operador</th>
@@ -433,6 +434,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <td>$<?= isset($nomina['total_sueldos']) ? number_format($nomina['total_sueldos'], 2) : '0.00' ?></td>
                                         <td>$<?= isset($nomina['total_actividades_extras']) ? number_format($nomina['total_actividades_extras'], 2) : '0.00' ?></td>
                                         <td>$<?= isset($nomina['total_deducciones']) ? number_format($nomina['total_deducciones'], 2) : '0.00' ?></td>
+                                        <td>$<?= isset($nomina['total_prestamos']) ? number_format($nomina['total_prestamos'], 2) : '0.00' ?></td>
                                         <td>$<?= isset($nomina['total_a_pagar']) ? number_format($nomina['total_a_pagar'], 2) : '0.00' ?></td>
                                         <td><?= isset($nomina['nombre_cuenta']) ? htmlspecialchars($nomina['nombre_cuenta']) : 'N/A' ?></td>
                                         <td><?= isset($nomina['nombre_operador']) ? htmlspecialchars($nomina['nombre_operador']) : 'N/A' ?></td>
@@ -540,6 +542,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                     <th>Dias Trabajados</th>
                                     <th>Extras</th>
                                     <th>Descuentos</th>
+                                    <th>Pago Prestamo</th>
                                     <th>Total</th>
                                 </tr>
                             </thead>
@@ -555,6 +558,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                 <td>${det.dias_laborados ?? 0}</td>
                                 <td>$${Number(det.actividades_extras ?? 0).toFixed(2)}</td>
                                 <td>$${Number(det.deducciones ?? 0).toFixed(2)}</td>
+                                <td>$${Number(det.prestamo_descuento ?? 0).toFixed(2)}</td>
                                 <td>$${Number(det.total_pagar ?? 0).toFixed(2)}</td>
                             </tr>
                         `;
