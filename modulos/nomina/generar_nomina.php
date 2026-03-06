@@ -1239,146 +1239,196 @@ require_once __DIR__ . '/../../includes/header.php';
                 }); 
             });
 
-            // Configurar el formulario de guardar nómina (EL IMPORTANTE)
+            // Configurar el formulario de guardar nómina 
             const formGuardarNomina = document.getElementById('formGuardarNomina');
+
             if (formGuardarNomina) {
                 formGuardarNomina.addEventListener('submit', function (e) {
-                    e.preventDefault(); // IMPORTANTE: Prevenir envío hasta preparar datos
+                    e.preventDefault();
                     
                     console.log("Preparando datos para guardar nómina...");
                     
-                    const container = document.getElementById('campos-ocultos-container');
-                    if (!container) {
-                        console.error("No se encontró el contenedor de campos ocultos");
+                    // Obtener el total a pagar antes de procesar
+                    const totalPagarElement = document.getElementById('total-general-total-pagar');
+                    if (!totalPagarElement) {
+                        alert("Error: No se pudo calcular el total a pagar");
                         return;
                     }
                     
-                    container.innerHTML = '';
-
-                    let totalSueldos = 0;
-                    let totalActividades = 0;
-                    let totalDeducciones = 0;
-                    let totalPagar = 0;
-                    let empleadosPagados = 0;
-                    let empleadosArray = [];
-
-                    // Recorrer todos los empleados usando los índices de los inputs
-                    const diasInputs = document.querySelectorAll('.dias-input');
+                    // Extraer el valor numérico del total a pagar (quitar $ y comas)
+                    const totalPagarTexto = totalPagarElement.textContent;
+                    const totalPagar = parseFloat(totalPagarTexto.replace(/[$,]/g, '')) || 0;
                     
-                    diasInputs.forEach(input => {
-                        const index = input.dataset.index;
-                        
-                        // Obtener ID del empleado
-                        const idEmpleadoInput = document.getElementById(`id-empleado-${index}`);
-                        if (!idEmpleadoInput) {
-                            console.error(`No se encontró id-empleado-${index}`);
-                            return;
-                        }
-                        
-                        const idEmpleado = idEmpleadoInput.value;
-                        const dias = input.value;
-
-                        // Obtener valores calculados
-                        const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
-                        const actividadesElement = document.getElementById(`total-actividades-${index}`);
-                        const descuentosElement = document.getElementById(`total-descuentos-${index}`);
-                        const pagarElement = document.getElementById(`total-pagar-${index}`);
-
-                        const sueldoBase = sueldoBaseElement ? parseFloat(sueldoBaseElement.dataset.value || 0) : 0;
-                        const actividades = actividadesElement ? parseFloat(actividadesElement.dataset.value || 0) : 0;
-                        const descuentos = descuentosElement ? parseFloat(descuentosElement.dataset.value || 0) : 0;
-                        const pagar = pagarElement ? parseFloat(pagarElement.dataset.value || 0) : 0;
-
-                        // Acumular totales
-                        totalSueldos += sueldoBase;
-                        totalActividades += actividades;
-                        totalDeducciones += descuentos;
-                        totalPagar += pagar;
-                        empleadosPagados++;
-
-                        // Agregar empleado al array
-                        empleadosArray.push({
-                            id_empleado: idEmpleado,
-                            dias: dias,
-                            sueldo_base: sueldoBase,
-                            actividades: actividades,
-                            descuentos: descuentos,
-                            descuento_prestamo: parseFloat(document.getElementById(`hidden-descuento-prestamo-${index}`)?.value || 0),
-                            total_pagar: pagar
-                        });
-                    });
-
-                    // Validar que hay empleados
-                    if (empleadosArray.length === 0) {
-                        alert("No hay empleados para guardar");
-                        return;
-                    }
-
-                    console.log(`Preparando ${empleadosArray.length} empleados para guardar`);
-
-                    // Crear inputs ocultos para el array de empleados
-                    empleadosArray.forEach((emp, idx) => {
-                        container.innerHTML += `
-                            <input type="hidden" name="empleados[${idx}][id_empleado]" value="${emp.id_empleado}">
-                            <input type="hidden" name="empleados[${idx}][dias]" value="${emp.dias}">
-                            <input type="hidden" name="empleados[${idx}][sueldo_base]" value="${emp.sueldo_base}">
-                            <input type="hidden" name="empleados[${idx}][actividades]" value="${emp.actividades}">
-                            <input type="hidden" name="empleados[${idx}][descuentos]" value="${emp.descuentos}">
-                            <input type="hidden" name="empleados[${idx}][descuento_prestamo]" value="${emp.descuento_prestamo}"> 
-                            <input type="hidden" name="empleados[${idx}][total_pagar]" value="${emp.total_pagar}">
-                        `;
-                    });
-
-                    // Totales generales
-                    container.innerHTML += `
-                        <input type="hidden" name="total_sueldos" value="${totalSueldos.toFixed(2)}">
-                        <input type="hidden" name="total_actividades" value="${totalActividades.toFixed(2)}">
-                        <input type="hidden" name="total_deducciones" value="${totalDeducciones.toFixed(2)}">
-                        <input type="hidden" name="total_pagar" value="${totalPagar.toFixed(2)}">
-                        <input type="hidden" name="empleados_pagados" value="${empleadosPagados}">
-                    `;
-
-                    // Obtener fechas del formulario
-                    const fechaInicio = document.getElementById('fecha_inicio').value;
-                    const fechaFin = document.getElementById('fecha_fin').value;
+                    // Obtener ID de la cuenta seleccionada
                     const idCuenta = document.getElementById('id_cuenta').value;
-
-                    // Convertir fechas de DD/MM/AAAA a AAAA-MM-DD
-                    function convertirFecha(fechaStr) {
-                        const partes = fechaStr.split('/');
-                        if (partes.length === 3) {
-                            return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-                        }
-                        return fechaStr;
+                    if (!idCuenta) {
+                        alert("Por favor selecciona una cuenta bancaria");
+                        return;
                     }
-
-                    container.innerHTML += `
-                        <input type="hidden" name="fecha_inicio" value="${convertirFecha(fechaInicio)}">
-                        <input type="hidden" name="fecha_fin" value="${convertirFecha(fechaFin)}">
-                        <input type="hidden" name="id_cuenta" value="${idCuenta}">
-                    `;
-
-                    // Mostrar datos que se enviarán (para debug)
-                    console.log("Datos a enviar:", {
-                        empleados: empleadosArray,
-                        totales: {
-                            sueldos: totalSueldos,
-                            actividades: totalActividades,
-                            deducciones: totalDeducciones,
-                            pagar: totalPagar
+                    
+                    // Mostrar indicador de carga
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando saldo...';
+                    submitBtn.disabled = true;
+                    
+                    // Hacer petición AJAX para verificar saldo
+                    fetch('verificar_saldo_cuenta.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        fechas: {
-                            inicio: convertirFecha(fechaInicio),
-                            fin: convertirFecha(fechaFin)
-                        },
-                        cuenta: idCuenta
+                        body: 'id_cuenta=' + encodeURIComponent(idCuenta) + '&monto_requerido=' + encodeURIComponent(totalPagar)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Saldo suficiente, proceder con el guardado
+                            console.log("Saldo verificado correctamente. Continuando con el guardado...");
+                            
+                            const container = document.getElementById('campos-ocultos-container');
+                            if (!container) {
+                                console.error("No se encontró el contenedor de campos ocultos");
+                                submitBtn.innerHTML = originalBtnText;
+                                submitBtn.disabled = false;
+                                return;
+                            }
+                            
+                            container.innerHTML = '';
+
+                            let totalSueldos = 0;
+                            let totalActividades = 0;
+                            let totalDeducciones = 0;
+                            let totalPagarAcumulado = 0;
+                            let empleadosPagados = 0;
+                            let empleadosArray = [];
+
+                            // Recorrer todos los empleados usando los índices de los inputs
+                            const diasInputs = document.querySelectorAll('.dias-input');
+                            
+                            diasInputs.forEach(input => {
+                                const index = input.dataset.index;
+                                
+                                // Obtener ID del empleado
+                                const idEmpleadoInput = document.getElementById(`id-empleado-${index}`);
+                                if (!idEmpleadoInput) {
+                                    console.error(`No se encontró id-empleado-${index}`);
+                                    return;
+                                }
+                                
+                                const idEmpleado = idEmpleadoInput.value;
+                                const dias = input.value;
+
+                                // Obtener valores calculados
+                                const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
+                                const actividadesElement = document.getElementById(`total-actividades-${index}`);
+                                const pagarElement = document.getElementById(`total-pagar-${index}`);
+                                
+                                // Calcular descuentos
+                                const incompletosInput = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
+                                const diasIncompletos = incompletosInput ? parseInt(incompletosInput.value) || 0 : 0;
+                                const descuentoIncompletos = diasIncompletos * 25;
+                                
+                                const prestamoElement = document.getElementById(`descuento-prestamo-${index}`);
+                                const descuentoPrestamo = prestamoElement ? parseFloat(prestamoElement.dataset.value || 0) : 0;
+                                
+                                const descuentos = descuentoIncompletos + descuentoPrestamo;
+
+                                const sueldoBase = sueldoBaseElement ? parseFloat(sueldoBaseElement.dataset.value || 0) : 0;
+                                const actividades = actividadesElement ? parseFloat(actividadesElement.dataset.value || 0) : 0;
+                                const pagar = pagarElement ? parseFloat(pagarElement.dataset.value || 0) : 0;
+
+                                // Acumular totales
+                                totalSueldos += sueldoBase;
+                                totalActividades += actividades;
+                                totalDeducciones += descuentos;
+                                totalPagarAcumulado += pagar;
+                                empleadosPagados++;
+
+                                // Agregar empleado al array
+                                empleadosArray.push({
+                                    id_empleado: idEmpleado,
+                                    dias: dias,
+                                    sueldo_base: sueldoBase,
+                                    actividades: actividades,
+                                    descuentos: descuentos,
+                                    descuento_prestamo: descuentoPrestamo,
+                                    total_pagar: pagar
+                                });
+                            });
+
+                            // Validar que hay empleados
+                            if (empleadosArray.length === 0) {
+                                alert("No hay empleados para guardar");
+                                submitBtn.innerHTML = originalBtnText;
+                                submitBtn.disabled = false;
+                                return;
+                            }
+
+                            console.log(`Preparando ${empleadosArray.length} empleados para guardar`);
+
+                            // Crear inputs ocultos para el array de empleados
+                            empleadosArray.forEach((emp, idx) => {
+                                container.innerHTML += `
+                                    <input type="hidden" name="empleados[${idx}][id_empleado]" value="${emp.id_empleado}">
+                                    <input type="hidden" name="empleados[${idx}][dias]" value="${emp.dias}">
+                                    <input type="hidden" name="empleados[${idx}][sueldo_base]" value="${emp.sueldo_base}">
+                                    <input type="hidden" name="empleados[${idx}][actividades]" value="${emp.actividades}">
+                                    <input type="hidden" name="empleados[${idx}][descuentos]" value="${emp.descuentos}">
+                                    <input type="hidden" name="empleados[${idx}][descuento_prestamo]" value="${emp.descuento_prestamo}"> 
+                                    <input type="hidden" name="empleados[${idx}][total_pagar]" value="${emp.total_pagar}">
+                                `;
+                            });
+
+                            // Totales generales
+                            container.innerHTML += `
+                                <input type="hidden" name="total_sueldos" value="${totalSueldos.toFixed(2)}">
+                                <input type="hidden" name="total_actividades" value="${totalActividades.toFixed(2)}">
+                                <input type="hidden" name="total_deducciones" value="${totalDeducciones.toFixed(2)}">
+                                <input type="hidden" name="total_pagar" value="${totalPagarAcumulado.toFixed(2)}">
+                                <input type="hidden" name="empleados_pagados" value="${empleadosPagados}">
+                            `;
+
+                            // Obtener fechas del formulario
+                            const fechaInicio = document.getElementById('fecha_inicio').value;
+                            const fechaFin = document.getElementById('fecha_fin').value;
+
+                            // Convertir fechas de DD/MM/AAAA a AAAA-MM-DD
+                            function convertirFecha(fechaStr) {
+                                const partes = fechaStr.split('/');
+                                if (partes.length === 3) {
+                                    return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                                }
+                                return fechaStr;
+                            }
+
+                            container.innerHTML += `
+                                <input type="hidden" name="fecha_inicio" value="${convertirFecha(fechaInicio)}">
+                                <input type="hidden" name="fecha_fin" value="${convertirFecha(fechaFin)}">
+                                <input type="hidden" name="id_cuenta" value="${idCuenta}">
+                            `;
+                            
+                            // Restaurar el botón y enviar
+                            submitBtn.innerHTML = originalBtnText;
+                            submitBtn.disabled = false;
+                            formGuardarNomina.submit();
+                            
+                        } else {
+                            // Saldo insuficiente, mostrar error y no enviar
+                            alert(data.message || "La cuenta no tiene saldo suficiente para esta nómina");
+                            submitBtn.innerHTML = originalBtnText;
+                            submitBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("Error al verificar el saldo de la cuenta. Por favor intenta de nuevo.");
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
                     });
-
-                    // Ahora sí enviar el formulario
-                    console.log("Enviando formulario...");
-                    this.submit();
                 });
             }
+
         }
 
         // Inicializar cálculos y configurar eventos cuando el DOM esté listo
