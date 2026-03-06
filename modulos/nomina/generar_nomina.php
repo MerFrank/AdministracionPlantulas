@@ -686,14 +686,18 @@ require_once __DIR__ . '/../../includes/header.php';
                                                     <i class="fas fa-undo"></i>
                                                 </button>
                                             </div>
-                                            <!-- Total Descuentos -->
+                                            
+                                            <!-- Descuento por días incompletos -->
                                             <div class="mt-2 text-center">
                                                 <small class="fw-bold text-danger" id="descuento-incompletos-small-<?php echo $index; ?>">
-                                                    Descuento: $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
+                                                    Desc. días: $<?php echo number_format($empleado['descuento_incompletos'] ?? 0, 2); ?>
                                                 </small>
-                                                <br>
-                                                <small class="text-muted">Original: <?php echo $empleado['dias_incompletos_original'] ?? 0; ?> día(s)</small>
                                             </div>
+                                            
+                                            <!-- Información original  -->
+                                            <small class="text-muted d-block mt-1">
+                                                Días incompletos original: <?php echo $empleado['dias_incompletos_original'] ?? 0; ?>
+                                            </small>
                                         </td>
                                         
                                         <!-- Sueldo Base -->
@@ -738,6 +742,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 $totalGeneralDescuentos = 0;
                                 $totalGeneralSueldoBase = 0;
                                 $totalGeneralTotalPagar = 0;
+                                $totalGeneralPrestamos = 0;
 
                                 foreach ($registrosEmpleados as $empleado) {
                                     $totalGeneralDiasTrabajados += $empleado['dias_trabajados'] ?? 0;
@@ -745,6 +750,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     $totalGeneralDescuentos += $empleado['total_descuentos'] ?? 0;
                                     $totalGeneralSueldoBase += $empleado['sueldo_base'] ?? 0;
                                     $totalGeneralTotalPagar += $empleado['total_pagar'] ?? 0;
+                                    $totalGeneralPrestamos += $empleado['descuento_prestamo'] ?? 0;
                                 }
                                 ?>
                                 <tr class="table-secondary fw-bold" style="background-color: #f8f9fa !important;">
@@ -753,7 +759,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <td class="text-success" id="total-general-actividades">$<?php echo number_format($totalGeneralActividades, 2); ?></td>
                                     <td class="text-danger" id="total-general-descuentos">$<?php echo number_format($totalGeneralDescuentos, 2); ?></td>
                                     <td class="text-primary" id="total-general-sueldo-base">$<?php echo number_format($totalGeneralSueldoBase, 2); ?></td>
-                                    <td class="text-danger" id="total-general-descuentos-2">$<?php echo number_format($totalGeneralDescuentos, 2); ?></td>
+                                    <td class="text-danger" id="total-general-prestamos">$<?php echo number_format($totalGeneralPrestamos, 2); ?></td>  
                                     <td class="text-success" style="background-color: #d4edda !important;" id="total-general-total-pagar">
                                         $<?php echo number_format($totalGeneralTotalPagar, 2); ?>
                                     </td>
@@ -825,6 +831,14 @@ require_once __DIR__ . '/../../includes/header.php';
                                         id="resumen-actividades">$<?php echo number_format($totalGeneralActividades, 2); ?></span>
                                 </div>
                                 <div style="font-size: 14px; color: #555;">Actividades</div>
+                            </div>
+                            <!-- Total Préstamos -->
+                            <div
+                                style="text-align: center; padding: 15px; background: #fff3e0; border-radius: 5px; border: 2px solid #e65100;">
+                                <div style="font-size: 24px; font-weight: bold; color: #e65100;">$<span
+                                        id="resumen-prestamos"><?php echo number_format($totalGeneralPrestamos, 2); ?></span>
+                                </div>
+                                <div style="font-size: 14px; color: #555;">Préstamos</div>
                             </div>
                             <!-- Total Descuentos -->
                             <div
@@ -958,7 +972,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 // ACTUALIZAR TOTAL DESCUENTOS (columna grande)
                 const totalDescuentosElement = document.getElementById(`total-descuentos-${index}`);
                 if (totalDescuentosElement) {
-                    totalDescuentosElement.textContent = `$${totalDescuentos.toFixed(2)}`;
+                    totalDescuentosElement.textContent = `TOTAL DESC: $${totalDescuentos.toFixed(2)}`;
                     totalDescuentosElement.dataset.value = totalDescuentos;
                     const hiddenTotalDescuentos = document.getElementById(`hidden-total-descuentos-${index}`);
                     if (hiddenTotalDescuentos) hiddenTotalDescuentos.value = totalDescuentos;
@@ -1057,11 +1071,11 @@ require_once __DIR__ . '/../../includes/header.php';
             const actEl = document.getElementById('total-general-actividades');
             const descEl = document.getElementById('total-general-descuentos');
             const sueldoEl = document.getElementById('total-general-sueldo-base');
-            const desc2El = document.getElementById('total-general-descuentos-2');
+            const prestamosEl = document.getElementById('total-general-prestamos');
             const pagarEl = document.getElementById('total-general-total-pagar');
 
             // Si la fila no existe, salir sin romper nada
-            if (!diasEl || !actEl || !descEl || !sueldoEl || !desc2El || !pagarEl) {
+            if (!diasEl || !actEl || !descEl || !sueldoEl || !prestamosEl || !pagarEl) {
                 return;
             }
 
@@ -1069,6 +1083,7 @@ require_once __DIR__ . '/../../includes/header.php';
             let totalActividades = 0;
             let totalDescuentos = 0;
             let totalSueldoBase = 0;
+            let totalPrestamos = 0;
             let totalPagar = 0;
 
             document.querySelectorAll('.dias-input').forEach(input => {
@@ -1078,21 +1093,26 @@ require_once __DIR__ . '/../../includes/header.php';
 
                 const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
                 const actividadesElement = document.getElementById(`total-actividades-${index}`);
-                const descuentosElement = document.getElementById(`total-descuentos-${index}`);
+                const prestamoElement = document.getElementById(`descuento-prestamo-${index}`);
+                const descuentosElement = document.getElementById(`total-descuentos-${index}`); // ← CORREGIDO: Obtener elemento de descuentos
                 const pagarElement = document.getElementById(`total-pagar-${index}`);
 
                 totalSueldoBase += sueldoBaseElement ? parseFloat(sueldoBaseElement.dataset.value || 0) : 0;
                 totalActividades += actividadesElement ? parseFloat(actividadesElement.dataset.value || 0) : 0;
+                totalPrestamos += prestamoElement ? parseFloat(prestamoElement.dataset.value || 0) : 0;
+                
                 totalDescuentos += descuentosElement ? parseFloat(descuentosElement.dataset.value || 0) : 0;
+                
                 totalPagar += pagarElement ? parseFloat(pagarElement.dataset.value || 0) : 0;
             });
 
             diasEl.textContent = `${totalDias} días`;
             actEl.textContent = `$${totalActividades.toFixed(2)}`;
-            descEl.textContent = `$${totalDescuentos.toFixed(2)}`;
+            descEl.textContent = `$${totalDescuentos.toFixed(2)}`; // ← Ahora muestra el total correcto
             sueldoEl.textContent = `$${totalSueldoBase.toFixed(2)}`;
-            desc2El.textContent = `$${totalDescuentos.toFixed(2)}`;
+            prestamosEl.textContent = `$${totalPrestamos.toFixed(2)}`;
             pagarEl.textContent = `$${totalPagar.toFixed(2)}`;
+            
             actualizarResumenGuardar();
         }
 
@@ -1100,23 +1120,27 @@ require_once __DIR__ . '/../../includes/header.php';
         function actualizarResumenGuardar() {
             const resumenSueldos = document.getElementById('resumen-sueldos');
             const resumenActividades = document.getElementById('resumen-actividades');
+            const resumenPrestamos = document.getElementById('resumen-prestamos'); // NUEVO
             const resumenDeducciones = document.getElementById('resumen-deducciones');
             const resumenTotal = document.getElementById('resumen-total');
             
-            if (resumenSueldos && resumenActividades && resumenDeducciones && resumenTotal) {
+            if (resumenSueldos && resumenActividades && resumenPrestamos && resumenDeducciones && resumenTotal) {
                 const sueldoBaseEl = document.getElementById('total-general-sueldo-base');
                 const actividadesEl = document.getElementById('total-general-actividades');
+                const prestamosEl = document.getElementById('total-general-prestamos'); // NUEVO
                 const descuentosEl = document.getElementById('total-general-descuentos');
                 const totalPagarEl = document.getElementById('total-general-total-pagar');
                 
-                if (sueldoBaseEl && actividadesEl && descuentosEl && totalPagarEl) {
+                if (sueldoBaseEl && actividadesEl && prestamosEl && descuentosEl && totalPagarEl) {
                     const sueldoBase = obtenerValorMoneda(sueldoBaseEl);
                     const actividades = obtenerValorMoneda(actividadesEl);
+                    const prestamos = obtenerValorMoneda(prestamosEl); // NUEVO
                     const descuentos = obtenerValorMoneda(descuentosEl);
                     const totalPagar = obtenerValorMoneda(totalPagarEl);
                     
                     resumenSueldos.textContent = sueldoBase.toFixed(2);
                     resumenActividades.textContent = actividades.toFixed(2);
+                    resumenPrestamos.textContent = prestamos.toFixed(2); // NUEVO
                     resumenDeducciones.textContent = descuentos.toFixed(2);
                     resumenTotal.textContent = totalPagar.toFixed(2);
                 }
