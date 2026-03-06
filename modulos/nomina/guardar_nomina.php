@@ -20,7 +20,6 @@ try {
     die("Error de conexión a la base de datos: " . $e->getMessage());
 }
 
-//  USAR LA MISMA VARIABLE EN TODO EL ARCHIVO
 $idOperador = $_SESSION['ID_Operador'] ?? 0;
 
 if ($idOperador == 0) {
@@ -30,19 +29,18 @@ if ($idOperador == 0) {
 }
 
 try {
-
     $camposRequeridos = [
-            'empleados',
-            'total_sueldos',
-            'total_pagar',
-            'id_cuenta',
-            'fecha_inicio',
-            'fecha_fin',
-            'total_actividades',
-            'total_deducciones',
-            'empleados_pagados'
-        ];
-        
+        'empleados',
+        'total_sueldos',
+        'total_pagar',
+        'id_cuenta',
+        'fecha_inicio',
+        'fecha_fin',
+        'total_actividades',
+        'total_deducciones',
+        'empleados_pagados'
+    ];
+    
     $camposFaltantes = [];
     foreach ($camposRequeridos as $campo) {
         if (!isset($_POST[$campo]) || (empty($_POST[$campo]) && $_POST[$campo] !== '0')) {
@@ -71,7 +69,13 @@ try {
     $empleadosPagados = $_POST['empleados_pagados'];
     $idCuenta = $_POST['id_cuenta'];
 
-    // ================= INSERT nomina =================
+    // Calcular total de préstamos de todos los empleados
+    $totalPrestamos = 0;
+    foreach ($empleados as $emp) {
+        $totalPrestamos += isset($emp['descuento_prestamo']) ? floatval($emp['descuento_prestamo']) : 0;
+    }
+
+    // ================= INSERT nomina_general con total_prestamos =================
     $sqlGeneral = "
         INSERT INTO nomina_general (
             fecha_inicio,
@@ -80,11 +84,12 @@ try {
             total_sueldos,
             total_actividades_extras,
             total_deducciones,
+            total_prestamos,
             total_a_pagar,
             id_cuenta,
             id_operador,
             fecha_registro
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ";
 
     $stmtGeneral = $pdo->prepare($sqlGeneral);
@@ -95,6 +100,7 @@ try {
         $totalSueldos,
         $totalActividades,
         $totalDeducciones,
+        $totalPrestamos,
         $totalPagar,
         $idCuenta,
         $idOperador
@@ -102,7 +108,7 @@ try {
 
     $idNominaGeneral = $pdo->lastInsertId();
 
-    // ================= INSERT detalles =================
+    // ================= INSERT nomina_detalle con prestamo_descuento =================
     $sqlDetalle = "
         INSERT INTO nomina_detalle (
             id_nomina_general,
@@ -111,15 +117,19 @@ try {
             sueldo_base,
             actividades_extras,
             deducciones,
+            prestamo_descuento,
             total_pagar,
             id_operador,
             fecha_registro
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ";
 
     $stmtDetalle = $pdo->prepare($sqlDetalle);
 
     foreach ($empleados as $emp) {
+        // Asegurar que descuento_prestamo existe y es numérico
+        $prestamoDescuento = isset($emp['descuento_prestamo']) ? floatval($emp['descuento_prestamo']) : 0;
+        
         $stmtDetalle->execute([
             $idNominaGeneral,
             $emp['id_empleado'],
@@ -127,6 +137,7 @@ try {
             $emp['sueldo_base'],
             $emp['actividades'],
             $emp['descuentos'],
+            $prestamoDescuento,
             $emp['total_pagar'],
             $idOperador
         ]);
@@ -138,10 +149,10 @@ try {
     exit;
 
 } catch (Exception $e) {
-
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-
+    
     echo "Error al guardar la nómina: " . $e->getMessage();
 }
+?>
