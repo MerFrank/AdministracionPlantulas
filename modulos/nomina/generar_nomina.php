@@ -1094,14 +1094,24 @@ require_once __DIR__ . '/../../includes/header.php';
                 const sueldoBaseElement = document.getElementById(`sueldo-base-${index}`);
                 const actividadesElement = document.getElementById(`total-actividades-${index}`);
                 const prestamoElement = document.getElementById(`descuento-prestamo-${index}`);
-                const descuentosElement = document.getElementById(`total-descuentos-${index}`); // ← CORREGIDO: Obtener elemento de descuentos
                 const pagarElement = document.getElementById(`total-pagar-${index}`);
+                
+                // Calcular descuento por días incompletos (desde el input)
+                const incompletosInput = document.querySelector(`.dias-incompletos-input[data-index="${index}"]`);
+                const diasIncompletos = incompletosInput ? parseInt(incompletosInput.value) || 0 : 0;
+                const descuentoIncompletos = diasIncompletos * 25; // $25 por día
+                
+                // Obtener descuento de préstamo
+                const descuentoPrestamo = prestamoElement ? parseFloat(prestamoElement.dataset.value || 0) : 0;
+                
+                // Total descuentos 
+                const totalDescuentosEmpleado = descuentoIncompletos ;
 
                 totalSueldoBase += sueldoBaseElement ? parseFloat(sueldoBaseElement.dataset.value || 0) : 0;
                 totalActividades += actividadesElement ? parseFloat(actividadesElement.dataset.value || 0) : 0;
-                totalPrestamos += prestamoElement ? parseFloat(prestamoElement.dataset.value || 0) : 0;
+                totalPrestamos += descuentoPrestamo;
                 
-                totalDescuentos += descuentosElement ? parseFloat(descuentosElement.dataset.value || 0) : 0;
+                totalDescuentos += totalDescuentosEmpleado;
                 
                 totalPagar += pagarElement ? parseFloat(pagarElement.dataset.value || 0) : 0;
             });
