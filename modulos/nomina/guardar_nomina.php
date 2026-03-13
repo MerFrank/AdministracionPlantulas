@@ -166,6 +166,33 @@ try {
       $totalPagar
     ]);
 
+   $stmt_ingresos = $pdo->prepare("
+    INSERT INTO ingresos (
+        monto, 
+        fecha, 
+        metodo_pago, 
+        observaciones, 
+        id_operador, 
+        id_cuenta
+    )
+    VALUES (
+        ?,       
+        NOW(),
+        ?,
+        ?,
+        ?,
+        ? 
+    ) 
+");
+
+$stmt_ingresos->execute([
+    $totalPrestamos,
+    'Transferencia',
+    'Pago prestamo a empleados',
+    $idOperador,
+    $idCuenta
+]);
+
     $pdo->commit();
 
     header("Location: generar_nomina.php?guardado=ok");
@@ -177,5 +204,6 @@ try {
     }
     
     echo "Error al guardar la nómina: " . $e->getMessage();
+    $success = "Prestamo registrado correctamente. ";
 }
 ?>
