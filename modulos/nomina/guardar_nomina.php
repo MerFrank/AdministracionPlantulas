@@ -152,6 +152,20 @@ try {
       ':id_cuenta' => $idCuenta
     ]);
 
+    $stmt_egresos = $pdo->prepare("
+        INSERT INTO egresos (
+            fecha, id_tipo_egreso, id_sucursal, id_cuenta, monto, concepto, 
+            metodo_pago, fecha_creacion
+        ) VALUE (
+            NOW(), 6, 4, ?, ?, 'Pago Nomina', 'Efectivo', NOW()
+            )
+    ");
+
+    $stmt_egresos->execute([
+      $idCuenta,
+      $totalPagar
+    ]);
+
     $pdo->commit();
 
     header("Location: generar_nomina.php?guardado=ok");
