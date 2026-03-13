@@ -75,7 +75,6 @@ try {
         $totalPrestamos += isset($emp['descuento_prestamo']) ? floatval($emp['descuento_prestamo']) : 0;
     }
 
-    // ================= INSERT nomina_general con total_prestamos =================
     $sqlGeneral = "
         INSERT INTO nomina_general (
             fecha_inicio,
@@ -108,7 +107,6 @@ try {
 
     $idNominaGeneral = $pdo->lastInsertId();
 
-    // ================= INSERT nomina_detalle con prestamo_descuento =================
     $sqlDetalle = "
         INSERT INTO nomina_detalle (
             id_nomina_general,
@@ -142,6 +140,17 @@ try {
             $idOperador
         ]);
     }
+
+    $stmt_update_cuenta = $pdo->prepare("
+      UPDATE cuentas_bancarias 
+      SET saldo_actual = saldo_actual - :monto 
+      WHERE id_cuenta = :id_cuenta
+    ");
+
+    $stmt_update_cuenta->execute([
+      ':monto' => $totalPagar,
+      ':id_cuenta' => $idCuenta
+    ]);
 
     $pdo->commit();
 
