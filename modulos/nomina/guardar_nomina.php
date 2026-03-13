@@ -167,31 +167,43 @@ try {
     ]);
 
    $stmt_ingresos = $pdo->prepare("
-    INSERT INTO ingresos (
-        monto, 
-        fecha, 
-        metodo_pago, 
-        observaciones, 
-        id_operador, 
-        id_cuenta
-    )
-    VALUES (
-        ?,       
-        NOW(),
-        ?,
-        ?,
-        ?,
-        ? 
-    ) 
-");
+        INSERT INTO ingresos (
+            monto, 
+            fecha, 
+            metodo_pago, 
+            observaciones, 
+            id_operador, 
+            id_cuenta
+        )
+        VALUES (
+            ?,       
+            NOW(),
+            ?,
+            ?,
+            ?,
+            ? 
+        ) 
+    ");
 
-$stmt_ingresos->execute([
-    $totalPrestamos,
-    'Transferencia',
-    'Pago prestamo a empleados',
-    $idOperador,
-    $idCuenta
-]);
+    $stmt_ingresos->execute([
+        $totalPrestamos,
+        'Transferencia',
+        'Pago prestamo a empleados',
+        $idOperador,
+        $idCuenta
+    ]);
+
+
+    $stmt_update_cuenta = $pdo->prepare("
+        UPDATE cuentas_bancarias 
+        SET saldo_actual = saldo_actual + :monto 
+        WHERE id_cuenta = :id_cuenta
+        ");
+
+        $stmt_update_cuenta->execute([
+        ':monto' => $totalPrestamos,
+        ':id_cuenta' => $idCuenta
+        ]);
 
     $pdo->commit();
 
