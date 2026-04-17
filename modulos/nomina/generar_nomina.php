@@ -371,7 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_dias'])) {
             if (isset($registrosEmpleados[$index])) {
                 $dias = intval($dias);
                 $original = $registrosEmpleados[$index]['dias_original'] ?? 0;
-                if ($dias >= $original && $dias <= 7) {
+                if ($dias >= 0 && $dias <= 7) {
                     $registrosEmpleados[$index]['dias_trabajados'] = $dias;
                     $sueldoDiario = $registrosEmpleados[$index]['sueldo_diario'] ?? 0;
                     $registrosEmpleados[$index]['sueldo_base'] = $sueldoDiario * $dias;
@@ -599,7 +599,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                                 <input type="number" 
                                                     name="dias_trabajados[<?php echo $index; ?>]" 
                                                     value="<?php echo $diasTrabajados; ?>"
-                                                    min="<?php echo $diasOriginal; ?>" 
+                                                    min="0" 
                                                     max="7"
                                                     class="form-control form-control-sm text-center dias-input"
                                                     data-index="<?php echo $index; ?>"
@@ -1170,7 +1170,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     const original = parseInt(this.dataset.original);
                     const value = parseInt(this.value) || original;
 
-                    if (value < original) {
+                    if (value < 0) {
                         this.value = original;
                         showTempMessage('No se puede reducir los días del valor original', 'warning');
                     }
