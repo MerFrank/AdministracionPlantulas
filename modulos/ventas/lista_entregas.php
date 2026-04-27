@@ -1,6 +1,6 @@
 <?php
 require_once(__DIR__ . '/../../includes/validacion_session.php');
-require_once __DIR__ . '/../../includes/config.php';
+require_once (__DIR__ . '/../../includes/config.php');
 // Habilitar reporte de errores
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -35,7 +35,7 @@ $entregas = $pdo->query("
     ORDER BY np.fechaPedido DESC
 ")->fetchAll();
 
-$titulo = 'Registro de Pedidos';
+$titulo = 'Lista de Pedidos';
 $encabezado = 'Reportes entregas de pedidos';
 $ruta = "vista_pedidos.php";
 $texto_boton = "Regresar";
@@ -44,6 +44,30 @@ require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <style>
+    /* Contenedor con scroll */
+    .table-scroll-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        margin-top: 20px;
+        position: relative;
+    }
+    
+    /* Cabecera fija */
+    .table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .table thead th {
+        background-color: #45814d;
+        position: sticky;
+        top: 0;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        white-space: nowrap;
+    }
     
     /* Badges de estado */
     .badge-estado {
@@ -93,11 +117,65 @@ require_once __DIR__ . '/../../includes/header.php';
         cursor: help;
         border-bottom: 1px dashed #ccc;
     }
+    
+    /* Estilos para exportación */
+    .btn-excel {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-bottom: 20px;
+        transition: background-color 0.3s;
+    }
+    
+    .btn-excel:hover {
+        background-color: #1e7e34;
+    }
+    
+    .btn-excel i {
+        margin-right: 5px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    /* Scrollbar personalizado */
+    .table-scroll-container::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 5px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
 </style>
 
 <main class="container py-4">
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
+    <!-- Botones de acción -->
+    <div class="action-buttons">
+        <button class="btn-excel" onclick="exportToExcel()">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </button>
+    </div>
+    
+    <!-- Contenedor con scroll -->
+    <div class="table-scroll-container">
+        <table class="table table-striped table-hover" id="tablaPedidos">
             <thead>
                 <tr>
                     <th>Folio</th>
@@ -112,12 +190,12 @@ require_once __DIR__ . '/../../includes/header.php';
                     <th>Fecha Pedido</th>
                     <th>Fecha Entrega</th>
                     <th>Fecha Entrega Real</th>
+                    <th>Días de Atraso</th>
                     <th>Fecha Validez</th>
                 </tr>
             </thead>
             <tbody>
-                <?php 
-                foreach ($entregas as $entrega): ?>
+                <?php foreach ($entregas as $entrega): ?>
                     <tr>
                         <td><?= htmlspecialchars($entrega['folio']) ?></td>
                         <td><?= htmlspecialchars($entrega['nombre_Cliente']) ?></td>
@@ -151,16 +229,7 @@ require_once __DIR__ . '/../../includes/header.php';
                             $entrega_real = $entrega['fecha_entrega_Real'];
                             if($entrega_real && strtotime($entrega_real) > strtotime($entrega['fecha_entrega'])):
                             ?>
-                                <div>
-                                    <span class="fecha-atrasada"><?= date('d/m/Y', strtotime($entrega_real)) ?></span>
-                                    <span class="texto-atraso">
-                                        <i class="fas fa-exclamation-triangle"></i> 
-                                        <?php 
-                                        $dias_atraso = (strtotime($entrega_real) - strtotime($entrega['fecha_entrega'])) / (60 * 60 * 24);
-                                        echo $dias_atraso . ' días';
-                                        ?>
-                                    </span>
-                                </div>
+                                <span class="fecha-atrasada"><?= date('d/m/Y', strtotime($entrega_real)) ?></span>
                             <?php elseif($entrega_real): ?>
                                 <span class="fecha-normal">
                                     <i class="fas fa-check-circle"></i> 
@@ -171,7 +240,23 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <i class="fas fa-clock"></i> Pendiente
                                 </span>
                             <?php endif; ?>
-                            </td>
+                        </td>
+                        <td>
+                            <?php 
+                            // Calcular días de atraso como número entero
+                            if($entrega_real && strtotime($entrega_real) > strtotime($entrega['fecha_entrega'])):
+                                $dias_atraso = floor((strtotime($entrega_real) - strtotime($entrega['fecha_entrega'])) / (60 * 60 * 24));
+                            ?>
+                                <span class="texto-atraso">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    <?= $dias_atraso ?> días
+                                </span>
+                            <?php elseif($entrega_real): ?>
+                                <span class="text-muted">0 días</span>
+                            <?php else: ?>
+                                <span class="text-muted">-</span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php 
                             $validez = $entrega['fecha_validez'];
@@ -187,13 +272,24 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <?= date('d/m/Y', strtotime($validez)) ?>
                                 </span>
                             <?php endif; ?>
-                            </td>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 </main>
+
+<script>
+function exportToExcel() {
+    const table = document.getElementById('tablaPedidos');
+    const wb = XLSX.utils.table_to_book(table, {sheet: "Pedidos"});
+    XLSX.writeFile(wb, `Reporte_Pedidos_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+</script>
+
+<!-- Incluir SheetJS para exportación a Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
 <?php 
 require_once __DIR__ . '/../../includes/footer.php';

@@ -202,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 subtotal, total, saldo_pendiente, estado, observaciones,
                 num_pagare, fecha_validez, fecha_entrega, lugar_pago, id_cuenta, num_remision, ID_Operador
             ) VALUES (:folio, NOW(), :id_cliente, :tipo_pago, :metodo_Pago, :subtotal, :total, :saldo_pendiente, :estado, :observaciones,
-                      :num_pagare, DATE_ADD(NOW(), INTERVAL 30 DAY), :fecha_entrega, 'Oficinas centrales', :id_cuenta, :num_remision, :ID_Operador)
+                      :num_pagare, DATE_ADD(:fecha_entrega, INTERVAL 90 DAY), :fecha_entrega, 'Oficinas centrales', :id_cuenta, :num_remision, :ID_Operador)
         ");
 
         // id_cuenta puede venir del formulario si existe; usar null si no

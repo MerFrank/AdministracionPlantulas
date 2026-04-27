@@ -33,7 +33,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         </div>
                         <h3 class="h5">Registrar entrega de pedidos</h3>
                         <p class="text-muted">Manten el registro de las fechas de registros de los pedidos</p>
-                        <a href="venta_desde_cotizacion.php" class="btn btn-info stretched-link">
+                        <a href="registro_entregas.php" class="btn btn-info stretched-link">
                             <i class="bi me-1"></i> Acceder
                         </a>
                     </div>

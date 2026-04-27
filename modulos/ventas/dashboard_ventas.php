@@ -227,6 +227,21 @@ $ultimas_ventas = $con->query("
                             <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
                                 <i class="bi bi-file-earmark-text text-info fs-1"></i>
                             </div>
+                            <h3 class="h5">Entregas</h3>
+                            <p class="text-muted">Revisa entrega de plantas y crea reportes</p>
+                            <a href="vista_pedidos.php" class="btn btn-info stretched-link">
+                                <i class="bi bi-file-earmark-text me-1"></i> Usar Cotización
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+                                <i class="bi bi-currency-dollar text-success fs-1"></i>
+                            </div>
                             <h3 class="h5">Desde Cotización</h3>
                             <p class="text-muted">Crear venta desde una cotización existente</p>
                             <a href="venta_desde_cotizacion.php" class="btn btn-info stretched-link">
