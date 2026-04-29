@@ -230,7 +230,7 @@ $ultimas_ventas = $con->query("
                             <h3 class="h5">Entregas</h3>
                             <p class="text-muted">Revisa entrega de plantas y crea reportes</p>
                             <a href="vista_pedidos.php" class="btn btn-info stretched-link">
-                                <i class="bi bi-file-earmark-text me-1"></i> Usar Cotización
+                                <i class="bi bi-file-earmark-text me-1"></i> Consulta Entregas
                             </a>
                         </div>
                     </div>
