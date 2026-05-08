@@ -63,8 +63,8 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <section class="dashboard-grid mb-5">
 
-    <!-- Tarjeta de Entregas (ancho completo arriba) -->
-    <div class="dashboard-card-full">
+    <!-- Tarjeta de Entregas -->
+    <div style="grid-column: 1 / -1;">
         <div class="card shadow h-100">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
@@ -109,35 +109,41 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
     </div>
 
-    <!-- Tarjetas pequeñas (dos columnas debajo) -->
-    <div class="dashboard-card-half">
-        <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-                <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
-                    <i class="bi bi-clipboard2-plus text-success fs-1"></i>
+    <!-- Contenedor centrado para las dos tarjetas inferiores -->
+    <div style="grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+        
+        <!-- Registrar entrega -->
+        <div style="flex: 0 1 400px; min-width: 280px;">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+                        <i class="bi bi-clipboard2-plus text-success fs-1"></i>
+                    </div>
+                    <h3 class="h5">Registrar entrega de pedidos</h3>
+                    <p class="text-muted">Mantén el registro de las fechas de registros de los pedidos</p>
+                    <a href="registro_entregas.php" class="btn btn-info stretched-link">
+                        <i class="bi me-1"></i> Acceder
+                    </a>
                 </div>
-                <h3 class="h5">Registrar entrega de pedidos</h3>
-                <p class="text-muted">Mantén el registro de las fechas de registros de los pedidos</p>
-                <a href="registro_entregas.php" class="btn btn-info stretched-link">
-                    <i class="bi me-1"></i> Acceder
-                </a>
             </div>
         </div>
-    </div>
 
-    <div class="dashboard-card-half">
-        <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-                <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
-                    <i class="bi bi-truck text-info fs-1"></i>
+        <!-- Reporte Entregas -->
+        <div style="flex: 0 1 400px; min-width: 280px;">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+                        <i class="bi bi-truck text-info fs-1"></i>
+                    </div>
+                    <h3 class="h5">Reporte Entregas</h3>
+                    <p class="text-muted">Generar reportes detallados de entregas</p>
+                    <a href="lista_entregas.php" class="btn btn-info stretched-link">
+                        <i class="bi me-1"></i> Acceder
+                    </a>
                 </div>
-                <h3 class="h5">Reporte Entregas</h3>
-                <p class="text-muted">Generar reportes detallados de entregas</p>
-                <a href="lista_entregas.php" class="btn btn-info stretched-link">
-                    <i class="bi me-1"></i> Acceder
-                </a>
             </div>
         </div>
+        
     </div>
 
 </section>
