@@ -257,7 +257,7 @@ $active_page = 'cuentas';
                     </div>
                     <h3 class="h5">Reportes</h3>
                     <p>Generar reportes financieros</p>
-                    <a href="reportes_cuentas.php" class="btn btn-info stretched-link">Generar</a>
+                    <a href="lista_reportes.php" class="btn btn-info stretched-link">Generar</a>
                 </div>
             </div>
         </div>
