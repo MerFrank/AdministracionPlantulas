@@ -55,7 +55,7 @@ function obtenerInformacionEmpleado($id_checador, $pdo)
                 FROM prestamos_empleados
                 WHERE activo = 1
             ) pe ON pe.id_empleado = e.id_empleado
-            WHERE e.id_checador = ?
+            WHERE e.id_checador = ?  AND e.activo = 1
             GROUP BY e.id_empleado, ep.id_asignacion, pe.montoDescuento
             LIMIT 1
         ");
