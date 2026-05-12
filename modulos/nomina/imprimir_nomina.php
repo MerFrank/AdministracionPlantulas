@@ -23,7 +23,7 @@ $nominas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <head>
     <meta charset="utf-8">
-    <title>Imprimir Nómina</title>
+    <title>Reporte Nómina - Semana <?= date('d/m/Y', strtotime($inicio_semana)) ?></title>
 
     <style>
         @page {
