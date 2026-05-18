@@ -239,6 +239,19 @@ $active_page = 'cuentas';
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
                 <div class="card-body text-center">
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
+                        <i class="bi bi-currency-dollar text-info fs-1"></i>
+                    </div>
+                    <h3 class="h5">Trasnferencias</h3>
+                    <p>Genera transferencias entre cuentas</p>
+                    <a href="trasnferencia_cuentas.php" class="btn btn-info stretched-link">Generar</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
                     <div class="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block mb-3">
                         <i class="bi bi-list-ul text-success fs-1"></i>
                     </div>
