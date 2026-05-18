@@ -15,7 +15,7 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $db = new Database();
-        $con = $db->conectar();
+        $pdo = $db->conectar();
         
         // Validar datos
         if (empty($_POST['nombre'])) {
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Insertar en la base de datos
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             INSERT INTO actividades_extras (nombre, pago_extra, descripcion, activo)
             VALUES (?, ?, ?, ?)
         ");

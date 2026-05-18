@@ -13,7 +13,7 @@ $empleados = [];
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     $sql = "SELECT
         e.id_empleado,
@@ -45,7 +45,7 @@ try {
         e.apellido_paterno";
 
     
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

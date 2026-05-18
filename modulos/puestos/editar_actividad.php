@@ -17,10 +17,10 @@ $actividad = null;
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Obtener datos de la actividad
-    $stmt = $con->prepare("
+    $stmt = $pdo->prepare("
         SELECT id_actividad, nombre, pago_extra, descripcion, activo
         FROM actividades_extras 
         WHERE id_actividad = ?
@@ -50,7 +50,7 @@ try {
         }
         
         // Actualizar en la base de datos
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             UPDATE actividades_extras 
             SET nombre = ?, pago_extra = ?, descripcion = ?, activo = ?
             WHERE id_actividad = ?

@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../includes/numeros_a_letras.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("<div style='text-align:center; padding:20px;'>
             <h2>Error de conexión</h2>
@@ -37,7 +37,7 @@ if ($id_venta === false || $id_venta === null) {
 }
 
 // Obtener información de la venta
-$stmt = $con->prepare("
+$stmt = $pdo->prepare("
     SELECT np.*, c.nombre_Cliente as cliente_nombre, c.domicilio_fiscal as direccion, c.telefono
     FROM NotasPedidos np
     LEFT JOIN Clientes c ON np.id_cliente = c.id_cliente
@@ -55,7 +55,7 @@ if (!$venta) {
 }
 
 // Obtener detalles de la venta (solo colores)
-$stmt = $con->prepare("
+$stmt = $pdo->prepare("
     SELECT col.nombre_color as color, 
            SUM(dnp.cantidad) as cantidad, 
            dnp.precio_real as precio_unitario, 

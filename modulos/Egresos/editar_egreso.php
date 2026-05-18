@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -19,7 +19,7 @@ $id_egreso = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $egreso = null;
 
 if ($id_egreso > 0) {
-    $stmt = $con->prepare("SELECT * FROM egresos WHERE id_egreso = ?");
+    $stmt = $pdo->prepare("SELECT * FROM egresos WHERE id_egreso = ?");
     $stmt->execute([$id_egreso]);
     $egreso = $stmt->fetch(PDO::FETCH_ASSOC);
 }
@@ -31,10 +31,10 @@ if (!$egreso) {
 }
 
 // Cargar datos para los select
-$proveedores = $con->query("SELECT id_proveedor, nombre_proveedor AS nombre FROM proveedores WHERE activo = 1 ORDER BY nombre_proveedor")->fetchAll();
-$sucursales = $con->query("SELECT id_sucursal, nombre FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
-$tiposEgreso = $con->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
-$cuentas = $con->query("SELECT id_cuenta, nombre, numero, saldo_actual FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$proveedores = $pdo->query("SELECT id_proveedor, nombre_proveedor AS nombre FROM proveedores WHERE activo = 1 ORDER BY nombre_proveedor")->fetchAll();
+$sucursales = $pdo->query("SELECT id_sucursal, nombre FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$tiposEgreso = $pdo->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$cuentas = $pdo->query("SELECT id_cuenta, nombre, numero, saldo_actual FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $con->beginTransaction();
+        $pdo->beginTransaction();
 
         $datos = [
             'id_egreso' => $id_egreso,
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Obtener el egreso actual para comparar cambios
-        $stmt = $con->prepare("SELECT * FROM egresos WHERE id_egreso = ?");
+        $stmt = $pdo->prepare("SELECT * FROM egresos WHERE id_egreso = ?");
         $stmt->execute([$id_egreso]);
         $egreso_actual = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 observaciones = :observaciones
                 WHERE id_egreso = :id_egreso";
         
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($datos);
 
         // 2. Manejar cambios en el método de pago y montos
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Revertir el monto anterior en la cuenta original
             $sqlRevertir = "UPDATE cuentas_bancarias SET saldo_actual = saldo_actual + :monto 
                            WHERE id_cuenta = :id_cuenta";
-            $stmtRevertir = $con->prepare($sqlRevertir);
+            $stmtRevertir = $pdo->prepare($sqlRevertir);
             $stmtRevertir->execute([
                 'monto' => $egreso_actual['monto'],
                 'id_cuenta' => $egreso_actual['id_cuenta']
@@ -111,20 +111,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Aplicar el nuevo monto a la cuenta seleccionada
             $sqlAplicar = "UPDATE cuentas_bancarias SET saldo_actual = saldo_actual - :monto 
                           WHERE id_cuenta = :id_cuenta";
-            $stmtAplicar = $con->prepare($sqlAplicar);
+            $stmtAplicar = $pdo->prepare($sqlAplicar);
             $stmtAplicar->execute([
                 'monto' => $datos['monto'],
                 'id_cuenta' => $datos['id_cuenta']
             ]);
         }
 
-        $con->commit();
+        $pdo->commit();
 
         $_SESSION['success_message'] = 'Egreso actualizado correctamente';
         header('Location: lista_egresos.php');
         exit;
     } catch (Exception $e) {
-        $con->rollBack();
+        $pdo->rollBack();
         $error = $e->getMessage();
     }
 }

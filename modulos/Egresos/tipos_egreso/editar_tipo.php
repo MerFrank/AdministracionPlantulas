@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -24,7 +24,7 @@ $id_tipo = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $tipo = null;
 
 if ($id_tipo > 0) {
-    $stmt = $con->prepare("SELECT * FROM tipos_egreso WHERE id_tipo = ?");
+    $stmt = $pdo->prepare("SELECT * FROM tipos_egreso WHERE id_tipo = ?");
     $stmt->execute([$id_tipo]);
     $tipo = $stmt->fetch(PDO::FETCH_ASSOC);
 }
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 descripcion = :descripcion 
                 WHERE id_tipo = :id_tipo";
         
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         if ($stmt->execute($datos)) {
             $_SESSION['success_message'] = 'Tipo de egreso actualizado correctamente';
             header('Location: lista_tipos.php');

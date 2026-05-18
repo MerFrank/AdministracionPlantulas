@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -24,7 +24,7 @@ if (!$id_cotizacion) {
     exit;
 }
 
-$stmt = $con->prepare("
+$stmt = $pdo->prepare("
     SELECT 
         c.*,
         cl.nombre_Cliente AS cliente_nombre,

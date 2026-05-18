@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Obtener todas las ventas (sin filtro inicial)
     $sql = "
@@ -20,7 +20,7 @@ try {
         LIMIT 50
     ";
     
-    $ventas = $con->query($sql)->fetchAll();
+    $ventas = $pdo->query($sql)->fetchAll();
 
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());

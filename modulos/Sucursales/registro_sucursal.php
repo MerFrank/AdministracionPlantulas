@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "INSERT INTO sucursales (nombre, direccion, telefono, responsable) 
                 VALUES (:nombre, :direccion, :telefono, :responsable)";
         
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         if ($stmt->execute($datos)) {
             $_SESSION['success_message'] = 'Sucursal registrada correctamente';
             header('Location: lista_sucursales.php');

@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -23,7 +23,7 @@ $id_cuenta = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $cuenta = null;
 
 if ($id_cuenta > 0) {
-    $stmt = $con->prepare("SELECT * FROM cuentas_bancarias WHERE id_cuenta = ?");
+    $stmt = $pdo->prepare("SELECT * FROM cuentas_bancarias WHERE id_cuenta = ?");
     $stmt->execute([$id_cuenta]);
     $cuenta = $stmt->fetch(PDO::FETCH_ASSOC);
 }
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 clabe = :clabe 
                 WHERE id_cuenta = :id_cuenta";
         
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         if ($stmt->execute($datos)) {
             $_SESSION['success_message'] = 'Cuenta actualizada correctamente';
             header('Location: lista_cuentas.php');

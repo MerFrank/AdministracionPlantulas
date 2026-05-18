@@ -15,7 +15,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -29,7 +29,7 @@ if ($id_venta <= 0) {
 }
 
 // Obtener datos de la venta
-$venta = $con->query("
+$venta = $pdo->query("
     SELECT np.*, c.nombre_Cliente 
     FROM notaspedidos np
     LEFT JOIN clientes c ON np.id_cliente = c.id_cliente
@@ -43,7 +43,7 @@ if (!$venta) {
 }
 
 // Obtener detalles de la venta
-$detalles_venta = $con->query("
+$detalles_venta = $pdo->query("
     SELECT d.*, v.nombre_variedad, e.nombre as especie
     FROM detallesnotapedido d
     JOIN variedades v ON d.id_variedad = v.id_variedad
@@ -52,7 +52,7 @@ $detalles_venta = $con->query("
 ")->fetchAll();
 
 // Obtener abonos registrados (CAMBIO: usar pagosventas en lugar de seguimientoanticipos)
-$abonos = $con->query("
+$abonos = $pdo->query("
     SELECT pv.*, cb.nombre as nombre_cuenta, cb.banco, cb.numero
     FROM pagosventas pv
     LEFT JOIN cuentas_bancarias cb ON pv.id_cuenta = cb.id_cuenta
@@ -64,9 +64,9 @@ $abonos = $con->query("
 $total_abonado = array_sum(array_column($abonos, 'monto'));
 
 // Obtener datos para formulario
-$clientes = $con->query("SELECT id_cliente, nombre_Cliente FROM clientes WHERE activo = 1 ORDER BY nombre_Cliente")->fetchAll();
+$clientes = $pdo->query("SELECT id_cliente, nombre_Cliente FROM clientes WHERE activo = 1 ORDER BY nombre_Cliente")->fetchAll();
 // falta v.precio
-$variedades = $con->query("
+$variedades = $pdo->query("
     SELECT v.id_variedad, v.nombre_variedad, v.codigo, e.nombre as especie, c.nombre_color as color
     FROM variedades v
     JOIN especies e ON v.id_especie = e.id_especie
@@ -75,7 +75,7 @@ $variedades = $con->query("
 ")->fetchAll();
 
 // Obtener cuentas bancarias para el formulario de abonos
-$cuentas_bancarias = $con->query("
+$cuentas_bancarias = $pdo->query("
     SELECT id_cuenta, nombre, banco, numero 
     FROM cuentas_bancarias 
     WHERE activo = 1
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $con->beginTransaction();
+        $pdo->beginTransaction();
         
         // Validar datos básicos
         if (empty($_POST['id_cliente'])) {
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Actualizar datos principales de la venta
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             UPDATE notaspedidos SET
                 id_cliente = ?,
                 tipo_pago = ?,
@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_cuenta_abono = (int)$_POST['id_cuenta_abono'];
             
             // CAMBIO: Insertar en pagosventas en lugar de seguimientoanticipos
-            $stmt = $con->prepare("
+            $stmt = $pdo->prepare("
                 INSERT INTO pagosventas (
                     id_notaPedido, monto, fecha, metodo_pago, 
                     referencia, observaciones, id_empleado, id_cuenta
@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             
             // ACTUALIZAR EL SALDO DE LA CUENTA BANCARIA
-            $stmt_update_cuenta = $con->prepare("
+            $stmt_update_cuenta = $pdo->prepare("
                 UPDATE cuentas_bancarias 
                 SET saldo_actual = saldo_actual + :monto 
                 WHERE id_cuenta = :id_cuenta
@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Actualizar estado según el saldo
             $nuevo_estado = ($nuevo_saldo <= 0) ? 'completado' : 'parcial';
             
-            $con->query("
+            $pdo->query("
                 UPDATE notaspedidos SET 
                     saldo_pendiente = $nuevo_saldo,
                     estado = '$nuevo_estado'
@@ -182,13 +182,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
         }
         
-        $con->commit();
+        $pdo->commit();
         
         $_SESSION['success_message'] = "Venta actualizada correctamente";
         header("Location: detalle_venta.php?id=$id_venta");
         exit;
     } catch (Exception $e) {
-        $con->rollBack();
+        $pdo->rollBack();
         $error = $e->getMessage();
     }
 }

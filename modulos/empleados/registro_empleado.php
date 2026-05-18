@@ -146,8 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                 )";
 
         $db = new Database();
-        $con = $db->conectar();
-        $stmt = $con->prepare($sql);
+        $pdo = $db->conectar();
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($datos);
 
         if ($stmt->rowCount() > 0) {

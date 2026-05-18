@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../includes/config.php';
 // Instanciar base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                   :telefono, :email, :rfc, :domicilio_fiscal, :productos
                 )";
 
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($datos);
 
         if ($stmt->rowCount() > 0) {

@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $sql = "INSERT INTO tipos_egreso (nombre, descripcion) VALUES (:nombre, :descripcion)";
         
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         if ($stmt->execute($datos)) {
             if (isset($_POST['redireccion'])) {
                 header('Location: ' . $_POST['redireccion']);

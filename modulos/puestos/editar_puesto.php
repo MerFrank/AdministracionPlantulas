@@ -34,11 +34,11 @@ if ($id_puesto === 0) {
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Obtener datos del puesto
     $sql_puesto = "SELECT * FROM puestos WHERE id_puesto = ?";
-    $stmt = $con->prepare($sql_puesto);
+    $stmt = $pdo->prepare($sql_puesto);
     $stmt->execute([$id_puesto]);
     $puesto = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                            nivel_jerarquico = :nivel_jerarquico, activo = :activo
                        WHERE id_puesto = :id_puesto";
         
-        $stmt_update = $con->prepare($sql_update);
+        $stmt_update = $pdo->prepare($sql_update);
         $stmt_update->execute([
             'nombre' => $nombre,
             'descripcion' => $descripcion,

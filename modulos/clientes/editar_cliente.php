@@ -23,7 +23,7 @@ require_once __DIR__ . '/../../includes/config.php';
 // Instanciar base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -36,7 +36,7 @@ if (empty($_SESSION['csrf_token'])) {
 // Obtener datos actuales del cliente
 try {
     $sql = "SELECT * FROM clientes WHERE id_cliente = ?";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([$id_cliente]);
     $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                   domicilio_fiscal = :domicilio_fiscal
                 WHERE id_cliente = :id_cliente";
 
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $result = $stmt->execute($datos);
 
         if ($result) {

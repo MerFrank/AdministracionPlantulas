@@ -13,13 +13,13 @@ require_once __DIR__ . '/../../includes/config.php';
 // Conexión a la base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Obtener estadísticas de cotizaciones (ahora con "completadas" en lugar de "aprobadas")
-$estadisticas = $con->query("
+$estadisticas = $pdo->query("
 SELECT 
 COUNT(*) as total_cotizaciones,
 SUM(total) as monto_total,
@@ -29,7 +29,7 @@ FROM cotizaciones
 ")->fetch();
 
 // Obtener últimas cotizaciones registradas
-$ultimas_cotizaciones = $con->query("
+$ultimas_cotizaciones = $pdo->query("
 SELECT c.id_cotizacion, c.folio, c.fecha, c.total, cl.nombre_Cliente as cliente_nombre, c.estado
 FROM cotizaciones c
 JOIN clientes cl ON c.id_cliente = cl.id_cliente

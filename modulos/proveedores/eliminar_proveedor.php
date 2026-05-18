@@ -24,7 +24,7 @@ $id_proveedor = $_GET['id'];
 // Instanciar base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -32,7 +32,7 @@ try {
 // Realizar el borrado lógico (marcar como inactivo)
 try {
     $sql = "UPDATE proveedores SET activo = 0 WHERE id_proveedor = ?";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([$id_proveedor]);
     
     // Verificar si se afectó alguna fila

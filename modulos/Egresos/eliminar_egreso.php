@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -22,7 +22,7 @@ if ($id_egreso > 0) {
         
         // Eliminar directamente (o implementar borrado lógico si prefieres)
         $sql = "DELETE FROM egresos WHERE id_egreso = ?";
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         
         if ($stmt->execute([$id_egreso])) {
             $_SESSION['success_message'] = 'Egreso eliminado correctamente';

@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                 VALUES (:nombre, :descripcion, :nivel_jerarquico, :activo)";
 
         $db = new Database();
-        $con = $db->conectar();
-        $stmt = $con->prepare($sql);
+        $pdo = $db->conectar();
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([
             'nombre' => $nombre,
             'descripcion' => $descripcion,

@@ -15,13 +15,13 @@ require_once __DIR__ . '/../../includes/header.php';
 // Conexión a la base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Obtener estadísticas de sucursales
-$estadisticas = $con->query("
+$estadisticas = $pdo->query("
     SELECT 
         COUNT(*) as total_sucursales,
         (SELECT COUNT(*) FROM sucursales WHERE activo = 1) as sucursales_activas
@@ -29,7 +29,7 @@ $estadisticas = $con->query("
 ")->fetch();
 
 // Obtener sucursales recientes (últimas 5 activas)
-$sucursales_recientes = $con->query("
+$sucursales_recientes = $pdo->query("
     SELECT nombre, direccion, telefono, responsable, fecha_creacion 
     FROM sucursales 
     WHERE activo = 1 

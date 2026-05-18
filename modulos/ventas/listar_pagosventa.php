@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -23,7 +23,7 @@ if ($id_venta <= 0) {
 }
 
 // Obtener información de la venta
-$sql_venta = $con->prepare("SELECT np.id_notaPedido, np.fechaPedido, c.nombre_Cliente as cliente 
+$sql_venta = $pdo->prepare("SELECT np.id_notaPedido, np.fechaPedido, c.nombre_Cliente as cliente 
                            FROM notaspedidos np 
                            INNER JOIN clientes c ON np.id_cliente = c.id_cliente 
                            WHERE np.id_notaPedido = ?");
@@ -36,7 +36,7 @@ if (!$venta) {
 }
 
 // Obtener pagos de la venta
-$sql_pagos = $con->prepare("SELECT p.*, o.nombre as empleado 
+$sql_pagos = $pdo->prepare("SELECT p.*, o.nombre as empleado 
                            FROM pagosventas p 
                            LEFT JOIN operadores o ON p.ID_Operador = o.ID_Operador 
                            WHERE p.id_notaPedido = ? 

@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -19,7 +19,7 @@ $id_tipo = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id_tipo > 0) {
     try {
         // Verificar si el tipo tiene egresos asociados
-        $stmt = $con->prepare("SELECT COUNT(*) FROM egresos WHERE id_tipo_egreso = ?");
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM egresos WHERE id_tipo_egreso = ?");
         $stmt->execute([$id_tipo]);
         $tieneEgresos = $stmt->fetchColumn() > 0;
 
@@ -33,7 +33,7 @@ if ($id_tipo > 0) {
             $mensaje = 'Tipo de egreso eliminado correctamente';
         }
 
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         if ($stmt->execute([$id_tipo])) {
             $_SESSION['success_message'] = $mensaje;
         } else {

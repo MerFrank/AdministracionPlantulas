@@ -12,7 +12,7 @@ require_once(__DIR__ . '/../../includes/config.php');
 try {
     // Intenta conectar a la base de datos
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     // Si hay error en la conexión, muestra mensaje y termina ejecución
     die("Error de conexión: " . $e->getMessage());
@@ -21,7 +21,7 @@ try {
 // Consulta SQL para obtener cuentas bancarias activas con información adicional:
 // - Número total de movimientos (egresos)
 // - Fecha del último movimiento
-$cuentas = $con->query("
+$cuentas = $pdo->query("
     SELECT c.*, 
            (SELECT COUNT(*) FROM egresos WHERE id_cuenta = c.id_cuenta) as num_movimientos,
            (SELECT MAX(fecha) FROM egresos WHERE id_cuenta = c.id_cuenta) as ultimo_movimiento

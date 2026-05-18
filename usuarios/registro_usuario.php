@@ -2,12 +2,12 @@
 require_once(__DIR__ . '/../includes/config.php');
 
 // Funciones
-function generarUsuario($nombre, $apellido_p, $con) {
+function generarUsuario($nombre, $apellido_p, $pdo) {
     $base = strtolower(trim($nombre)) . '.' . strtolower(trim($apellido_p));
     $usuario = $base;
     $i = 1;
 
-    $stmt = $con->prepare("SELECT * FROM operadores WHERE Usuario = ?");
+    $stmt = $pdo->prepare("SELECT * FROM operadores WHERE Usuario = ?");
     while (true) {
         $stmt->bindParam(1, $usuario, PDO::PARAM_STR);
         $stmt->execute();
@@ -30,13 +30,13 @@ function generarContrasena($longitud = 10) {
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Consutar roles para asignar al usuario
-$roles = $con->query("SELECT ID_Rol, nombreRol FROM roles ORDER BY nombreRol")->fetchAll();
+$roles = $pdo->query("SELECT ID_Rol, nombreRol FROM roles ORDER BY nombreRol")->fetchAll();
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_rol     = $_POST['ID_Rol'] ?? '';
 
         // Generar usuario y contraseña
-        $usuario    = generarUsuario($nombre, $apellido_p, $con);
+        $usuario    = generarUsuario($nombre, $apellido_p, $pdo);
         $contra     = generarContrasena();
         $contra_hash= password_hash($contra, PASSWORD_BCRYPT);
 
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (Nombre, Apellido_P, Apellido_M, Puesto, Fecha_Ingreso, Correo_Electronico, Fecha_Registro, Usuario, Contrasena_Hash, Activo, ID_Rol) 
             VALUES (:Nombre, :Apellido_P, :Apellido_M, :Puesto, :Fecha_Ingreso, :Correo_Electronico, current_timestamp(), :Usuario, :Contrasena_Hash, :Activo, :ID_Rol)";
 
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($datos);
 
         if ($stmt->rowCount() > 0) {

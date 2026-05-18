@@ -12,7 +12,7 @@ $titulo = 'Lista de Empleados - Plantulas';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -27,7 +27,7 @@ if (!empty($busqueda)) {
             ORDER BY activo DESC, apellido_paterno, apellido_materno, nombre ASC";
     
     try {
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute(array_fill(0, 8, $busquedaLike));
         $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -37,7 +37,7 @@ if (!empty($busqueda)) {
     $sql = "SELECT * FROM empleados 
             ORDER BY activo DESC, apellido_paterno, apellido_materno, nombre ASC";
     try {
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute();
         $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {

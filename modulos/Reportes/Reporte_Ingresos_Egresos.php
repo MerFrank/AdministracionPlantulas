@@ -37,7 +37,7 @@ if ($tipo_filtro == 'semana') {
 // Obtener datos para el reporte
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // CONSULTA CORREGIDA PARA ONLY_FULL_GROUP_BY
     $sql = "SELECT 
@@ -56,25 +56,25 @@ try {
             GROUP BY DATE(fecha)
             ORDER BY fecha";
     
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([':fecha_inicio' => $fecha_inicio, ':fecha_fin' => $fecha_fin]);
     $datosDiarios = $stmt->fetchAll();
     
     // Totales generales (usando consultas preparadas)
     $sqlIngresos = "SELECT IFNULL(SUM(total), 0) FROM NotasPedidos WHERE fechaPedido BETWEEN :fecha_inicio AND :fecha_fin";
-    $stmtIngresos = $con->prepare($sqlIngresos);
+    $stmtIngresos = $pdo->prepare($sqlIngresos);
     $stmtIngresos->execute([':fecha_inicio' => $fecha_inicio, ':fecha_fin' => $fecha_fin]);
     $totalIngresos = $stmtIngresos->fetchColumn();
     
     $sqlEgresos = "SELECT IFNULL(SUM(monto), 0) FROM egresos WHERE fecha BETWEEN :fecha_inicio AND :fecha_fin";
-    $stmtEgresos = $con->prepare($sqlEgresos);
+    $stmtEgresos = $pdo->prepare($sqlEgresos);
     $stmtEgresos->execute([':fecha_inicio' => $fecha_inicio, ':fecha_fin' => $fecha_fin]);
     $totalEgresos = $stmtEgresos->fetchColumn();
     
     $balance = $totalIngresos - $totalEgresos;
     
     // Egresos por tipo (corregido para ONLY_FULL_GROUP_BY)
-    $egresosPorTipo = $con->prepare("
+    $egresosPorTipo = $pdo->prepare("
         SELECT t.id_tipo, t.nombre as tipo, IFNULL(SUM(e.monto), 0) as total
         FROM egresos e
         JOIN tipos_egreso t ON e.id_tipo_egreso = t.id_tipo
@@ -86,7 +86,7 @@ try {
     $egresosPorTipo = $egresosPorTipo->fetchAll();
     
     // Ingresos por cliente (corregido para ONLY_FULL_GROUP_BY)
-    $ingresosPorCliente = $con->prepare("
+    $ingresosPorCliente = $pdo->prepare("
         SELECT c.id_cliente, c.nombre_Cliente as cliente, IFNULL(SUM(np.total), 0) as total
         FROM NotasPedidos np
         JOIN Clientes c ON np.id_cliente = c.id_cliente
@@ -99,7 +99,7 @@ try {
     $ingresosPorCliente = $ingresosPorCliente->fetchAll();
     
     // Semanas disponibles
-    $semanasDisponibles = $con->query("
+    $semanasDisponibles = $pdo->query("
         SELECT DISTINCT CONCAT(YEAR(fecha), '-W', LPAD(WEEK(fecha, 3), 2, '0')) as semana
         FROM (
             SELECT fechaPedido as fecha FROM NotasPedidos

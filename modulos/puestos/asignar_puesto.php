@@ -26,24 +26,24 @@ if (empty($_SESSION['csrf_token'])) {
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Obtener lista de empleados activos
     $sql_empleados = "SELECT id_empleado, nombre, apellido_paterno, apellido_materno 
                       FROM empleados WHERE activo = 1 ORDER BY apellido_paterno, nombre";
-    $stmt_empleados = $con->prepare($sql_empleados);
+    $stmt_empleados = $pdo->prepare($sql_empleados);
     $stmt_empleados->execute();
     $empleados = $stmt_empleados->fetchAll(PDO::FETCH_ASSOC);
 
     // Obtener lista de puestos activos
     $sql_puestos = "SELECT id_puesto, nombre FROM puestos WHERE activo = 1 ORDER BY nombre";
-    $stmt_puestos = $con->prepare($sql_puestos);
+    $stmt_puestos = $pdo->prepare($sql_puestos);
     $stmt_puestos->execute();
     $puestos = $stmt_puestos->fetchAll(PDO::FETCH_ASSOC);
 
     // Obtener lista de actividades extra activas
     $sql_actividades = "SELECT id_actividad, nombre, pago_extra FROM actividades_extras WHERE activo = 1 ORDER BY nombre";
-    $stmt_actividades = $con->prepare($sql_actividades);
+    $stmt_actividades = $pdo->prepare($sql_actividades);
     $stmt_actividades->execute();
     $actividades = $stmt_actividades->fetchAll(PDO::FETCH_ASSOC);
 
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
 
     try {
         $db = new Database();
-        $con = $db->conectar();
+        $pdo = $db->conectar();
 
         // Validar y sanitizar datos
         $id_empleado = filter_var($_POST['id_empleado'], FILTER_SANITIZE_NUMBER_INT);
@@ -72,31 +72,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
         $hora_salida = filter_var($_POST['hora_salida'], FILTER_SANITIZE_STRING);
 
         // Iniciar transacción
-        $con->beginTransaction();
+        $pdo->beginTransaction();
 
         // 1. Desactivar el puesto actual del empleado si existe
         $sql_desactivar = "UPDATE empleado_puesto SET fecha_fin = CURRENT_DATE() WHERE id_empleado = ? AND fecha_fin IS NULL";
-        $stmt_desactivar = $con->prepare($sql_desactivar);
+        $stmt_desactivar = $pdo->prepare($sql_desactivar);
         $stmt_desactivar->execute([$id_empleado]);
 
         // 2. Insertar la nueva asignación
         $sql_insertar = "INSERT INTO empleado_puesto (id_empleado, id_puesto, sueldo_diario, fecha_inicio, fecha_fin, dias_laborales, hora_entrada, hora_salida) 
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt_insertar = $con->prepare($sql_insertar);
+        $stmt_insertar = $pdo->prepare($sql_insertar);
         $stmt_insertar->execute([$id_empleado, $id_puesto, $sueldo_diario, $fecha_inicio, $fecha_fin, $dias_laborales, $hora_entrada, $hora_salida]);
-        $id_asignacion = $con->lastInsertId();
+        $id_asignacion = $pdo->lastInsertId();
 
 
         // 3. Insertar las actividades extras si existen - CAMBIO AQUÍ
         if (isset($_POST['actividades']) && !empty($_POST['actividades'])) {
             $sql_actividades = "INSERT INTO empleado_actividades (id_asignacion, id_actividad, fecha, horas_trabajadas, pago_calculado, observaciones) 
                                 VALUES (?, ?, CURDATE(), ?, ?, ?)";
-            $stmt_actividades = $con->prepare($sql_actividades);
+            $stmt_actividades = $pdo->prepare($sql_actividades);
             
             foreach ($_POST['actividades'] as $id_actividad => $actividad_data) {
                 if (isset($actividad_data['dias']) && !empty($actividad_data['dias'])) {
                     // Obtener información de la actividad para calcular el pago
-                    $stmt_info_actividad = $con->prepare("SELECT pago_extra FROM actividades_extras WHERE id_actividad = ?");
+                    $stmt_info_actividad = $pdo->prepare("SELECT pago_extra FROM actividades_extras WHERE id_actividad = ?");
                     $stmt_info_actividad->execute([$id_actividad]);
                     $info_actividad = $stmt_info_actividad->fetch(PDO::FETCH_ASSOC);
                     
@@ -121,14 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
         }
 
         // Commit la transacción
-        $con->commit();
+        $pdo->commit();
 
         $_SESSION['success'] = "Puesto asignado correctamente al empleado.";
         header("Location: " . BASE_URL . '/modulos/puestos/dashboard_puestos.php');
         exit();
 
     } catch (PDOException $e) {
-        $con->rollBack();
+        $pdo->rollBack();
         $_SESSION['error'] = "Error al asignar el puesto: " . $e->getMessage();
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();

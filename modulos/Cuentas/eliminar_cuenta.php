@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -19,7 +19,7 @@ $id_cuenta = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id_cuenta > 0) {
     try {
         // Verificar si la cuenta existe
-        $stmt = $con->prepare("SELECT nombre FROM cuentas_bancarias WHERE id_cuenta = ?");
+        $stmt = $pdo->prepare("SELECT nombre FROM cuentas_bancarias WHERE id_cuenta = ?");
         $stmt->execute([$id_cuenta]);
         $nombre_cuenta = $stmt->fetchColumn();
         
@@ -31,7 +31,7 @@ if ($id_cuenta > 0) {
 
         // Siempre hacer borrado lógico (marcar como inactivo)
         $sql = "UPDATE cuentas_bancarias SET activo = 0 WHERE id_cuenta = ?";
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         
         if ($stmt->execute([$id_cuenta])) {
             $_SESSION['success_message'] = "Cuenta '$nombre_cuenta' marcada como inactiva";

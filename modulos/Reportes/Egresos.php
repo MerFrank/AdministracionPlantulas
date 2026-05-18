@@ -25,7 +25,7 @@ if ($fecha_inicio > $fecha_fin) {
 // Obtener datos de egresos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Consulta base
     $sql = "SELECT e.id_egreso, e.fecha, e.monto, e.concepto, e.metodo_pago, e.comprobante,
@@ -49,13 +49,13 @@ try {
     
     $sql .= " ORDER BY e.fecha DESC";
     
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $egresos = $stmt->fetchAll();
     
     // Obtener proveedores y tipos para filtros
-    $proveedores = $con->query("SELECT id_proveedor, nombre_proveedor FROM proveedores WHERE activo = 1 ORDER BY nombre_proveedor")->fetchAll();
-    $tiposEgreso = $con->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
+    $proveedores = $pdo->query("SELECT id_proveedor, nombre_proveedor FROM proveedores WHERE activo = 1 ORDER BY nombre_proveedor")->fetchAll();
+    $tiposEgreso = $pdo->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
     
 } catch (PDOException $e) {
     die("Error al obtener egresos: " . $e->getMessage());

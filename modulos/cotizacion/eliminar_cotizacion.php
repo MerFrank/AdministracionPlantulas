@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -25,7 +25,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $id_cotizacion = (int)$_GET['id'];
 
 // Verificar si la cotización existe
-$stmt = $con->prepare("SELECT folio FROM cotizaciones WHERE id_cotizacion = ?");
+$stmt = $pdo->prepare("SELECT folio FROM cotizaciones WHERE id_cotizacion = ?");
 $stmt->execute([$id_cotizacion]);
 $cotizacion = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -37,21 +37,21 @@ if (!$cotizacion) {
 
 // Eliminar la cotización y sus items
 try {
-    $con->beginTransaction();
+    $pdo->beginTransaction();
     
     // Eliminar items de la cotización
-    $stmt = $con->prepare("DELETE FROM detallescotizacion WHERE id_cotizacion = ?");
+    $stmt = $pdo->prepare("DELETE FROM detallescotizacion WHERE id_cotizacion = ?");
     $stmt->execute([$id_cotizacion]);
     
     // Eliminar la cotización
-    $stmt = $con->prepare("DELETE FROM cotizaciones WHERE id_cotizacion = ?");
+    $stmt = $pdo->prepare("DELETE FROM cotizaciones WHERE id_cotizacion = ?");
     $stmt->execute([$id_cotizacion]);
     
-    $con->commit();
+    $pdo->commit();
     
     $_SESSION['success_message'] = "Cotización {$cotizacion['folio']} eliminada correctamente";
 } catch (PDOException $e) {
-    $con->rollBack();
+    $pdo->rollBack();
     $_SESSION['error_message'] = "Error al eliminar la cotización: " . $e->getMessage();
 }
 

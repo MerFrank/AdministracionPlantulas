@@ -9,13 +9,13 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Obtener cuentas bancarias activas
-$cuentas_bancarias = $con->query("
+$cuentas_bancarias = $pdo->query("
     SELECT id_cuenta, nombre, banco, numero 
     FROM cuentas_bancarias 
     WHERE activo = 1
@@ -23,7 +23,7 @@ $cuentas_bancarias = $con->query("
 ")->fetchAll();
 
 // MODIFICACIÓN: Consulta corregida para incluir diferentes formatos de tipo de pago
-$ventas_pendientes = $con->query("
+$ventas_pendientes = $pdo->query("
     SELECT np.id_notaPedido, c.nombre_Cliente, np.saldo_pendiente, np.tipo_pago, np.estado
     FROM notaspedidos np
     JOIN clientes c ON np.id_cliente = c.id_cliente
@@ -41,7 +41,7 @@ $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $con->beginTransaction();
+        $pdo->beginTransaction();
         
         // Validar datos
         if (empty($_POST['id_notaPedido'])) {
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // MODIFICACIÓN: Consulta corregida para incluir diferentes formatos de tipo de pago
         // Obtener información de la venta
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             SELECT np.id_notaPedido, np.id_cliente, np.total, np.saldo_pendiente, c.nombre_Cliente
             FROM notaspedidos np
             JOIN clientes c ON np.id_cliente = c.id_cliente
@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("El monto excede el saldo pendiente");
         }
         
-        $stmt_update_cuenta = $con->prepare("
+        $stmt_update_cuenta = $pdo->prepare("
             UPDATE cuentas_bancarias 
             SET saldo_actual = saldo_actual + :monto 
             WHERE id_cuenta = :id_cuenta
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Registrar el pago en PagosVentas
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             INSERT INTO pagosventas (
                 id_notaPedido, monto, fecha, metodo_pago, 
                 referencia, observaciones, id_operador, id_cuenta
@@ -133,19 +133,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Actualizar saldo pendiente en la nota de pedido
         $estado = $nuevo_saldo > 0 ? 'parcial' : 'completado';
         
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             UPDATE notaspedidos 
             SET saldo_pendiente = ?, estado = ?
             WHERE id_notaPedido = ?
         ");
         $stmt->execute([$nuevo_saldo, $estado, $venta['id_notaPedido']]);
         
-        $con->commit();
+        $pdo->commit();
         
         $success = "Pago registrado correctamente. Saldo pendiente actual: $" . number_format($nuevo_saldo, 2);
         
     } catch (Exception $e) {
-        $con->rollBack();
+        $pdo->rollBack();
         $error = $e->getMessage();
     }
 }

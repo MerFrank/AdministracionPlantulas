@@ -15,13 +15,13 @@ require_once __DIR__ . '/../../includes/header.php';
 // Conexión a la base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Obtener estadísticas de ventas (modificado para usar pagosventas)
-$estadisticas = $con->query("
+$estadisticas = $pdo->query("
     SELECT 
         COUNT(*) as total_ventas,
         SUM(total) as monto_total,
@@ -37,7 +37,7 @@ $saldo_pendiente = ($estadisticas['pendientes'] ?? 0) - ($estadisticas['total_ab
 $saldo_credito = max($estadisticas['credito_pendiente'] ?? 0, 0);
 
 // Obtener últimas ventas registradas
-$ultimas_ventas = $con->query("
+$ultimas_ventas = $pdo->query("
     SELECT np.id_notaPedido as id_venta, np.total, np.fechaPedido as fecha, 
            c.nombre_Cliente as cliente_nombre, np.estado, np.tipo_pago, np.saldo_pendiente
     FROM notaspedidos np

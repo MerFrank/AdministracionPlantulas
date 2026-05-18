@@ -2,7 +2,7 @@
 require_once(__DIR__ . '/../../includes/validacion_session.php');
 require_once __DIR__ . '/../../includes/config.php';
 $db = new Database();
-$conexion = $db->conectar();
+$pdo = $db->conectar();
 
 // Procesar el envío del formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = "UPDATE especies SET nombre = :nombre, descripcion = :descripcion WHERE id_especie = :id";
             }
 
-            $stmt = $conexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombre', $nombre);
             $stmt->bindParam(':descripcion', $descripcion, $descripcion ? PDO::PARAM_STR : PDO::PARAM_NULL);
 
@@ -49,7 +49,7 @@ if (isset($_GET['eliminar'])) {
 
     try {
         $sql = "DELETE FROM especies WHERE id_especie = :id";
-        $stmt = $conexion->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
@@ -65,7 +65,7 @@ $especieEditar = null;
 if (isset($_GET['editar'])) {
     try {
         $sql = "SELECT * FROM especies WHERE id_especie = :id";
-        $stmt = $conexion->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $_GET['editar'], PDO::PARAM_INT);
         $stmt->execute();
         $especieEditar = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -140,7 +140,7 @@ require('../../includes/header.php');
                                 <?php
                                 try {
                                     $sql = "SELECT * FROM especies ORDER BY nombre";
-                                    $stmt = $conexion->query($sql);
+                                    $stmt = $pdo->query($sql);
 
                                     if ($stmt->rowCount() > 0) {
                                         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {

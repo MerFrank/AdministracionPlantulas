@@ -33,12 +33,12 @@ switch($filtro) {
 // Obtener datos para gráficos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Totales del período
-    $totalIngresos = $con->query("SELECT SUM(total) FROM NotasPedidos 
+    $totalIngresos = $pdo->query("SELECT SUM(total) FROM NotasPedidos 
                                  WHERE fechaPedido BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
-    $totalEgresos = $con->query("SELECT SUM(monto) FROM egresos 
+    $totalEgresos = $pdo->query("SELECT SUM(monto) FROM egresos 
                                 WHERE fecha BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
     $balance = $totalIngresos - $totalEgresos;
     
@@ -68,7 +68,7 @@ try {
             ORDER BY hora
         ";
         
-        $result = $con->query($query)->fetchAll();
+        $result = $pdo->query($query)->fetchAll();
         
         for($h = 0; $h < 24; $h++) {
             $datosComparativo['labels'][] = "$h:00";
@@ -102,7 +102,7 @@ try {
             ORDER BY dia_semana
         ";
         
-        $result = $con->query($query)->fetchAll();
+        $result = $pdo->query($query)->fetchAll();
         
         // Inicializar todos los días con 0
         foreach($diasSemana as $index => $dia) {
@@ -141,7 +141,7 @@ try {
             ORDER BY fecha_dia
         ";
         
-        $result = $con->query($query)->fetchAll();
+        $result = $pdo->query($query)->fetchAll();
         
         foreach($result as $row) {
             $datosComparativo['labels'][] = date('d/m', strtotime($row['fecha_dia']));
@@ -151,7 +151,7 @@ try {
     }
     
     // Distribución de ingresos por cliente (top 5)
-    $ingresosPorCliente = $con->query("
+    $ingresosPorCliente = $pdo->query("
         SELECT c.nombre_Cliente as cliente, SUM(np.total) as total
         FROM NotasPedidos np
         JOIN Clientes c ON np.id_cliente = c.id_cliente
@@ -162,7 +162,7 @@ try {
     ")->fetchAll();
     
     // Distribución de egresos por tipo
-    $egresosPorTipo = $con->query("
+    $egresosPorTipo = $pdo->query("
         SELECT t.nombre as tipo, SUM(e.monto) as total
         FROM egresos e
         JOIN tipos_egreso t ON e.id_tipo_egreso = t.id_tipo
@@ -172,7 +172,7 @@ try {
     ")->fetchAll();
     
     // Distribución de egresos por proveedor (top 5)
-    $egresosPorProveedor = $con->query("
+    $egresosPorProveedor = $pdo->query("
         SELECT p.nombre_proveedor as proveedor, SUM(e.monto) as total
         FROM egresos e
         JOIN proveedores p ON e.id_proveedor = p.id_proveedor

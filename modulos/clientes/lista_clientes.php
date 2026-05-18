@@ -14,7 +14,7 @@ $titulo = 'Lista de Clientes - Plantulas';
 // Instanciar base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -29,7 +29,7 @@ if (!empty($busqueda)) {
             ORDER BY nombre_Cliente ASC";
     
     try {
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute(array_fill(0, 4, $busquedaLike));
         $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -39,7 +39,7 @@ if (!empty($busqueda)) {
 } else {
     $sql = "SELECT * FROM clientes WHERE activo = 1 ORDER BY nombre_Cliente ASC";
     try {
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute();
         $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {

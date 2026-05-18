@@ -24,7 +24,7 @@ if ($fecha_inicio > $fecha_fin) {
 // Obtener datos de ingresos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Consulta base
     $sql = "SELECT np.id_notaPedido, np.folio, np.fechaPedido, c.nombre_Cliente as cliente, 
@@ -43,12 +43,12 @@ try {
     
     $sql .= " ORDER BY np.fechaPedido DESC";
     
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $ingresos = $stmt->fetchAll();
     
     // Obtener clientes para filtro
-    $clientes = $con->query("SELECT id_cliente, nombre_Cliente FROM Clientes ORDER BY nombre_Cliente")->fetchAll();
+    $clientes = $pdo->query("SELECT id_cliente, nombre_Cliente FROM Clientes ORDER BY nombre_Cliente")->fetchAll();
     
 } catch (PDOException $e) {
     die("Error al obtener ingresos: " . $e->getMessage());

@@ -15,13 +15,13 @@ require_once __DIR__ . '/../../includes/header.php';
 // Conexión a la base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Obtener estadísticas de egresos
-$estadisticas = $con->query("
+$estadisticas = $pdo->query("
     SELECT 
         COUNT(*) as total_egresos,
         SUM(monto) as monto_total,
@@ -30,7 +30,7 @@ $estadisticas = $con->query("
 ")->fetch();
 
 // Obtener últimos egresos registrados
-$ultimos_egresos = $con->query("
+$ultimos_egresos = $pdo->query("
     SELECT e.id_egreso, e.monto, e.fecha, e.concepto, c.nombre as cuenta_nombre
     FROM egresos e
     JOIN cuentas_bancarias c ON e.id_cuenta = c.id_cuenta

@@ -20,7 +20,7 @@ require_once __DIR__ . '/../../includes/config.php';
 // ==============================================
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -35,7 +35,7 @@ if (isset($_GET['ajax_action'])) {
         switch ($_GET['ajax_action']) {
             case 'get_colores':
                 $id_especie = (int)$_GET['id_especie'];
-                $stmt = $con->prepare("SELECT id_color, nombre_color FROM colores WHERE id_especie = ? ORDER BY nombre_color");
+                $stmt = $pdo->prepare("SELECT id_color, nombre_color FROM colores WHERE id_especie = ? ORDER BY nombre_color");
                 $stmt->execute([$id_especie]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
@@ -43,7 +43,7 @@ if (isset($_GET['ajax_action'])) {
             case 'get_variedades':
                 $id_especie = (int)$_GET['id_especie'];
                 $id_color = (int)$_GET['id_color'];
-                $stmt = $con->prepare("SELECT id_variedad, nombre_variedad, codigo FROM variedades WHERE id_especie = ? AND id_color = ? ORDER BY nombre_variedad");
+                $stmt = $pdo->prepare("SELECT id_variedad, nombre_variedad, codigo FROM variedades WHERE id_especie = ? AND id_color = ? ORDER BY nombre_variedad");
                 $stmt->execute([$id_especie, $id_color]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
@@ -60,9 +60,9 @@ if (isset($_GET['ajax_action'])) {
 // ==============================================
 // OBTENER DATOS PARA EL FORMULARIO
 // ==============================================
-$clientes = $con->query("SELECT id_cliente, nombre_Cliente FROM clientes WHERE activo = 1 ORDER BY nombre_Cliente")->fetchAll();
-$especies = $con->query("SELECT id_especie, nombre FROM especies ORDER BY nombre")->fetchAll();
-$cuentas_bancarias = $con->query("SELECT id_cuenta, nombre, banco, numero FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$clientes = $pdo->query("SELECT id_cliente, nombre_Cliente FROM clientes WHERE activo = 1 ORDER BY nombre_Cliente")->fetchAll();
+$especies = $pdo->query("SELECT id_especie, nombre FROM especies ORDER BY nombre")->fetchAll();
+$cuentas_bancarias = $pdo->query("SELECT id_cuenta, nombre, banco, numero FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -171,10 +171,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Iniciar transacción
-        $con->beginTransaction();
+        $pdo->beginTransaction();
 
         if ($anticipo > 0) {
-            $stmt_update_cuenta = $con->prepare("
+            $stmt_update_cuenta = $pdo->prepare("
                 UPDATE cuentas_bancarias 
                 SET saldo_actual = saldo_actual + :monto 
                 WHERE id_cuenta = :id_cuenta
@@ -191,12 +191,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Generar folio y num_remision
-        $countRow = (int)$con->query("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = YEAR(NOW())")->fetch(PDO::FETCH_ASSOC)['total'];
+        $countRow = (int)$pdo->query("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = YEAR(NOW())")->fetch(PDO::FETCH_ASSOC)['total'];
         $folio = 'NP-' . date('Y') . '-' . str_pad($countRow + 1, 5, '0', STR_PAD_LEFT);
         $num_remision = 'REM-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
         // Insertar nota 
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             INSERT INTO notaspedidos (
                 folio, fechaPedido, id_cliente, tipo_pago, metodo_Pago,
                 subtotal, total, saldo_pendiente, estado, observaciones,
@@ -227,10 +227,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':num_remision' => $num_remision
         ]);
 
-        $id_notaPedido = $con->lastInsertId();
+        $id_notaPedido = $pdo->lastInsertId();
 
         // Insertar detalles
-        $stmt_det = $con->prepare("
+        $stmt_det = $pdo->prepare("
             INSERT INTO detallesnotapedido
             (id_notaPedido, id_variedad, color, cantidad, precio_unitario, subtotal, monto_total)
             VALUES (:id_notaPedido, :id_variedad, :color, :cantidad, :precio_unitario, :subtotal, :monto_total)
@@ -255,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nom_aval = $_POST['nom-aval'] ?? '';
             $monto_garantia = $_POST['monto'] ?? 0;
 
-            $stmt_garantia = $con->prepare("
+            $stmt_garantia = $pdo->prepare("
                 INSERT INTO datos_garantia (id_notaPedido, nom_bien, num_regis, nom_aval, monto)
                 VALUES (:id_notaPedido, :nom_bien, :num_regis, :nom_aval, :monto)
             ");
@@ -271,12 +271,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Registrar pago en pagosventas (reemplazando seguimientoanticipos)
         if ($anticipo > 0) {
-            $stmt_pago = $con->prepare("
+            $stmt_pago = $pdo->prepare("
                 INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta, ID_Operador)
                 VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta, :ID_Operador)
             ");
 
-            $referencia = 'PAG-' . date('Ymd') . '-' . str_pad($con->query("SELECT COUNT(*) FROM pagosventas WHERE DATE(fecha)=CURDATE()")->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
+            $referencia = 'PAG-' . date('Ymd') . '-' . str_pad($pdo->query("SELECT COUNT(*) FROM pagosventas WHERE DATE(fecha)=CURDATE()")->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
 
             $stmt_pago->execute([
                 ':id_notaPedido' => $id_notaPedido,
@@ -289,14 +289,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        $con->commit();
+        $pdo->commit();
 
         // Mensaje de éxito y redirección
         $_SESSION['success_message'] = "Venta registrada correctamente con folio #{$folio}";
         header("Location: lista_ventas.php");
         exit;
     } catch (Exception $e) {
-        if ($con && $con->inTransaction()) $con->rollBack();
+        if ($pdo && $pdo->inTransaction()) $pdo->rollBack();
         // Devuelve el mensaje de error (lo puedes mostrar en pantalla)
         $error = "Error al guardar la nota de pedido: " . $e->getMessage();
     }

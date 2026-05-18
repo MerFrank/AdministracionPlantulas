@@ -11,16 +11,16 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
-    $con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = $db->conectar();
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Obtener datos para filtros
-$sucursales = $con->query("SELECT id_sucursal, nombre FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
-$tiposEgreso = $con->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
-$especies = $con->query("SELECT id_especie, nombre FROM Especies ORDER BY nombre")->fetchAll();
+$sucursales = $pdo->query("SELECT id_sucursal, nombre FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$tiposEgreso = $pdo->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$especies = $pdo->query("SELECT id_especie, nombre FROM Especies ORDER BY nombre")->fetchAll();
 
 // Procesar parámetros de filtrado
 $fecha_inicio = $_GET['fecha_inicio'] ?? date('Y-m-01');
@@ -62,7 +62,7 @@ try {
         $paramsIngresos[':id_sucursal'] = $id_sucursal;
     }
     
-    $stmtIngresos = $con->prepare($sqlIngresos);
+    $stmtIngresos = $pdo->prepare($sqlIngresos);
     $stmtIngresos->execute($paramsIngresos);
     $ingresos = $stmtIngresos->fetchAll();
 
@@ -91,7 +91,7 @@ try {
         $paramsEgresos[':id_tipo_egreso'] = $id_tipo_egreso;
     }
     
-    $stmtEgresos = $con->prepare($sqlEgresos);
+    $stmtEgresos = $pdo->prepare($sqlEgresos);
     $stmtEgresos->execute($paramsEgresos);
     $egresos = $stmtEgresos->fetchAll();
 
@@ -189,7 +189,7 @@ try {
     AND e.estado = 'activo'
     GROUP BY t.nombre";
     
-    $stmtEgresosTipo = $con->prepare($sqlEgresosTipo);
+    $stmtEgresosTipo = $pdo->prepare($sqlEgresosTipo);
     $stmtEgresosTipo->execute([':fecha_inicio' => $fecha_inicio, ':fecha_fin' => $fecha_fin]);
     $datosGraficas['egresos_por_tipo'] = $stmtEgresosTipo->fetchAll();
 
@@ -203,7 +203,7 @@ try {
     AND e.estado = 'activo'
     GROUP BY s.nombre";
     
-    $stmtEgresosSucursal = $con->prepare($sqlEgresosSucursal);
+    $stmtEgresosSucursal = $pdo->prepare($sqlEgresosSucursal);
     $stmtEgresosSucursal->execute([':fecha_inicio' => $fecha_inicio, ':fecha_fin' => $fecha_fin]);
     $datosGraficas['egresos_por_sucursal'] = $stmtEgresosSucursal->fetchAll();
 
@@ -217,7 +217,7 @@ try {
     AND np.estado != 'cancelado'
     GROUP BY s.nombre";
     
-    $stmtIngresosSucursal = $con->prepare($sqlIngresosSucursal);
+    $stmtIngresosSucursal = $pdo->prepare($sqlIngresosSucursal);
     $stmtIngresosSucursal->execute([':fecha_inicio' => $fecha_inicio, ':fecha_fin' => $fecha_fin]);
     $datosGraficas['ingresos_por_sucursal'] = $stmtIngresosSucursal->fetchAll();
 
@@ -232,7 +232,7 @@ try {
         AND DATE(dnp.fecha_creacion) BETWEEN :fecha_inicio AND :fecha_fin
         GROUP BY v.nombre_variedad";
         
-        $stmtEgresosVariedad = $con->prepare($sqlEgresosVariedad);
+        $stmtEgresosVariedad = $pdo->prepare($sqlEgresosVariedad);
         $stmtEgresosVariedad->execute([
             ':id_especie' => $id_especie,
             ':fecha_inicio' => $fecha_inicio,

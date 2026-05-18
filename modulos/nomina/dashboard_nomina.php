@@ -10,11 +10,11 @@ if (function_exists('verificarRol')) {
 // Obtener estadísticas de nómina
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Total de nóminas generadas (períodos distintos)
     $sql = "SELECT COUNT(DISTINCT id_periodo) as total FROM nominas";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $total_nominas = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
@@ -22,13 +22,13 @@ try {
     $mes_actual = date('Y-m');
     $sql = "SELECT COUNT(*) as total, COALESCE(SUM(sueldo_neto), 0) as monto 
             FROM nominas WHERE id_periodo = ? AND estatus = 'pagada'";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([$mes_actual]);
     $nomina_mes = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Próxima nómina a generar
     $sql = "SELECT MAX(id_periodo) as ultimo_periodo FROM nominas";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $ultimo_periodo = $stmt->fetch(PDO::FETCH_ASSOC)['ultimo_periodo'];
     

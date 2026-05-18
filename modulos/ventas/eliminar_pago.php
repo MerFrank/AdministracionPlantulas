@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -23,7 +23,7 @@ if ($id_pago <= 0) {
 }
 
 // Obtener información del pago para redireccionar después
-$sql_pago = $con->prepare("SELECT p.id_notaPedido, p.monto, p.id_cuenta 
+$sql_pago = $pdo->prepare("SELECT p.id_notaPedido, p.monto, p.id_cuenta 
                           FROM pagosventas p 
                           WHERE p.id_pago = ?");
 $sql_pago->execute([$id_pago]);
@@ -37,7 +37,7 @@ if (!$pago) {
 }
 
 // Verificar si la venta permite eliminar pagos (dependiendo del estado)
-$sql_estado = $con->prepare("SELECT estado FROM notaspedidos WHERE id_notaPedido = ?");
+$sql_estado = $pdo->prepare("SELECT estado FROM notaspedidos WHERE id_notaPedido = ?");
 $sql_estado->execute([$pago['id_notaPedido']]);
 $estado_result = $sql_estado->fetch(PDO::FETCH_ASSOC);
 
@@ -55,11 +55,11 @@ if ($estado_result) {
 // Eliminar el pago
 try {
     // Iniciar transacción
-    $con->beginTransaction();
+    $pdo->beginTransaction();
     
     // 1. Verificar que la cuenta tenga suficiente saldo antes de revertir
     if ($pago['id_cuenta']) {
-        $sql_saldo = $con->prepare("SELECT saldo_actual FROM cuentas_bancarias WHERE id_cuenta = ?");
+        $sql_saldo = $pdo->prepare("SELECT saldo_actual FROM cuentas_bancarias WHERE id_cuenta = ?");
         $sql_saldo->execute([$pago['id_cuenta']]);
         $saldo_result = $sql_saldo->fetch(PDO::FETCH_ASSOC);
         
@@ -71,26 +71,26 @@ try {
             }
             
             // 2. Revertir el monto en la cuenta bancaria
-            $sql_revertir = $con->prepare("UPDATE cuentas_bancarias SET saldo_actual = saldo_actual - ? WHERE id_cuenta = ?");
+            $sql_revertir = $pdo->prepare("UPDATE cuentas_bancarias SET saldo_actual = saldo_actual - ? WHERE id_cuenta = ?");
             $sql_revertir->execute([$pago['monto'], $pago['id_cuenta']]);
         }
     }
     
     // 3. Eliminar el pago
-    $sql_delete = $con->prepare("DELETE FROM pagosventas WHERE id_pago = ?");
+    $sql_delete = $pdo->prepare("DELETE FROM pagosventas WHERE id_pago = ?");
     $sql_delete->execute([$id_pago]);
     
     // 4. Actualizar el estado de la venta
-    actualizarEstadoVenta($pago['id_notaPedido'], $con);
+    actualizarEstadoVenta($pago['id_notaPedido'], $pdo);
     
-    $con->commit();
+    $pdo->commit();
     
     $_SESSION['success'] = "Pago eliminado correctamente";
 } catch (PDOException $e) {
-    $con->rollBack();
+    $pdo->rollBack();
     $_SESSION['error'] = "Error al eliminar el pago: " . $e->getMessage();
 } catch (Exception $e) {
-    $con->rollBack();
+    $pdo->rollBack();
     $_SESSION['error'] = $e->getMessage();
 }
 
@@ -99,15 +99,15 @@ header("Location: listar_pagosventa.php?id=" . $pago['id_notaPedido']);
 exit;
 
 // Función para actualizar el estado de la venta
-function actualizarEstadoVenta($id_venta, $con) {
+function actualizarEstadoVenta($id_venta, $pdo) {
     // Calcular total pagado
-    $sql_pagos = $con->prepare("SELECT SUM(monto) as total_pagado FROM pagosventas WHERE id_notaPedido = ?");
+    $sql_pagos = $pdo->prepare("SELECT SUM(monto) as total_pagado FROM pagosventas WHERE id_notaPedido = ?");
     $sql_pagos->execute([$id_venta]);
     $total_pagado_result = $sql_pagos->fetch(PDO::FETCH_ASSOC);
     $total_pagado = $total_pagado_result ? $total_pagado_result['total_pagado'] : 0;
     
     // Obtener total de la venta
-    $sql_venta = $con->prepare("SELECT total FROM notaspedidos WHERE id_notaPedido = ?");
+    $sql_venta = $pdo->prepare("SELECT total FROM notaspedidos WHERE id_notaPedido = ?");
     $sql_venta->execute([$id_venta]);
     $total_venta_result = $sql_venta->fetch(PDO::FETCH_ASSOC);
     $total_venta = $total_venta_result ? $total_venta_result['total'] : 0;
@@ -125,6 +125,6 @@ function actualizarEstadoVenta($id_venta, $con) {
     }
     
     // Actualizar estado y saldo pendiente
-    $sql_update = $con->prepare("UPDATE notaspedidos SET estado = ?, saldo_pendiente = ? WHERE id_notaPedido = ?");
+    $sql_update = $pdo->prepare("UPDATE notaspedidos SET estado = ?, saldo_pendiente = ? WHERE id_notaPedido = ?");
     $sql_update->execute([$nuevo_estado, $saldo_pendiente, $id_venta]);
 }

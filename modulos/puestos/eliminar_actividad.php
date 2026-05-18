@@ -17,10 +17,10 @@ $success = '';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Obtener nombre de la actividad para el mensaje
-    $stmt = $con->prepare("
+    $stmt = $pdo->prepare("
         SELECT nombre 
         FROM actividades_extras 
         WHERE id_actividad = ?
@@ -33,7 +33,7 @@ try {
     }
     
     // Verificar si la actividad está siendo usada en algún registro
-    $stmt_verificar = $con->prepare("
+    $stmt_verificar = $pdo->prepare("
         SELECT COUNT(*) as en_uso 
         FROM empleado_actividades 
         WHERE id_actividad = ?
@@ -43,7 +43,7 @@ try {
     
     if ($uso['en_uso'] > 0) {
         // Si está en uso, desactivar en lugar de eliminar
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             UPDATE actividades_extras 
             SET activo = 0 
             WHERE id_actividad = ?
@@ -53,7 +53,7 @@ try {
         $success = "La actividad '" . htmlspecialchars($actividad['nombre']) . "' estaba siendo utilizada, por lo que se ha desactivado en lugar de eliminar.";
     } else {
         // Si no está en uso, eliminar permanentemente
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             DELETE FROM actividades_extras 
             WHERE id_actividad = ?
         ");

@@ -24,7 +24,7 @@ require_once __DIR__ . '/../../includes/config.php';
 // Instanciar base de datos
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -37,7 +37,7 @@ if (empty($_SESSION['csrf_token'])) {
 // Obtener datos actuales del proveedor
 try {
     $sql = "SELECT * FROM proveedores WHERE id_proveedor = ?";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([$id_proveedor]);
     $proveedor = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
                   productos = :productos
                 WHERE id_proveedor = :id_proveedor";
 
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $result = $stmt->execute($datos);
 
         if ($result) {

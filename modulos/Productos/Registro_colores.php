@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../includes/config.php';
 ob_start();
 
 $db = new Database();
-$conexion = $db->conectar();
+$pdo = $db->conectar();
 // variable para dar un valor y no de error
 $especieSeleccionada = isset($_GET['especie']) ? intval($_GET['especie']) : null;
 // Procesamiento de formularios (POST)
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if ($accion === 'eliminar' && $idColor) {
             $sql = "DELETE FROM colores WHERE id_color = :id_color";
-            $stmt = $conexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sqlCheck .= " AND id_color != :id_color_excluir";
             }
 
-            $stmtCheck = $conexion->prepare($sqlCheck);
+            $stmtCheck = $pdo->prepare($sqlCheck);
             $stmtCheck->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
             $stmtCheck->bindParam(':color', $color);
             if ($accion === 'editar' && $idColor) {
@@ -58,12 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($accion === 'crear') {
                 $sql = "INSERT INTO colores (id_especie, nombre_color) VALUES (:id_especie, :color)";
-                $stmt = $conexion->prepare($sql);
+                $stmt = $pdo->prepare($sql);
                 $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
                 $stmt->bindParam(':color', $color);
             } elseif ($accion === 'editar') {
                 $sql = "UPDATE colores SET nombre_color = :color WHERE id_color = :id_color";
-                $stmt = $conexion->prepare($sql);
+                $stmt = $pdo->prepare($sql);
                 $stmt->bindParam(':color', $color);
                 $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
             }
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_GET['especie'])) {
     $idEspecie = intval($_GET['especie']);
     $sql = "SELECT id_color, nombre_color FROM colores WHERE id_especie = :id_especie ORDER BY nombre_color";
-    $stmt = $conexion->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
     $stmt->execute();
     $colores = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -127,7 +127,7 @@ require '../../includes/header.php';
                         <option value="">-- Seleccione --</option>
                         <?php
                         $sql = "SELECT id_especie, nombre FROM especies ORDER BY nombre";
-                        $stmt = $conexion->query($sql);
+                        $stmt = $pdo->query($sql);
                         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                             $selected = ($especieSeleccionada == $row['id_especie']) ? 'selected' : '';
                             echo "<option value='{$row['id_especie']}' $selected>{$row['nombre']}</option>";
@@ -171,7 +171,7 @@ require '../../includes/header.php';
                                 $sql = "SELECT id_color, nombre_color FROM colores 
                                 WHERE id_especie = :id_especie 
                                 ORDER BY nombre_color";
-                                $stmt = $conexion->prepare($sql);
+                                $stmt = $pdo->prepare($sql);
                                 $stmt->bindParam(':id_especie', $especieSeleccionada, PDO::PARAM_INT);
                                 $stmt->execute();
 

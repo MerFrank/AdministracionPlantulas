@@ -11,17 +11,17 @@ $empleados = [];
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Total de puestos activos
     $sql = "SELECT COUNT(*) as total FROM puestos WHERE activo = 1";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $total_puestos = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     // Total de empleados con puesto asignado
     $sql = "SELECT COUNT(DISTINCT id_empleado) as total FROM empleado_puesto WHERE fecha_fin IS NULL";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $total_asignaciones = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
@@ -33,7 +33,7 @@ try {
             WHERE p.activo = 1
             ORDER BY e.nombre";
     
-    $stmt_empleados = $con->prepare($sql_empleados);
+    $stmt_empleados = $pdo->prepare($sql_empleados);
     $stmt_empleados->execute();
     $empleados = $stmt_empleados->fetchAll(PDO::FETCH_ASSOC);
     

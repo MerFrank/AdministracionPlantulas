@@ -3,7 +3,7 @@ require_once(__DIR__ . '/../../includes/validacion_session.php');
 require_once __DIR__ . '/../../includes/config.php';
 
 $db = new Database();
-$conexion = $db->conectar();
+$pdo = $db->conectar();
 
 // Variables para edición
 $variedadEditar = null;
@@ -32,11 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Iniciar transacción
-            $conexion->beginTransaction();
+            $pdo->beginTransaction();
 
             // Verificar que la variedad existe y está activa
             $sqlCheck = "SELECT id_variedad FROM variedades WHERE id_variedad = :id AND activo = 1";
-            $stmtCheck = $conexion->prepare($sqlCheck);
+            $stmtCheck = $pdo->prepare($sqlCheck);
             $stmtCheck->bindParam(':id', $idVariedad, PDO::PARAM_INT);
             $stmtCheck->execute();
 
@@ -46,14 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Borrado lógico (marcar como inactivo)
             $sql = "UPDATE variedades SET activo = 0 WHERE id_variedad = :id";
-            $stmt = $conexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $idVariedad, PDO::PARAM_INT);
 
             if (!$stmt->execute()) {
                 throw new Exception('Error al marcar la variedad como eliminada');
             }
 
-            $conexion->commit();
+            $pdo->commit();
 
             sendJsonResponse(true, 'Variedad marcada como eliminada');
         } else {
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sqlCheck .= " AND id_variedad != :id_variedad";
             }
 
-            $stmtCheck = $conexion->prepare($sqlCheck);
+            $stmtCheck = $pdo->prepare($sqlCheck);
             $stmtCheck->bindParam(':codigo', $codigoVariedad);
             if ($accion === 'editar') {
                 $stmtCheck->bindParam(':id_variedad', $idVariedad, PDO::PARAM_INT);
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         WHERE id_variedad = :id_variedad";
             }
 
-            $stmt = $conexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
             $stmt->bindParam(':id_color', $idColor, PDO::PARAM_INT);
             $stmt->bindParam(':nombre', $nombreVariedad);
@@ -123,9 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Obtener datos para respuesta
-            $lastId = $accion === 'crear' ? $conexion->lastInsertId() : $idVariedad;
-            $nombreEspecie = $conexion->query("SELECT nombre FROM especies WHERE id_especie = $idEspecie")->fetchColumn();
-            $nombreColor = $conexion->query("SELECT nombre_color FROM colores WHERE id_color = $idColor")->fetchColumn();
+            $lastId = $accion === 'crear' ? $pdo->lastInsertId() : $idVariedad;
+            $nombreEspecie = $pdo->query("SELECT nombre FROM especies WHERE id_especie = $idEspecie")->fetchColumn();
+            $nombreColor = $pdo->query("SELECT nombre_color FROM colores WHERE id_color = $idColor")->fetchColumn();
 
             sendJsonResponse(
                 true,
@@ -140,14 +140,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
     } catch (PDOException $e) {
-        if ($conexion->inTransaction()) {
-            $conexion->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
         }
         error_log('Error en gestión de variedades: ' . $e->getMessage());
         sendJsonResponse(false, 'Error en la base de datos: ' . $e->getMessage());
     } catch (Exception $e) {
-        if ($conexion->inTransaction()) {
-            $conexion->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
         }
         error_log('Error en variedades: ' . $e->getMessage());
         sendJsonResponse(false, $e->getMessage());
@@ -167,7 +167,7 @@ if (isset($_GET['editar'])) {
                 JOIN especies e ON v.id_especie = e.id_especie
                 JOIN colores c ON v.id_color = c.id_color
                 WHERE v.id_variedad = :id AND v.activo = 1";
-        $stmt = $conexion->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $idEditar, PDO::PARAM_INT);
         $stmt->execute();
         $variedadEditar = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -184,7 +184,7 @@ if (isset($_GET['editar'])) {
 $especies = [];
 try {
     $sql = "SELECT id_especie, nombre FROM especies ORDER BY nombre";
-    $stmt = $conexion->query($sql);
+    $stmt = $pdo->query($sql);
     $especies = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $errorEspecies = "Error al cargar especies: " . $e->getMessage();
@@ -196,7 +196,7 @@ if (isset($variedadEditar) || $especieSeleccionada) {
     $idEspecie = $variedadEditar['id_especie'] ?? $especieSeleccionada;
     try {
         $sql = "SELECT id_color, nombre_color FROM colores WHERE id_especie = :id_especie ORDER BY nombre_color";
-        $stmt = $conexion->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
         $stmt->execute();
         $colores = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -221,7 +221,7 @@ try {
 
     $sql .= " ORDER BY e.nombre, c.nombre_color, v.nombre_variedad";
 
-    $stmt = $especieSeleccionada ? $conexion->prepare($sql) : $conexion->query($sql);
+    $stmt = $especieSeleccionada ? $pdo->prepare($sql) : $pdo->query($sql);
 
     if ($especieSeleccionada) {
         $stmt->bindParam(':id_especie', $especieSeleccionada, PDO::PARAM_INT);

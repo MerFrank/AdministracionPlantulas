@@ -13,11 +13,11 @@ $puestos = [];
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Consulta SQL para seleccionar todos los puestos ordenados por nombre.
     $sql = "SELECT * FROM puestos ORDER BY nombre";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $puestos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

@@ -12,21 +12,21 @@ require_once __DIR__ . '/../../includes/header.php';
 // Obtener datos resumidos para el dashboard
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Totales del mes actual
-    $ingresosMes = $con->query("SELECT SUM(total) FROM NotasPedidos 
+    $ingresosMes = $pdo->query("SELECT SUM(total) FROM NotasPedidos 
                                WHERE MONTH(fechaPedido) = MONTH(CURRENT_DATE()) 
                                AND YEAR(fechaPedido) = YEAR(CURRENT_DATE())")->fetchColumn();
     
-    $egresosMes = $con->query("SELECT SUM(monto) FROM egresos 
+    $egresosMes = $pdo->query("SELECT SUM(monto) FROM egresos 
                               WHERE MONTH(fecha) = MONTH(CURRENT_DATE()) 
                               AND YEAR(fecha) = YEAR(CURRENT_DATE())")->fetchColumn();
     
     $balanceMes = $ingresosMes - $egresosMes;
     
     // Últimos 6 meses para gráfico
-    $datosMensuales = $con->query("
+    $datosMensuales = $pdo->query("
         SELECT 
             DATE_FORMAT(fecha, '%Y-%m') as mes,
             SUM(CASE WHEN tipo = 'ingreso' THEN monto ELSE 0 END) as ingresos,
@@ -154,7 +154,7 @@ try {
                             </thead>
                             <tbody>
                                 <?php
-                                $ultimosIngresos = $con->query("
+                                $ultimosIngresos = $pdo->query("
                                     SELECT np.fechaPedido, c.nombre_Cliente, np.total 
                                     FROM NotasPedidos np
                                     JOIN Clientes c ON np.id_cliente = c.id_cliente
@@ -193,7 +193,7 @@ try {
                             </thead>
                             <tbody>
                                 <?php
-                                $ultimosEgresos = $con->query("
+                                $ultimosEgresos = $pdo->query("
                                     SELECT e.fecha, e.concepto, e.monto 
                                     FROM egresos e
                                     ORDER BY e.fecha DESC LIMIT 5

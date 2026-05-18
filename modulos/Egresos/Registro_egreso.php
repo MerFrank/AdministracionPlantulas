@@ -7,8 +7,8 @@ ini_set('display_errors', 1);
 
 require_once __DIR__ . '/../../includes/config.php';
 
-function generarNumeroComprobante($con) {
-    $stmt = $con->query("SELECT MAX(id_egreso) as ultimo_id FROM egresos");
+function generarNumeroComprobante($pdo) {
+    $stmt = $pdo->query("SELECT MAX(id_egreso) as ultimo_id FROM egresos");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $ultimo_id = $result['ultimo_id'] ?? 0;
     return 'EG-' . str_pad($ultimo_id + 1, 6, '0', STR_PAD_LEFT);
@@ -16,16 +16,16 @@ function generarNumeroComprobante($con) {
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Cargar datos para los select
-$proveedores = $con->query("SELECT id_proveedor, nombre_proveedor AS nombre FROM proveedores WHERE activo = 1 ORDER BY nombre_proveedor")->fetchAll();
-$sucursales = $con->query("SELECT id_sucursal, nombre FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
-$tiposEgreso = $con->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
-$cuentas = $con->query("SELECT id_cuenta, nombre, numero, saldo_actual FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$proveedores = $pdo->query("SELECT id_proveedor, nombre_proveedor AS nombre FROM proveedores WHERE activo = 1 ORDER BY nombre_proveedor")->fetchAll();
+$sucursales = $pdo->query("SELECT id_sucursal, nombre FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$tiposEgreso = $pdo->query("SELECT id_tipo, nombre FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$cuentas = $pdo->query("SELECT id_cuenta, nombre, numero, saldo_actual FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -33,7 +33,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Procesar formulario
 $error = '';
-$numero_comprobante = generarNumeroComprobante($con);
+$numero_comprobante = generarNumeroComprobante($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $con->beginTransaction();
+        $pdo->beginTransaction();
 
         // Validar campos requeridos
         $camposRequeridos = [
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_cuenta_origen = (int)$_POST['id_cuenta_origen'];
         $monto = (float)$_POST['monto'];
 
-        $stmtSaldo = $con->prepare("SELECT saldo_actual FROM cuentas_bancarias WHERE id_cuenta = ? FOR UPDATE");
+        $stmtSaldo = $pdo->prepare("SELECT saldo_actual FROM cuentas_bancarias WHERE id_cuenta = ? FOR UPDATE");
         $stmtSaldo->execute([$id_cuenta_origen]);
         $saldoActual = $stmtSaldo->fetchColumn();
 
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Saldo insuficiente en la cuenta seleccionada. Saldo disponible: $" . number_format($saldoActual, 2));
         }
 
-        $stmtTipoCuenta = $con->prepare("SELECT tipo_cuenta FROM cuentas_bancarias WHERE id_cuenta = ?");
+        $stmtTipoCuenta = $pdo->prepare("SELECT tipo_cuenta FROM cuentas_bancarias WHERE id_cuenta = ?");
         $stmtTipoCuenta->execute([$id_cuenta_origen]);
         $tipoCuenta = $stmtTipoCuenta->fetchColumn();
         
@@ -117,16 +117,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     :tipo_operacion, :id_cuenta_destino, :metodo_pago
                 )";
 
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($datos);
-        $id_egreso = $con->lastInsertId();
+        $id_egreso = $pdo->lastInsertId();
 
         // Actualizar saldos
         if ($datos['tipo_operacion'] === 'reembolso') {
             // Sumar a cuenta destino
             $sqlUpdate = "UPDATE cuentas_bancarias SET saldo_actual = saldo_actual + :monto 
                          WHERE id_cuenta = :id_cuenta";
-            $stmtUpdate = $con->prepare($sqlUpdate);
+            $stmtUpdate = $pdo->prepare($sqlUpdate);
             $stmtUpdate->execute([
                 'monto' => $datos['monto'],
                 'id_cuenta' => $datos['id_cuenta_destino']
@@ -136,19 +136,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Restar de cuenta origen
         $sqlUpdate = "UPDATE cuentas_bancarias SET saldo_actual = saldo_actual - :monto 
                      WHERE id_cuenta = :id_cuenta";
-        $stmtUpdate = $con->prepare($sqlUpdate);
+        $stmtUpdate = $pdo->prepare($sqlUpdate);
         $stmtUpdate->execute([
             'monto' => $datos['monto'],
             'id_cuenta' => $datos['id_cuenta_origen']
         ]);
 
-        $con->commit();
+        $pdo->commit();
 
         $_SESSION['success_message'] = 'Operación registrada correctamente';
         header('Location: lista_egresos.php');
         exit;
     } catch (Exception $e) {
-        $con->rollBack();
+        $pdo->rollBack();
         $error = $e->getMessage();
     }
 }

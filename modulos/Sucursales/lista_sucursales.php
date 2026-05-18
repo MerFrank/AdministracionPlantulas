@@ -9,12 +9,12 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
-$sucursales = $con->query("SELECT * FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$sucursales = $pdo->query("SELECT * FROM sucursales WHERE activo = 1 ORDER BY nombre")->fetchAll();
 
 $titulo = 'Sucursales';
 $encabezado = 'Listado de Sucursales';

@@ -14,9 +14,9 @@ try {
     $idEspecie = (int)$_GET['especie'];
 
     $db = new Database();
-    $conexion = $db->conectar();
+    $pdo = $db->conectar();
 
-    $stmt = $conexion->prepare("SELECT id_color, nombre_color FROM colores WHERE id_especie = :id_especie ORDER BY nombre_color");
+    $stmt = $pdo->prepare("SELECT id_color, nombre_color FROM colores WHERE id_especie = :id_especie ORDER BY nombre_color");
     $stmt->bindParam(':id_especie', $idEspecie, PDO::PARAM_INT);
     $stmt->execute();
 

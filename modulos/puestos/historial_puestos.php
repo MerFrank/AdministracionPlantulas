@@ -15,14 +15,14 @@ if ($id_empleado <= 0) {
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Obtener información del empleado
 
     $sql_empleado = "SELECT id_empleado, nombre, apellido_paterno, apellido_materno 
  
                      FROM empleados WHERE id_empleado = ?";
-    $stmt_empleado = $con->prepare($sql_empleado);
+    $stmt_empleado = $pdo->prepare($sql_empleado);
     $stmt_empleado->execute([$id_empleado]);
     $empleado = $stmt_empleado->fetch(PDO::FETCH_ASSOC);
     
@@ -40,7 +40,7 @@ try {
                       JOIN puestos p ON ep.id_puesto = p.id_puesto
                       WHERE ep.id_empleado = ?
                       ORDER BY ep.fecha_inicio DESC";
-    $stmt_historial = $con->prepare($sql_historial);
+    $stmt_historial = $pdo->prepare($sql_historial);
     $stmt_historial->execute([$id_empleado]);
     $historial = $stmt_historial->fetchAll(PDO::FETCH_ASSOC);
     

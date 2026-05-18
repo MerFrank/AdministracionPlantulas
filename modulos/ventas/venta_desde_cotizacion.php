@@ -7,16 +7,16 @@ ini_set('display_errors', 1);
 require_once __DIR__ . '/../../includes/config.php';
 
 // Funciones auxiliares para generar números secuenciales
-function generarFolioNotaPedido($con) {
+function generarFolioNotaPedido($pdo) {
     $year = date('Y');
-    $stmt = $con->prepare("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = ?");
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = ?");
     $stmt->execute([$year]);
     $count = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
     return 'NP-' . $year . '-' . str_pad($count + 1, 5, '0', STR_PAD_LEFT);
 }
 
-function generarNumeroRemision($con) {
-    $stmt = $con->query("SELECT MAX(num_remision) as max_num FROM notaspedidos");
+function generarNumeroRemision($pdo) {
+    $stmt = $pdo->query("SELECT MAX(num_remision) as max_num FROM notaspedidos");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Convertir a entero antes de sumar
@@ -26,13 +26,13 @@ function generarNumeroRemision($con) {
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
 // Obtener cotizaciones disponibles
-$cotizaciones = $con->query("
+$cotizaciones = $pdo->query("
     SELECT c.id_cotizacion, c.folio, c.fecha, cl.nombre_Cliente as cliente, c.total
     FROM cotizaciones c
     LEFT JOIN clientes cl ON c.id_cliente = cl.id_cliente
@@ -44,13 +44,13 @@ $cotizaciones = $con->query("
 $cotizacion_seleccionada = null;
 $detalles_cotizacion = [];
 
-$cuentas_bancarias = $con->query("SELECT id_cuenta, nombre, banco, numero FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$cuentas_bancarias = $pdo->query("SELECT id_cuenta, nombre, banco, numero FROM cuentas_bancarias WHERE activo = 1 ORDER BY nombre")->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_cotizacion'])) {
     $id_cotizacion = (int)$_POST['id_cotizacion'];
     
     // Obtener información de la cotización
-    $stmt = $con->prepare("
+    $stmt = $pdo->prepare("
         SELECT c.*, cl.nombre_Cliente as cliente_nombre, cl.telefono, cl.domicilio_fiscal as direccion
         FROM cotizaciones c
         LEFT JOIN clientes cl ON c.id_cliente = cl.id_cliente
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_cotizacion'])) {
     $cotizacion_seleccionada = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Obtener detalles de la cotización
-    $stmt = $con->prepare("
+    $stmt = $pdo->prepare("
         SELECT dc.*, v.nombre_variedad as variedad_nombre, 
                e.nombre as especie, col.nombre_color as color
         FROM detallescotizacion dc
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_cotizacion'])) {
 // Procesar creación de venta
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
     try {
-        $con->beginTransaction();
+        $pdo->beginTransaction();
         
         $id_cotizacion = (int)$_POST['id_cotizacion'];
         $id_cliente = (int)$_POST['id_cliente'];
@@ -90,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
         }
         
         // Generar números secuenciales
-        $folio = generarFolioNotaPedido($con);
-        $num_remision = generarNumeroRemision($con);
+        $folio = generarFolioNotaPedido($pdo);
+        $num_remision = generarNumeroRemision($pdo);
         $total = (float)$_POST['total'];
         $saldo_pendiente = $tipo_pago === 'contado' ? 0 : ($total - $anticipo);
         $estado = $tipo_pago === 'contado' ? 'completado' : ($anticipo > 0 ? 'parcial' : 'pendiente');
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
         $ID_Operador = $_SESSION['ID_Operador'] ?? null;
         $id_cuenta = isset($_POST['id_cuenta']) ? (int)$_POST['id_cuenta'] : null;
         // Insertar Nota de Pedido
-        $stmt = $con->prepare("
+        $stmt = $pdo->prepare("
             INSERT INTO notaspedidos (
                 folio, num_remision, fechaPedido, id_cliente, id_cotizacion, tipo_pago, metodo_Pago,
                 subtotal, descuento, total, saldo_pendiente, estado, 
@@ -129,11 +129,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             $ID_Operador
         ]);
         
-        $id_notaPedido = $con->lastInsertId();
+        $id_notaPedido = $pdo->lastInsertId();
         
         // Copiar detalles de cotización a nota de pedido
         foreach ($detalles_cotizacion as $detalle) {
-            $stmt = $con->prepare("
+            $stmt = $pdo->prepare("
                 INSERT INTO detallesnotapedido (
                     id_notaPedido, id_variedad, cantidad, precio_unitario, 
                     subtotal, monto_total, color
@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
         }
         
         // Actualizar estado de cotización
-        $stmt = $con->prepare("UPDATE cotizaciones SET estado = 'completado' WHERE id_cotizacion = ?");
+        $stmt = $pdo->prepare("UPDATE cotizaciones SET estado = 'completado' WHERE id_cotizacion = ?");
         $stmt->execute([$id_cotizacion]);
         
         // Registrar anticipo si hay (usando la nueva tabla de pagos)
@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             }
 
             
-            $stmt = $con->prepare("
+            $stmt = $pdo->prepare("
                 INSERT INTO pagosventas (
                     id_notaPedido, monto, fecha, metodo_pago, referencia, 
                     observaciones, id_operador, id_cuenta
@@ -186,13 +186,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             ]);
         }
         
-        $con->commit();
+        $pdo->commit();
         
         $_SESSION['success_message'] = "Venta creada correctamente con folio #$id_notaPedido";
         header("Location: lista_ventas.php");
         exit;
     } catch (Exception $e) {
-        $con->rollBack();
+        $pdo->rollBack();
         $error = $e->getMessage();
     }
 }

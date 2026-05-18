@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -74,7 +74,7 @@ $sql = "
 ";
 
 
-$stmt = $con->prepare($sql);
+$stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $cotizaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

@@ -17,10 +17,10 @@ $actividades = [];
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     $sql = "SELECT * FROM actividades_extras ORDER BY nombre";
-    $stmt = $con->prepare($sql);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $actividades = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

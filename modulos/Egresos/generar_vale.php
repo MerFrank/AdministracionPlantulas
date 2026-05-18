@@ -91,7 +91,7 @@ function convertirMenorMil($numero) {
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
     
     // Obtener ID del egreso desde GET o POST
     $id_egreso = $_GET['id'] ?? $_POST['id_egreso'] ?? null;
@@ -103,7 +103,7 @@ try {
                 LEFT JOIN sucursales s ON e.id_sucursal = s.id_sucursal 
                 LEFT JOIN proveedores p ON e.id_proveedor = p.id_proveedor
                 WHERE e.id_egreso = ?";
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([$id_egreso]);
         $egreso = $stmt->fetch(PDO::FETCH_ASSOC);
         

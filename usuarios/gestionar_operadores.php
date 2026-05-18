@@ -11,7 +11,7 @@ $titulo = 'Lista de Operadores';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -37,7 +37,7 @@ if (!empty($where_conditions)) {
 
 // Obtener el total de registros para paginación
 $sql_count = "SELECT COUNT(*) as total FROM operadores $where_sql";
-$stmt_count = $con->prepare($sql_count);
+$stmt_count = $pdo->prepare($sql_count);
 foreach ($params as $key => $value) {
     $stmt_count->bindValue($key, $value);
 }
@@ -55,7 +55,7 @@ $offset = ($pagina - 1) * $registros_por_pagina;
 // Obtener los registros de la página actual
 $sql = "SELECT * FROM operadores $where_sql ORDER BY Fecha_Registro DESC LIMIT :offset, :limit";
 
-$stmt = $con->prepare($sql);
+$stmt = $pdo->prepare($sql);
 foreach ($params as $key => $value) {
     $stmt->bindValue($key, $value);
 }

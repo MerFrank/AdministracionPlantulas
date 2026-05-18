@@ -10,12 +10,12 @@ require_once __DIR__ . '/../../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
-$tipos = $con->query("SELECT * FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
+$tipos = $pdo->query("SELECT * FROM tipos_egreso WHERE activo = 1 ORDER BY nombre")->fetchAll();
 
 $titulo = 'Tipos de Egreso';
 $encabezado = 'Listado de Tipos de Egreso';

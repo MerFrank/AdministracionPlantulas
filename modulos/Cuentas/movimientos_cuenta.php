@@ -19,7 +19,7 @@ function format_currency($value)
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -32,7 +32,7 @@ if ($id_cuenta <= 0) {
     exit;
 }
 
-$stmt = $con->prepare("SELECT * FROM cuentas_bancarias WHERE id_cuenta = ?");
+$stmt = $pdo->prepare("SELECT * FROM cuentas_bancarias WHERE id_cuenta = ?");
 $stmt->execute([$id_cuenta]);
 $cuenta = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -55,7 +55,7 @@ $sql_saldo_inicial = "SELECT COALESCE(SUM(CASE WHEN tipo_operacion = 'ingreso' T
                       FROM egresos 
                       WHERE id_cuenta = :id_cuenta AND fecha < :fecha_inicio";
 
-$stmt = $con->prepare($sql_saldo_inicial);
+$stmt = $pdo->prepare($sql_saldo_inicial);
 $stmt->execute([':id_cuenta' => $id_cuenta, ':fecha_inicio' => $fecha_inicio]);
 $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 $saldo_inicial_periodo = $cuenta['saldo_inicial'] + $resultado['saldo_anterior'];
@@ -82,7 +82,7 @@ $sql_movimientos = "
         e.fecha ASC, e.id_egreso ASC
 ";
 
-$stmt = $con->prepare($sql_movimientos);
+$stmt = $pdo->prepare($sql_movimientos);
 $stmt->execute([
     ':id_cuenta' => $id_cuenta,
     ':fecha_inicio' => $fecha_inicio,

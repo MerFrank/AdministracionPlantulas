@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../includes/config.php';
 // Intenta establecer conexión con la base de datos
 try {
     $db = new Database(); // Crea una nueva instancia de la clase Database
-    $con = $db->conectar(); // Obtiene la conexión PDO
+    $pdo = $db->conectar(); // Obtiene la conexión PDO
 } catch (PDOException $e) {
     // Si hay error en la conexión, muestra mensaje y termina la ejecución
     die("Error de conexión: " . $e->getMessage());
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "INSERT INTO cuentas_bancarias (nombre, banco, tipo_cuenta, numero, clabe, saldo_inicial, saldo_actual) 
                 VALUES (:nombre, :banco, :tipo_cuenta, :numero, :clabe, :saldo_inicial, :saldo_inicial)";
         
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         if ($stmt->execute($datos)) {
             // Si la inserción es exitosa:
             $_SESSION['success_message'] = 'Cuenta registrada correctamente';

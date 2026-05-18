@@ -14,7 +14,7 @@ require_once __DIR__ . '/../../includes/config.php';
 
 try {
     $db = new Database();
-    $con = $db->conectar();
+    $pdo = $db->conectar();
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
@@ -30,7 +30,7 @@ if (isset($_GET['ajax_action'])) {
         switch ($_GET['ajax_action']) {
             case 'get_colores':
                 $id_especie = (int)$_GET['id_especie'];
-                $stmt = $con->prepare("SELECT id_color, nombre_color FROM colores WHERE id_especie = ? ORDER BY nombre_color");
+                $stmt = $pdo->prepare("SELECT id_color, nombre_color FROM colores WHERE id_especie = ? ORDER BY nombre_color");
                 $stmt->execute([$id_especie]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
@@ -38,7 +38,7 @@ if (isset($_GET['ajax_action'])) {
             case 'get_variedades':
                 $id_especie = (int)$_GET['id_especie'];
                 $id_color = (int)$_GET['id_color'];
-                $stmt = $con->prepare("SELECT id_variedad, nombre_variedad, codigo FROM variedades WHERE id_especie = ? AND id_color = ? AND activo = 1 ORDER BY nombre_variedad");
+                $stmt = $pdo->prepare("SELECT id_variedad, nombre_variedad, codigo FROM variedades WHERE id_especie = ? AND id_color = ? AND activo = 1 ORDER BY nombre_variedad");
                 $stmt->execute([$id_especie, $id_color]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
                 break;
@@ -56,20 +56,20 @@ if (isset($_GET['ajax_action'])) {
 // FUNCIONES Y LÓGICA DE COTIZACIÓN
 // ==============================================
 
-function generarFolio($con) {
-    $stmt = $con->query("SELECT MAX(id_cotizacion) as ultimo_id FROM cotizaciones");
+function generarFolio($pdo) {
+    $stmt = $pdo->query("SELECT MAX(id_cotizacion) as ultimo_id FROM cotizaciones");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $ultimo_id = $result['ultimo_id'] ?? 0;
     return 'COT-' . date('Y') . '-' . str_pad($ultimo_id + 1, 4, '0', STR_PAD_LEFT);
 }
 
 // Obtener datos iniciales
-$clientes = $con->query("SELECT id_cliente, nombre_Cliente as nombre, telefono, nombre_Empresa 
+$clientes = $pdo->query("SELECT id_cliente, nombre_Cliente as nombre, telefono, nombre_Empresa 
                         FROM clientes 
                         WHERE activo = 1 
                         ORDER BY nombre_Cliente")->fetchAll();
 
-$especies = $con->query("SELECT id_especie, nombre FROM especies ORDER BY nombre")->fetchAll();
+$especies = $pdo->query("SELECT id_especie, nombre FROM especies ORDER BY nombre")->fetchAll();
 
 // Generar token CSRF
 if (empty($_SESSION['csrf_token'])) {
@@ -78,7 +78,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Procesar formulario
 $error = '';
-$folio = generarFolio($con);
+$folio = generarFolio($pdo);
 $success_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $con->beginTransaction();
+        $pdo->beginTransaction();
 
         // Validar campos requeridos
         $camposRequeridos = [
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     :total, :observaciones, 'pendiente', :items
                 )";
 
-        $stmt = $con->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([
             'folio' => $folio,
             'id_cliente' => (int)$_POST['id_cliente'],
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'items' => $_POST['items']
         ]);
 
-        $id_cotizacion = $con->lastInsertId();
+        $id_cotizacion = $pdo->lastInsertId();
 
         // Insertar items de cotización
         foreach ($items as $item) {
@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 :precio_unitario, :subtotal, :observaciones
             )";
 
-            $stmtItem = $con->prepare($sqlItem);
+            $stmtItem = $pdo->prepare($sqlItem);
             $stmtItem->execute([
                 'id_cotizacion' => $id_cotizacion,
                 'id_especie' => $item['id_especie'],
@@ -160,13 +160,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        $con->commit();
+        $pdo->commit();
 
         $_SESSION['success_message'] = 'Cotización registrada correctamente con folio: ' . $folio;
         header('Location: lista_cotizaciones.php');
         exit;
     } catch (Exception $e) {
-        $con->rollBack();
+        $pdo->rollBack();
         $error = $e->getMessage();
     }
 }
