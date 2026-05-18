@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__.'/../session_manager.php';
-require_once __DIR__.'/../db.php';
+require_once __DIR__ . '/../includes/config.php';
 
 if (!isset($_SESSION['ID_Operador']) || (int)$_SESSION['Rol']!==1) {
     header('Location: ../login.php'); exit;

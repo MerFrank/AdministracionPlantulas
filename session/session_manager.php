@@ -28,13 +28,13 @@ require_once __DIR__ . '/../includes/config.php';
 
 try {
     $db = new Database();
-    $conn = $db->conectar();
+    $pdo = $db->conectar();
 
     // —— VALIDACIÓN DE SID EN BASE DE DATOS ——
     $currentSid = session_id();
 
     // Traer de BD el session_id y el tiempo de inactividad
-    $stmt = $conn->prepare("
+    $stmt = $pdo->prepare("
         SELECT 
           `current_session_id`,
           TIMESTAMPDIFF(SECOND, `last_activity`, NOW()) AS inactivity
@@ -74,7 +74,7 @@ try {
     }
 
     // Actualizar last_activity al momento actual
-    $upd = $conn->prepare("
+    $upd = $pdo->prepare("
         UPDATE `operadores`
            SET `last_activity` = NOW()
          WHERE `ID_Operador` = ?
@@ -93,7 +93,7 @@ try {
 
         // Guardar nuevo SID en BD
         $newSid = session_id();
-        $upd2 = $conn->prepare("
+        $upd2 = $pdo->prepare("
             UPDATE `operadores`
                SET `current_session_id` = ?
              WHERE `ID_Operador` = ?

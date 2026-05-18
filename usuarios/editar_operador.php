@@ -6,7 +6,10 @@ error_reporting(E_ALL);
 
 // 1) Validar sesión y rol
 require_once __DIR__ . '/../session_manager.php';
-require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../includes/config.php';
+
+$db = new Database();
+$pdo = $db->conectar();
 
 if (!isset($_SESSION['ID_Operador'])) {
     header('Location: ../login.php?mensaje=Debe iniciar sesión');
@@ -29,7 +32,7 @@ if (!isset($_GET['id'])) {
     echo "ID no especificado.";
     exit();
 }
-$id = intval($_GET['id']);
+$id = (int) $_GET['id'];
 $mensaje = "";
 
 // 6) Si llegan datos por POST, actualizamos
@@ -43,47 +46,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_rol       = $_POST['id_rol'];
 
     $sql = "UPDATE operadores SET 
-              Nombre              = ?,
-              Apellido_P          = ?,
-              Apellido_M          = ?,
-              Correo_Electronico  = ?,
-              Puesto              = ?,
-              Area_Produccion     = ?,
-              ID_Rol              = ?,
+              Nombre              = :nombre,
+              Apellido_P          = :apellido_p,
+              Apellido_M          = :apellido_m,
+              Correo_Electronico  = :correo,
+              Puesto              = :puesto,
+              Area_Produccion     = :area,
+              ID_Rol              = :id_rol,
               Fecha_Actualizacion = NOW()
-            WHERE ID_Operador = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param(
-      'sssssiii',
-      $nombre,
-      $apellido_p,
-      $apellido_m,
-      $correo,
-      $puesto,
-      $area,
-      $id_rol,
-      $id
-    );
+            WHERE ID_Operador = :id";
+    
+    $stmt = $pdo->prepare($sql);
+    
+    // CORRECCIÓN: Usar bindValue/bindParam de PDO con marcadores nombrados
+    $stmt->bindValue(':nombre', $nombre, PDO::PARAM_STR);
+    $stmt->bindValue(':apellido_p', $apellido_p, PDO::PARAM_STR);
+    $stmt->bindValue(':apellido_m', $apellido_m, PDO::PARAM_STR);
+    $stmt->bindValue(':correo', $correo, PDO::PARAM_STR);
+    $stmt->bindValue(':puesto', $puesto, PDO::PARAM_STR);
+    $stmt->bindValue(':area', $area, PDO::PARAM_STR);
+    $stmt->bindValue(':id_rol', $id_rol, PDO::PARAM_INT);
+    $stmt->bindValue(':id', $id, PDO::PARAM_INT);
 
     if ($stmt->execute()) {
         $mensaje = "<p class=\"error-message\" style=\"color: green;\">✅ Datos actualizados correctamente</p>";
     } else {
-        $mensaje = "<p class=\"error-message\">❌ Error: " . htmlspecialchars($stmt->error) . "</p>";
+        // CORRECCIÓN: errorInfo() en lugar de error
+        $error = $stmt->errorInfo();
+        $mensaje = "<p class=\"error-message\">❌ Error: " . htmlspecialchars($error[2]) . "</p>";
     }
-    $stmt->close();
 }
 
 // 7) Recuperar los datos actuales del operador
-$res = $conn->prepare("
+$stmt = $pdo->prepare("
     SELECT Nombre, Apellido_P, Apellido_M, Correo_Electronico, Puesto, Area_Produccion, ID_Rol
       FROM operadores
-     WHERE ID_Operador = ?
+     WHERE ID_Operador = :id
 ");
-$res->bind_param('i', $id);
-$res->execute();
-$result   = $res->get_result();
-$operador = $result->fetch_assoc();
-$res->close();
+
+// CORRECCIÓN: Usar bindValue de PDO
+$stmt->bindValue(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+
+// CORRECCIÓN: fetch() de PDO en lugar de get_result()
+$operador = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$operador) {
     echo "Operador no encontrado.";
@@ -91,7 +97,7 @@ if (!$operador) {
 }
 
 // 8) Obtener roles disponibles
-$roles = $conn->query("SELECT ID_Rol, Nombre_Rol FROM roles");
+$roles = $pdo->query("SELECT ID_Rol, Nombre_Rol FROM roles");
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -165,7 +171,7 @@ $roles = $conn->query("SELECT ID_Rol, Nombre_Rol FROM roles");
         <label>
           Rol del sistema:
           <select name="id_rol" required>
-            <?php while ($rol = $roles->fetch_assoc()) : ?>
+            <?php while ($rol = $roles->fetch(PDO::FETCH_ASSOC)) : ?>
               <option value="<?= $rol['ID_Rol']; ?>"
                 <?= $rol['ID_Rol'] == $operador['ID_Rol'] ? 'selected' : ''; ?>>
                 <?= htmlspecialchars($rol['Nombre_Rol']); ?>
