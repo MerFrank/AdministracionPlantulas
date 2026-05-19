@@ -91,15 +91,31 @@ require_once __DIR__ . '/../../includes/header.php';
                             </div>
 
                             <div class="mb-3">
-                                <label for="concepto_deposito" class="form-label">Concepto</label>
-                                <input type="text" class="form-control" id="concepto_deposito" name="concepto" 
-                                       placeholder="Ej: Depósito en efectivo, Pago de nómina...">
+                                <div class="mb-4">
+                                    <label for="concepto_deposito" class="form-label">Concepto</label>
+                                    <input type="text" class="form-control" id="concepto_deposito" name="concepto" >
+                                </div>
+    
+                                <div class="col-md-4">
+                                    <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="metodo_pago" required>
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Tarjeta">Tarjeta</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="referencia" class="form-label">Referenia</label>
+                                    <input type="text" class="form-control" id="referencia" name="referencia" >
+                                </div>
+
                             </div>
 
+
                             <div class="mb-3">
-                                <label for="comprobante_deposito" class="form-label">Comprobante (opcional)</label>
-                                <input type="file" class="form-control" id="comprobante_deposito" name="comprobante" accept=".pdf,.jpg,.png">
-                                <small class="text-muted">Formatos aceptados: PDF, JPG, PNG</small>
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <input type="text" class="form-control" id="observaciones" name="observaciones" >
                             </div>
 
                             <div class="d-grid">
