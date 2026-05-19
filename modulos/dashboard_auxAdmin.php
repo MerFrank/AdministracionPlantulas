@@ -27,7 +27,7 @@ require_once(__DIR__ . '/../includes/header.php');
                        
             <!-- Módulo de Cuentas -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0 border-top border-5 border-success">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-success bg-opacity-10 p-3 rounded me-3">
@@ -46,7 +46,7 @@ require_once(__DIR__ . '/../includes/header.php');
 
             <!-- Módulo de Egresos -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0 border-top border-5 border-danger">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-danger bg-opacity-10 p-3 rounded me-3">
@@ -65,7 +65,7 @@ require_once(__DIR__ . '/../includes/header.php');
 
             <!-- Módulo de Proveedores -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0 border-top border-5 border-warning">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-warning bg-opacity-10 p-3 rounded me-3">
@@ -84,7 +84,7 @@ require_once(__DIR__ . '/../includes/header.php');
 
             <!-- Módulo de Sucursales -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0 border-top border-5 border-info">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-info bg-opacity-10 p-3 rounded me-3">
