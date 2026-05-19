@@ -23,12 +23,13 @@ try {
     die("Error de conexión a la base de datos: " . $e->getMessage());
 }
 
-try {
-    $db = new Database();
-    $pdo = $db->conectar();
-} catch (PDOException $e) {
-    die("Error de conexión: " . $e->getMessage());
-}
+
+$cuentas_bancarias = $pdo->query("
+    SELECT id_cuenta, nombre, banco, numero 
+    FROM cuentas_bancarias 
+    WHERE activo = 1
+    ORDER BY nombre
+")->fetchAll();
 
 
 
@@ -69,12 +70,14 @@ require_once __DIR__ . '/../../includes/header.php';
                             <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Realizar Depósito a Cuenta</h5>
                             
                             <div class="mb-3">
-                                <label for="cuenta_destino_deposito" class="form-label">Cuenta Destino *</label>
-                                <select class="form-select" id="cuenta_destino_deposito" name="cuenta_destino" required>
-                                    <option value="" selected disabled>Seleccione una cuenta</option>
-                                    <option value="1">Cuenta Ahorro - 1234-5678</option>
-                                    <option value="2">Cuenta Corriente - 8765-4321</option>
-                                    <option value="3">Cuenta Nómina - 1111-2222</option>
+                                <label class="form-label">Cuenta bancaria <span class="text-danger">*</span></label>
+                                <select class="form-select" name="id_cuenta" required>
+                                    <option value="">Seleccione una cuenta...</option>
+                                    <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                        <option value="<?= $cuenta['id_cuenta'] ?>">
+                                            <?= htmlspecialchars($cuenta['banco'] . ' - ' . $cuenta['nombre'] . ' (' . $cuenta['numero'] . ')') ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
@@ -111,24 +114,29 @@ require_once __DIR__ . '/../../includes/header.php';
                     <div class="tab-pane fade" id="transferencia" role="tabpanel">
                         <form id="formTransferencia" method="POST" action="procesar_transferencia.php">
                             <h5 class="mb-3"><i class="bi bi-send"></i> Realizar Transferencia entre Cuentas</h5>
-                            
+
                             <div class="mb-3">
-                                <label for="cuenta_origen" class="form-label">Cuenta Origen *</label>
+                                <label class="cuenta_origen">Cuenta Origen *<span class="text-danger">*</span></label>
                                 <select class="form-select" id="cuenta_origen" name="cuenta_origen" required>
-                                    <option value="" selected disabled>Seleccione cuenta origen</option>
-                                    <option value="1">Cuenta Ahorro - 1234-5678 (Saldo: $5,000.00)</option>
-                                    <option value="2">Cuenta Corriente - 8765-4321 (Saldo: $12,000.00)</option>
-                                    <option value="3">Cuenta Nómina - 1111-2222 (Saldo: $8,500.00)</option>
+                                    <option value="">Seleccione cuenta origen</option>
+                                    <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                        <option value="<?= $cuenta['id_cuenta'] ?>">
+                                            <?= htmlspecialchars($cuenta['banco'] . ' - ' . $cuenta['nombre'] . ' (' . $cuenta['numero'] . ')') ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
+
                             <div class="mb-3">
-                                <label for="cuenta_destino_transferencia" class="form-label">Cuenta Destino *</label>
+                                <label class="cuenta_destino_transferencia">Cuenta bancaria <span class="text-danger">*</span></label>
                                 <select class="form-select" id="cuenta_destino_transferencia" name="cuenta_destino" required>
-                                    <option value="" selected disabled>Seleccione cuenta destino</option>
-                                    <option value="1">Cuenta Ahorro - 1234-5678</option>
-                                    <option value="2">Cuenta Corriente - 8765-4321</option>
-                                    <option value="3">Cuenta Nómina - 1111-2222</option>
+                                    <option value="">Seleccione cuenta destino</option>
+                                    <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                        <option value="<?= $cuenta['id_cuenta'] ?>">
+                                            <?= htmlspecialchars($cuenta['banco'] . ' - ' . $cuenta['nombre'] . ' (' . $cuenta['numero'] . ')') ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
