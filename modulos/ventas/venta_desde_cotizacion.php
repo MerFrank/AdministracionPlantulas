@@ -166,10 +166,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             
             $stmt = $pdo->prepare("
                 INSERT INTO pagosventas (
-                    id_notaPedido, monto, fecha, metodo_pago, referencia, 
+                    id_notaPedido, tipo_ingreso, monto, fecha, metodo_pago, referencia, 
                     observaciones, id_operador, id_cuenta
                 ) VALUES (
-                    ?, ?, NOW(), ?, NULL, 
+                    ?, ?, ?, NOW(), ?, NULL, 
                     ?, ?, ?
                 )
             ");
@@ -178,6 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_venta'])) {
             
             $stmt->execute([
                 $id_notaPedido,
+                'venta',
                 $anticipo,
                 $_POST['metodo_pago'],
                 $observaciones_pago,

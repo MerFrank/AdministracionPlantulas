@@ -27,7 +27,7 @@ try {
     $pdo = $db->conectar();
     
     // Consulta base
-    $sql = "SELECT np.id_notaPedido, np.folio, np.fechaPedido, c.nombre_Cliente as cliente, 
+    $sql = "SELECT np.id_notaPedido, np.tipo_ingreso, np.folio, np.fechaPedido, c.nombre_Cliente as cliente, 
                    np.total, np.estado, np.metodo_Pago,
                    (SELECT SUM(monto) FROM PagosVentas WHERE id_notaPedido = np.id_notaPedido) as pagado
             FROM NotasPedidos np

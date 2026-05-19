@@ -272,20 +272,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Registrar pago en pagosventas (reemplazando seguimientoanticipos)
         if ($anticipo > 0) {
             $stmt_pago = $pdo->prepare("
-                INSERT INTO pagosventas (id_notaPedido, monto, fecha, metodo_pago, referencia, observaciones, id_cuenta, ID_Operador)
-                VALUES (:id_notaPedido, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta, :ID_Operador)
+                INSERT INTO pagosventas (id_notaPedido, tipo_ingreso,  monto, fecha, metodo_pago, referencia, observaciones, id_cuenta, ID_Operador)
+                VALUES (:id_notaPedido, :tipo_ingreso, :monto, NOW(), :metodo_pago, :referencia, :observaciones, :id_cuenta, :ID_Operador)
             ");
 
             $referencia = 'PAG-' . date('Ymd') . '-' . str_pad($pdo->query("SELECT COUNT(*) FROM pagosventas WHERE DATE(fecha)=CURDATE()")->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
 
             $stmt_pago->execute([
                 ':id_notaPedido' => $id_notaPedido,
+                ':tipo_ingreso' => 'venta',
                 ':monto' => $anticipo,
                 ':metodo_pago' => $metodo_Pago,
                 ':referencia' => $referencia,
                 ':observaciones' => 'Anticipo de venta',
                 ':id_cuenta' => $id_cuenta,
-                ':ID_Operador' => $ID_Operador //ID del operador 
+                ':ID_Operador' => $ID_Operador 
             ]);
         }
 
