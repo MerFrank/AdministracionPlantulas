@@ -16,6 +16,26 @@ $es_login = (basename($_SERVER['PHP_SELF']) == 'login.php');
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    
+    .contenedor-pagina {
+      zoom: 80%; 
+      display: flex;
+      flex-direction: column;
+      min-height: 125vh; 
+    }
+
+    header, .barra-navegacion {
+      flex-shrink: 0;
+    }
+  </style>
 </head>
 
 <body>
