@@ -137,8 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $total_final = $subtotal_general - $descuento;
 
-        // Anticipo (tu formulario puede mandar 'anticipo' o 'subtotal' como monto pagado)
-        $anticipo = isset($_POST['anticipo']) ? (float)$_POST['anticipo'] : (isset($_POST['subtotal']) ? (float)$_POST['subtotal'] : 0.0);
+        $anticipo = isset($_POST['anticipo']) ? (float)$_POST['anticipo'] : 0.0;
 
         // Validaciones básicas
         if (!$fecha_entrega || !$tipo_pago || !$metodo_Pago || !$id_cliente) {
@@ -147,6 +146,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($tipo_pago === 'contado' && abs($anticipo - $total_final) > 0.01) {
             throw new Exception("En ventas de contado el monto pagado debe ser igual al total.");
         }
+        if ($anticipo > $total_final) {
+            throw new Exception("El anticipo no puede ser mayor al total.");
+        }
+
         if ($anticipo > $total_final) {
             throw new Exception("El anticipo no puede ser mayor al total.");
         }
@@ -781,7 +784,7 @@ require __DIR__ . '/../../includes/header.php';
                                     <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text">$</span>
-                                        <input type="number" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
+                                        <input type="number" class="form-control" name="anticipo" id="inputMontoPago" step="0.01" min="0" required>
                                     </div>
                                     <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
                                 </div>
@@ -979,6 +982,14 @@ require __DIR__ . '/../../includes/header.php';
             $('#labelMontoPago').text(esCredito ? 'Anticipo' : 'Monto de Pago');
             $('#ayudaMontoPago').text(esCredito ? 'Ingrese el anticipo (opcional)' : 'Ingrese el monto total');
             inputMontoPago.prop('required', !esCredito);
+            
+            if (esCredito) {
+                inputMontoPago.prop('readonly', false);
+                inputMontoPago.removeClass('bg-light');
+            } else {
+                inputMontoPago.prop('readonly', true);
+                inputMontoPago.addClass('bg-light');
+            }
 
             actualizarSaldo();
         });
