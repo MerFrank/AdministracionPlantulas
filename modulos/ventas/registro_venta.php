@@ -81,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Leer campos principales (acepta metodo_Pago o metodo_pago por compatibilidad)
+        $folio = $_POST['folio'] ??null ;
         $fecha_entrega  = $_POST['fechaPedido'] ?? null; // en tu formulario pusiste name="fechaPedido"
         $tipo_pago      = $_POST['tipo_pago'] ?? null;
         $metodo_Pago    = $_POST['metodo_Pago'] ?? ($_POST['metodo_pago'] ?? null);
@@ -192,7 +193,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Generar folio y num_remision
         $countRow = (int)$pdo->query("SELECT COUNT(*) as total FROM notaspedidos WHERE YEAR(fechaPedido) = YEAR(NOW())")->fetch(PDO::FETCH_ASSOC)['total'];
-        $folio = 'NP-' . date('Y') . '-' . str_pad($countRow + 1, 5, '0', STR_PAD_LEFT);
+        if (empty($folio)){
+            $folio = 'NP-' . date('Y') . '-' . str_pad($countRow + 1, 5, '0', STR_PAD_LEFT);
+        }
         $num_remision = 'REM-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
         // Insertar nota 
@@ -316,261 +319,539 @@ require __DIR__ . '/../../includes/header.php';
 <main class="container-fluid mt-4 px-0">
     <div class="card shadow border-0 rounded-0">
         <div class="card-header bg-primary text-white">
-            <h2><i class="bi bi-cart-plus"></i> <?= $encabezado ?></h2>
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="venta-tab" data-bs-toggle="tab" data-bs-target="#venta" type="button" role="tab">
+                        <h5>
+                            <i class="bi bi-cart-plus"></i> Venta
+                        </h5>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="anticipo-tab" data-bs-toggle="tab" data-bs-target="#anticipo" type="button" role="tab">
+                        <h5>
+                            <i class="bi bi-currency-dollar"></i> Anticipo
+                        </h5>
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-pane fade show active" id="venta" role="tabpanel">
+                <!-- Formulario venta -->
+                <form method="post" id="ventaForm" class="form-doble-columna">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                    <input type="hidden" name="items" id="itemsVenta" value="">
+        
+                    <!-- Sección Cliente y Fecha -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+        
+                                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+        
+                                <input type="text"
+                                    class="form-control"
+                                    id="inputClienteNombre"
+                                    list="listaClientes"
+                                    placeholder="click para seleccionar o escribir un cliente"
+                                    autocomplete="off"
+                                    required>
+        
+                                <input type="hidden" name="id_cliente" id="inputClienteId" required>
+        
+                                <datalist id="listaClientes">
+                                    <?php foreach ($clientes as $cliente): ?>
+                                        <option value="<?= htmlspecialchars($cliente['nombre_Cliente']) ?>"
+                                            data-id="<?= $cliente['id_cliente'] ?>">
+                                        <?php endforeach; ?>
+                                </datalist>
+                            </div>
+                        </div>
+        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Entrega <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="fechaPedido" id="inputFechaEntrega" required
+                                    min="<?= date('Y-m-d') ?>">
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Folio <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="folio" id="inputFolio" required>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Sección Productos -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="h5 mb-0"><i class="bi bi-list-check"></i> Productos</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3" id="formItem">
+                                <div class="col-md-4">
+                                    <label class="form-label">Especie <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="selectEspecie" required>
+                                        <option value="">Seleccione...</option>
+                                        <?php foreach ($especies as $especie): ?>
+                                            <option value="<?= $especie['id_especie'] ?>">
+                                                <?= htmlspecialchars($especie['nombre']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Color <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="selectColor" disabled>
+                                        <option value="">Seleccione especie primero</option>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Variedad <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="selectVariedad" disabled>
+                                        <option value="">Seleccione color primero</option>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-2">
+                                    <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="inputCantidad" min="1" value="1" required>
+                                    </div>
+                                </div>
+        
+                                <div class="col-md-2">
+                                    <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="inputPrecio" step="0.01" min="0.01" required>
+                                    </div>
+                                </div>
+        
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
+                                        <i class="bi bi-plus-circle"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+        
+                            <div class="mt-4">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="tablaItems">
+                                        <thead>
+                                            <tr>
+                                                <th>Especie</th>
+                                                <th>Color</th>
+                                                <th>Variedad</th>
+                                                <th>Cantidad</th>
+                                                <th>P. Unitario</th>
+                                                <th>Subtotal</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyItems">
+                                            <!-- Items dinámicos -->
+                                        </tbody>
+                                        <tfoot
+                                            id="tfootItems">
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Sección Pagos -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h3 class="h5 mb-0"><i class="bi bi-credit-card"></i> Información de Pago</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="tipo_pago" id="tipoPago" required>
+                                        <option value="credito">Crédito</option>
+                                        <option value="contado">Contado</option>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="metodo_pago" required>
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Tarjeta">Tarjeta</option>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="id_cuenta" required>
+                                        <option value="">Seleccione una cuenta...</option>
+                                        <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                            <option value="<?= $cuenta['id_cuenta'] ?>">
+                                                <?= htmlspecialchars("{$cuenta['banco']} - {$cuenta['nombre']} ({$cuenta['numero']})") ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-6" id="montoPagoContainer">
+                                    <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
+                                    </div>
+                                    <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
+                                </div>
+        
+                                <div class="col-md-6" id="saldoContainer" style="display:none;">
+                                    <label class="form-label">Saldo Pendiente</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control" name="total" id="inputSaldoPendiente" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Observaciones -->
+                    <div class="mb-4">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="2"></textarea>
+                    </div>
+        
+                    <!-- Garantia -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-receipt"></i> Datos de Garantia</h5>
+        
+                        <div class="mb-3">
+                            <label class="form-label">¿Requiere Garantia?</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si"
+                                    <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="opcion-si">Sí</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="opcion" id="opcion-no" value="no"
+                                    <?= (!isset($_POST['opcion']) || $_POST['opcion'] === 'no') ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="opcion-no">No</label>
+                            </div>
+                        </div>
+        
+                        <div id="datos-garantia" class="bg-light p-3 rounded <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? '' : 'd-none' ?>">
+                            <div class="row g-3">
+        
+                                <div class="col-md-6">
+                                    <label for="nom-bien" class="form-label">Bien de intercambio</label>
+                                    <input type="text" class="form-control" id="nom-bien" name="nom-bien" maxlength="14"
+                                        placeholder="Carro, terreno, inmueble"
+                                        value="<?= htmlspecialchars($_POST['nom-bien'] ?? '') ?>">
+                                </div>
+        
+                                <div class="col-md-6">
+                                    <label for="num-regis" class="form-label">Número de registro o de factura</label>
+                                    <textarea class="form-control" id="num-regis" name="num-regis" maxlength="255"
+                                        placeholder="XAXX010101000"><?= htmlspecialchars($_POST['num-regis'] ?? '') ?></textarea>
+                                </div>
+        
+                                <div class="col-md-6">
+                                    <label for="nom-aval" class="form-label">Nombre del aval</label>
+                                    <input type="text" class="form-control" id="nom-aval" name="nom-aval" maxlength="14"
+                                        value="<?= htmlspecialchars($_POST['nom-aval'] ?? '') ?>">
+                                </div>
+        
+                                <div class="col-md-2">
+                                    <label class="form-label">Monto <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="monto" name="monto" step="0.01" min="0.01">
+                                    </div>
+                                </div>
+        
+                            </div>
+                        </div>
+                    </div>
+        
+                    <input type="hidden" id="totalVenta" data-venta-total="0" value="0">
+        
+        
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="lista_ventas.php" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Registrar Venta
+                        </button>
+                    </div>
+        
+                </form>
+            </div>
+            <div class="tab-pane fade " id="anticipo" role="tabpanel">
+                <!-- Formulario Anticipo -->
+                <form method="post" id="anticipoForm" class="form-doble-columna">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                    <input type="hidden" name="items" id="itemsVenta" value="">
+        
+                    <!-- Sección Cliente y Fecha -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+        
+                                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+        
+                                <input type="text"
+                                    class="form-control"
+                                    id="inputClienteNombre"
+                                    list="listaClientes"
+                                    placeholder="click para seleccionar o escribir un cliente"
+                                    autocomplete="off"
+                                    required>
+        
+                                <input type="hidden" name="id_cliente" id="inputClienteId" required>
+        
+                                <datalist id="listaClientes">
+                                    <?php foreach ($clientes as $cliente): ?>
+                                        <option value="<?= htmlspecialchars($cliente['nombre_Cliente']) ?>"
+                                            data-id="<?= $cliente['id_cliente'] ?>">
+                                        <?php endforeach; ?>
+                                </datalist>
+                            </div>
+                        </div>
+        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Entrega <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="fechaPedido" id="inputFechaEntrega" required
+                                    min="<?= date('Y-m-d') ?>">
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Folio <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="folio" id="inputFolio" required>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Sección Productos -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="h5 mb-0"><i class="bi bi-list-check"></i> Productos</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3" id="formItem">
+                                <div class="col-md-6">
+                                    <label class="form-label">Especie <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="selectEspecie" required>
+                                        <option value="">Seleccione...</option>
+                                        <?php foreach ($especies as $especie): ?>
+                                            <option value="<?= $especie['id_especie'] ?>">
+                                                <?= htmlspecialchars($especie['nombre']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-6">
+                                    <label class="form-label">Color <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="selectColor" disabled>
+                                        <option value="">Seleccione especie primero</option>
+                                    </select>
+                                </div>
+        
+                                
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Cantidad <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="inputCantidad" min="1" value="1" required>
+                                    </div>
+                                </div>
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="inputPrecio" step="0.01" min="0.01" required>
+                                    </div>
+                                </div>
+        
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
+                                        <i class="bi bi-plus-circle"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+        
+                            <div class="mt-4">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="tablaItems">
+                                        <thead>
+                                            <tr>
+                                                <th>Especie</th>
+                                                <th>Color</th>
+                                                <th>Variedad</th>
+                                                <th>Cantidad</th>
+                                                <th>P. Unitario</th>
+                                                <th>Subtotal</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyItems">
+                                            <!-- Items dinámicos -->
+                                        </tbody>
+                                        <tfoot
+                                            id="tfootItems">
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Sección Pagos -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h3 class="h5 mb-0"><i class="bi bi-credit-card"></i> Información de Pago</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="tipo_pago" id="tipoPago" required>
+                                        <option value="credito">Crédito</option>
+                                        <option value="contado">Contado</option>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="metodo_pago" required>
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Tarjeta">Tarjeta</option>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-4">
+                                    <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="id_cuenta" required>
+                                        <option value="">Seleccione una cuenta...</option>
+                                        <?php foreach ($cuentas_bancarias as $cuenta): ?>
+                                            <option value="<?= $cuenta['id_cuenta'] ?>">
+                                                <?= htmlspecialchars("{$cuenta['banco']} - {$cuenta['nombre']} ({$cuenta['numero']})") ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+        
+                                <div class="col-md-6" id="montoPagoContainer">
+                                    <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
+                                    </div>
+                                    <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
+                                </div>
+        
+                                <div class="col-md-6" id="saldoContainer" style="display:none;">
+                                    <label class="form-label">Saldo Pendiente</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control" name="total" id="inputSaldoPendiente" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Observaciones -->
+                    <div class="mb-4">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" name="observaciones" rows="2"></textarea>
+                    </div>
+        
+                    <!-- Garantia -->
+                    <div class="form-section">
+                        <h5><i class="bi bi-receipt"></i> Datos de Garantia</h5>
+        
+                        <div class="mb-3">
+                            <label class="form-label">¿Requiere Garantia?</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si"
+                                    <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="opcion-si">Sí</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="opcion" id="opcion-no" value="no"
+                                    <?= (!isset($_POST['opcion']) || $_POST['opcion'] === 'no') ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="opcion-no">No</label>
+                            </div>
+                        </div>
+        
+                        <div id="datos-garantia" class="bg-light p-3 rounded <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? '' : 'd-none' ?>">
+                            <div class="row g-3">
+        
+                                <div class="col-md-6">
+                                    <label for="nom-bien" class="form-label">Bien de intercambio</label>
+                                    <input type="text" class="form-control" id="nom-bien" name="nom-bien" maxlength="14"
+                                        placeholder="Carro, terreno, inmueble"
+                                        value="<?= htmlspecialchars($_POST['nom-bien'] ?? '') ?>">
+                                </div>
+        
+                                <div class="col-md-6">
+                                    <label for="num-regis" class="form-label">Número de registro o de factura</label>
+                                    <textarea class="form-control" id="num-regis" name="num-regis" maxlength="255"
+                                        placeholder="XAXX010101000"><?= htmlspecialchars($_POST['num-regis'] ?? '') ?></textarea>
+                                </div>
+        
+                                <div class="col-md-6">
+                                    <label for="nom-aval" class="form-label">Nombre del aval</label>
+                                    <input type="text" class="form-control" id="nom-aval" name="nom-aval" maxlength="14"
+                                        value="<?= htmlspecialchars($_POST['nom-aval'] ?? '') ?>">
+                                </div>
+        
+                                <div class="col-md-2">
+                                    <label class="form-label">Monto <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="monto" name="monto" step="0.01" min="0.01">
+                                    </div>
+                                </div>
+        
+                            </div>
+                        </div>
+                    </div>
+        
+                    <input type="hidden" id="totalVenta" data-venta-total="0" value="0">
+        
+        
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="lista_ventas.php" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Registrar Venta
+                        </button>
+                    </div>
+        
+                </form>
+            </div>
         </div>
 
-        <?php if (!empty($error)): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
+       
 
-        <form method="post" id="ventaForm" class="form-doble-columna">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-            <input type="hidden" name="items" id="itemsVenta" value="">
-
-            <!-- Sección Cliente y Fecha -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="mb-3">
-
-                        <label class="form-label">Cliente <span class="text-danger">*</span></label>
-
-                        <input type="text"
-                            class="form-control"
-                            id="inputClienteNombre"
-                            list="listaClientes"
-                            placeholder="click para seleccionar o escribir un cliente"
-                            autocomplete="off"
-                            required>
-
-                        <input type="hidden" name="id_cliente" id="inputClienteId" required>
-
-                        <datalist id="listaClientes">
-                            <?php foreach ($clientes as $cliente): ?>
-                                <option value="<?= htmlspecialchars($cliente['nombre_Cliente']) ?>"
-                                    data-id="<?= $cliente['id_cliente'] ?>">
-                                <?php endforeach; ?>
-                        </datalist>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Fecha de Entrega <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" name="fechaPedido" id="inputFechaEntrega" required
-                            min="<?= date('Y-m-d') ?>">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección Productos -->
-            <div class="card mb-4">
-                <div class="card-header bg-secondary text-white">
-                    <h3 class="h5 mb-0"><i class="bi bi-list-check"></i> Productos</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3" id="formItem">
-                        <div class="col-md-4">
-                            <label class="form-label">Especie <span class="text-danger">*</span></label>
-                            <select class="form-select" id="selectEspecie" required>
-                                <option value="">Seleccione...</option>
-                                <?php foreach ($especies as $especie): ?>
-                                    <option value="<?= $especie['id_especie'] ?>">
-                                        <?= htmlspecialchars($especie['nombre']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Color <span class="text-danger">*</span></label>
-                            <select class="form-select" id="selectColor" disabled>
-                                <option value="">Seleccione especie primero</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Variedad <span class="text-danger">*</span></label>
-                            <select class="form-select" id="selectVariedad" disabled>
-                                <option value="">Seleccione color primero</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label">Cantidad <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="inputCantidad" min="1" value="1" required>
-                            </div>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label">Precio Unitario <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="inputPrecio" step="0.01" min="0.01" required>
-                            </div>
-                        </div>
-
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-primary w-100" id="btnAgregarItem">
-                                <i class="bi bi-plus-circle"></i> Agregar
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="tablaItems">
-                                <thead>
-                                    <tr>
-                                        <th>Especie</th>
-                                        <th>Color</th>
-                                        <th>Variedad</th>
-                                        <th>Cantidad</th>
-                                        <th>P. Unitario</th>
-                                        <th>Subtotal</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbodyItems">
-                                    <!-- Items dinámicos -->
-                                </tbody>
-                                <tfoot
-                                    id="tfootItems">
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección Pagos -->
-            <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    <h3 class="h5 mb-0"><i class="bi bi-credit-card"></i> Información de Pago</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
-                            <select class="form-select" name="tipo_pago" id="tipoPago" required>
-                                <option value="credito">Crédito</option>
-                                <option value="contado">Contado</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
-                            <select class="form-select" name="metodo_pago" required>
-                                <option value="Efectivo">Efectivo</option>
-                                <option value="Transferencia">Transferencia</option>
-                                <option value="Tarjeta">Tarjeta</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Cuenta Bancaria <span class="text-danger">*</span></label>
-                            <select class="form-select" name="id_cuenta" required>
-                                <option value="">Seleccione una cuenta...</option>
-                                <?php foreach ($cuentas_bancarias as $cuenta): ?>
-                                    <option value="<?= $cuenta['id_cuenta'] ?>">
-                                        <?= htmlspecialchars("{$cuenta['banco']} - {$cuenta['nombre']} ({$cuenta['numero']})") ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="col-md-6" id="montoPagoContainer">
-                            <label class="form-label" id="labelMontoPago">Monto de Pago <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" name="subtotal" id="inputMontoPago" step="0.01" min="0" required>
-                            </div>
-                            <small class="text-muted" id="ayudaMontoPago">Ingrese el monto total a pagar</small>
-                        </div>
-
-                        <div class="col-md-6" id="saldoContainer" style="display:none;">
-                            <label class="form-label">Saldo Pendiente</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="text" class="form-control" name="total" id="inputSaldoPendiente" readonly>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Observaciones -->
-            <div class="mb-4">
-                <label class="form-label">Observaciones</label>
-                <textarea class="form-control" name="observaciones" rows="2"></textarea>
-            </div>
-
-            <!-- Garantia -->
-            <div class="form-section">
-                <h5><i class="bi bi-receipt"></i> Datos de Garantia</h5>
-
-                <div class="mb-3">
-                    <label class="form-label">¿Requiere Garantia?</label>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="opcion" id="opcion-si" value="si"
-                            <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="opcion-si">Sí</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="opcion" id="opcion-no" value="no"
-                            <?= (!isset($_POST['opcion']) || $_POST['opcion'] === 'no') ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="opcion-no">No</label>
-                    </div>
-                </div>
-
-                <div id="datos-garantia" class="bg-light p-3 rounded <?= (isset($_POST['opcion']) && $_POST['opcion'] === 'si') ? '' : 'd-none' ?>">
-                    <div class="row g-3">
-
-                        <div class="col-md-6">
-                            <label for="nom-bien" class="form-label">Bien de intercambio</label>
-                            <input type="text" class="form-control" id="nom-bien" name="nom-bien" maxlength="14"
-                                placeholder="Carro, terreno, inmueble"
-                                value="<?= htmlspecialchars($_POST['nom-bien'] ?? '') ?>">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="num-regis" class="form-label">Número de registro o de factura</label>
-                            <textarea class="form-control" id="num-regis" name="num-regis" maxlength="255"
-                                placeholder="XAXX010101000"><?= htmlspecialchars($_POST['num-regis'] ?? '') ?></textarea>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="nom-aval" class="form-label">Nombre del aval</label>
-                            <input type="text" class="form-control" id="nom-aval" name="nom-aval" maxlength="14"
-                                value="<?= htmlspecialchars($_POST['nom-aval'] ?? '') ?>">
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label">Monto <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="monto" name="monto" step="0.01" min="0.01">
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <input type="hidden" id="totalVenta" data-venta-total="0" value="0">
-
-
-            <!-- Botones -->
-            <div class="d-flex justify-content-between">
-                <a href="lista_ventas.php" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle"></i> Registrar Venta
-                </button>
-            </div>
-
-        </form>
 
 
     </div>
