@@ -143,7 +143,18 @@ require('../../includes/header.php');
                 <div class="row g-3">
                     <!-- Sección Información Básica -->
                     <div class="col-md-6 form-section">
+
+                        
+                        
                         <h5><i class="bi bi-info-circle"></i> Información Básica</h5>
+                        
+                        <div class="mb-3">
+                            <label for="nombre_Cliente" class="form-label required-field">Nombre/Razón Social</label>
+                            <input type="text" class="form-control" id="nombre_Cliente" name="nombre_Cliente"  maxlength="255"
+                                    placeholder="Nombre completo o razón social"
+                                    value="<?= htmlspecialchars($_POST['nombre_Cliente'] ?? '') ?>">
+                            <div class="invalid-feedback">Por favor ingrese el nombre del cliente</div>
+                        </div>
                         
                         <div class="mb-3">
                             <label for="alias" class="form-label">Alias (Opcional)</label>
@@ -153,13 +164,6 @@ require('../../includes/header.php');
                         
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="nombre_Cliente" class="form-label required-field">Nombre/Razón Social</label>
-                            <input type="text" class="form-control" id="nombre_Cliente" name="nombre_Cliente"  maxlength="255"
-                                    placeholder="Nombre completo o razón social"
-                                    value="<?= htmlspecialchars($_POST['nombre_Cliente'] ?? '') ?>">
-                            <div class="invalid-feedback">Por favor ingrese el nombre del cliente</div>
-                        </div>
                         
                         <div class="mb-3">
                             <label for="nombre_Empresa" class="form-label">Empresa (Opcional)</label>
