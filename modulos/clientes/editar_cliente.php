@@ -83,9 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
             throw new Exception("Teléfono no válido. Debe contener entre 10 y 15 dígitos");
         }
 
-        if (!$datos['email'] === false) {
-            throw new Exception("Correo electrónico no válido");
-        }
+        
 
 
         // Actualizar en BD
