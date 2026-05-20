@@ -104,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Calcular totales SERVER-SIDE (no confiar en lo que venga del cliente)
         $subtotal_general = 0.0;
         $items_venta = [];
+        $descuento = isset($_POST['descuento']) ? (float)$_POST['descuento'] : 0;
         foreach ($items as $it) {
             $cant = isset($it['cantidad']) ? (int)$it['cantidad'] : 0;
             $precio = isset($it['precio_unitario']) ? (float)$it['precio_unitario'] : ((isset($it['precio']) ? (float)$it['precio'] : 0.0));
@@ -122,9 +123,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
         }
 
+        if ($descuento < 0) {
+            throw new Exception("El descuento no puede ser negativo.");
+        }
+
+        if ($descuento > $subtotal_general) {
+            throw new Exception("El descuento no puede ser mayor al subtotal.");
+        }
+
         if ($subtotal_general <= 0) {
             throw new Exception("El total de la venta debe ser mayor a cero.");
         }
+        
+        $total_final = $subtotal_general - $descuento;
 
         // Anticipo (tu formulario puede mandar 'anticipo' o 'subtotal' como monto pagado)
         $anticipo = isset($_POST['anticipo']) ? (float)$_POST['anticipo'] : (isset($_POST['subtotal']) ? (float)$_POST['subtotal'] : 0.0);
@@ -133,10 +144,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$fecha_entrega || !$tipo_pago || !$metodo_Pago || !$id_cliente) {
             throw new Exception("Faltan datos obligatorios para registrar la nota de pedido.");
         }
-        if ($tipo_pago === 'contado' && abs($anticipo - $subtotal_general) > 0.01) {
+        if ($tipo_pago === 'contado' && abs($anticipo - $total_final) > 0.01) {
             throw new Exception("En ventas de contado el monto pagado debe ser igual al total.");
         }
-        if ($anticipo > $subtotal_general) {
+        if ($anticipo > $total_final) {
             throw new Exception("El anticipo no puede ser mayor al total.");
         }
 
@@ -145,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $saldo_pendiente = 0.00;
             $estado = 'completado';
         } else {
-            $saldo_pendiente = round($subtotal_general - $anticipo, 2);
+            $saldo_pendiente = round($total_final - $anticipo, 2);
             $estado = $anticipo > 0 ? 'parcial' : 'pendiente';
         }
 
@@ -220,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':metodo_Pago' => $metodo_Pago,
             ':subtotal' => $subtotal_general,
             ':descuento' => $descuento,
-            ':total' => $subtotal_general, 
+            ':total' => $total_final, 
             ':saldo_pendiente' => $saldo_pendiente,
             ':estado' => $estado,
             ':observaciones' => $observaciones,
@@ -469,7 +480,8 @@ require __DIR__ . '/../../includes/header.php';
                                 <label class="form-label">Descuento </span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="inputPrecio" step="0.01" >
+                                    <input type="number" class="form-control" id="inputDescuento" name="descuento" step="0.01"
+                                     min="0" value="0" >
                                 </div>
                             </div>
 
@@ -920,6 +932,7 @@ require __DIR__ . '/../../includes/header.php';
         const tipoPago = $('#tipoPago');
         const inputMontoPago = $('#inputMontoPago');
         const inputSaldoPendiente = $('#inputSaldoPendiente');
+        const inputDescuento = $('#inputDescuento');
 
 
         const inputNombreCliente = $('#inputClienteNombre');
@@ -985,6 +998,10 @@ require __DIR__ . '/../../includes/header.php';
             if (tipoPago.val() === 'credito') {
                 actualizarSaldo();
             }
+        });
+
+        inputDescuento.on('input', function() {
+            actualizarTablaItems();
         });
 
         function resetearVenta() {
@@ -1192,6 +1209,7 @@ require __DIR__ . '/../../includes/header.php';
 
             let totalVenta = 0;
             let totalCantidad = 0;
+            let descuento = parseFloat(inputDescuento.val()) || 0;
 
             items.forEach((item, index) => {
                 totalVenta += item.subtotal;
@@ -1214,24 +1232,38 @@ require __DIR__ . '/../../includes/header.php';
             `);
             });
 
+            let totalFinal = totalVenta - descuento;
+
+            if (totalFinal < 0) {
+                totalFinal = 0;
+            }
+
 
             $tfoot.append(`
-            <tr>
-            <td colspan="3" class="text-end fw-bold">TOTAL UNIDADES:</td> 
-            
-            <td class="fw-bold">${totalCantidad}</td> 
-            
-            <td class="text-end fw-bold">TOTAL VENTA:</td> 
-            
-            <td class="fw-bold">$${totalVenta.toFixed(2)}</td> 
-            
-            <td></td>
-            
-            </tr>
-        `);
+                <tr>
+                    <td colspan="4"></td>
+                    <td class="text-end fw-bold">SUBTOTAL:</td>
+                    <td class="fw-bold">$${totalVenta.toFixed(2)}</td>
+                    <td></td>
+                </tr>
+
+                <tr>
+                    <td colspan="4"></td>
+                    <td class="text-end fw-bold text-danger">DESCUENTO:</td>
+                    <td class="fw-bold text-danger">-$${descuento.toFixed(2)}</td>
+                    <td></td>
+                </tr>
+
+                <tr>
+                    <td colspan="4"></td>
+                    <td class="text-end fw-bold text-success">TOTAL FINAL:</td>
+                    <td class="fw-bold text-success">$${totalFinal.toFixed(2)}</td>
+                    <td></td>
+                </tr>
+            `);
 
 
-            $('#totalVenta').data('venta-total', totalVenta);
+            $('#totalVenta').data('venta-total', totalFinal);
             $('#totalVenta').text(`$${totalVenta.toFixed(2)}`);
             $('#itemsVenta').val(JSON.stringify(items));
             actualizarSaldo();
@@ -1254,10 +1286,10 @@ require __DIR__ . '/../../includes/header.php';
                 return;
             }
 
-            const total = parseFloat($('#totalVenta').text().replace('$', ''));
+            const total = $('#totalVenta').data('venta-total') || 0;
             const monto = parseFloat(inputMontoPago.val()) || 0;
 
-            if (tipoPago.val() === 'contado' && monto !== total) {
+            if ($tipo_pago === 'contado' && abs($anticipo - $total_final) > 0.01) {
                 e.preventDefault();
                 alert('El pago debe ser igual al total en ventas de contado');
                 return;
