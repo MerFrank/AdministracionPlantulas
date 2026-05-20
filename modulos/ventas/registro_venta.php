@@ -202,9 +202,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("
             INSERT INTO notaspedidos (
                 folio, fechaPedido, id_cliente, tipo_pago, metodo_Pago,
-                subtotal, total, saldo_pendiente, estado, observaciones,
+                subtotal, descuento, total, saldo_pendiente, estado, observaciones,
                 num_pagare, fecha_validez, fecha_entrega, lugar_pago, id_cuenta, num_remision, ID_Operador
-            ) VALUES (:folio, NOW(), :id_cliente, :tipo_pago, :metodo_Pago, :subtotal, :total, :saldo_pendiente, :estado, :observaciones,
+            ) VALUES (:folio, NOW(), :id_cliente, :tipo_pago, :metodo_Pago, :subtotal, :descuento, :total, :saldo_pendiente, :estado, :observaciones,
                       :num_pagare, DATE_ADD(:fecha_entrega, INTERVAL 90 DAY), :fecha_entrega, 'Oficinas centrales', :id_cuenta, :num_remision, :ID_Operador)
         ");
 
@@ -219,14 +219,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':tipo_pago' => $tipo_pago,
             ':metodo_Pago' => $metodo_Pago,
             ':subtotal' => $subtotal_general,
-            ':total' => $subtotal_general, // aquí no aplico impuestos en este ejemplo
+            ':descuento' => $descuento,
+            ':total' => $subtotal_general, 
             ':saldo_pendiente' => $saldo_pendiente,
             ':estado' => $estado,
             ':observaciones' => $observaciones,
             ':num_pagare' => rand(1000, 9999),
             ':fecha_entrega' => $fecha_entrega,
             ':id_cuenta' => $id_cuenta,
-            ':ID_Operador' => $ID_Operador, //ID del operador 
+            ':ID_Operador' => $ID_Operador, 
             ':num_remision' => $num_remision
         ]);
 
@@ -463,6 +464,15 @@ require __DIR__ . '/../../includes/header.php';
                                     </table>
                                 </div>
                             </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Descuento </span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="inputPrecio" step="0.01" >
+                                </div>
+                            </div>
+
                         </div>
                     </div>
         
