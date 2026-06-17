@@ -15,9 +15,9 @@ error_reporting(E_ALL);
 if (isset($_SESSION['ID_Operador'])) {
 
     $rutas = [
-        1 => '/modulos/dashboard_adminGeneral.php',
-        2 => '/modulos/dashboard_secre.php',
-        3 => '/modulos/dashboard_auxAdmin.php',
+        1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
+        2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
+        3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
         4 => '/control_administrativo/public/AdministracionControl',
         5 => '/control_administrativo/public/SecretariaControl',
         6 => '/control_administrativo/public/AuxiliarControl',
@@ -106,10 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // Redirigir según rol
                     $rutas = [
-                        1 => '/modulos/dashboard_adminGeneral.php',
-                        2 => '/modulos/dashboard_secre.php',
-                        3 => '/modulos/dashboard_auxAdmin.php',
-                        4 => '/control_administrativo/public/AdministracionControl',
+                        1 => '/AdministracionPlantulas/modulos/dashboard_adminGeneral.php',
+                        2 => '/AdministracionPlantulas/modulos/dashboard_secre.php',
+                        3 => '/AdministracionPlantulas/modulos/dashboard_auxAdmin.php',
+                        4 => '/AdministracionPlantulas/control_administrativo/public/AdministracionControl',
                         5 => '/control_administrativo/public/SecretariaControl',
                         6 => '/control_administrativo/public/AuxiliarControl',
                     ];
